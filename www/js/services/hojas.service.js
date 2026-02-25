@@ -1,0 +1,107 @@
+import { createHojaCab, getNextNumeroSecuencial, getHojas, deleteHojaCab, updateHojaCab, updateEstadoHoja } from '../repositories/hojasCab.repo.js';
+import { addLotesToHoja } from '../repositories/hojasLotes.repo.js';
+import { uuid } from '../utils/uuid.js';
+
+export async function crearHojaTrabajoCabecera(data) {
+
+  if (!data.lotes || data.lotes.length === 0) {
+    throw new Error('Debe seleccionar al menos un lote');
+  }
+
+  if (!data.fecha_inicio || !data.fecha_fin) {
+    throw new Error('Debe indicar fecha de inicio y fin');
+  }
+
+  const hojaId           = uuid();
+  const numeroSecuencial = await getNextNumeroSecuencial();
+
+  // Fecha + hora + minuto
+  const ahora  = new Date();
+  const fecha  = ahora.toISOString().slice(0, 10).replace(/-/g, ''); // 20250219
+  const hora   = String(ahora.getHours()).padStart(2, '0');
+  const minuto = String(ahora.getMinutes()).padStart(2, '0');
+  const corr   = String(numeroSecuencial).padStart(5, '0');
+
+  // Modelo del dispositivo
+  const modelo = await getModeloDispositivo();
+
+  const numeroCompleto = `${modelo}-${fecha}${hora}${minuto}${corr}`;
+  // Ejemplo: SAMSUNGS21-20250219-1430-00001
+  await createHojaCab({
+    id:                      hojaId,
+    numero_secuencial:       numeroSecuencial,
+    numero_completo:         numeroCompleto,
+    dispositivo_id:          modelo,
+    campana:                 data.campana ?? String(ahora.getFullYear()),
+    empresa_id:              data.empresa_id,
+    cultivo_id:              data.cultivo_id,
+    tecnico_id:              data.tecnico_id,
+    sector_id:               data.sector_id,
+    tipo_aplicacion_id:      data.tipo_aplicacion_id,
+    caudal_id:               data.caudal_id,
+    mes:                     data.mes,
+    fecha_inicio:            data.fecha_inicio,
+    fecha_fin:               data.fecha_fin,
+    cantidad_hectareas:      data.cantidad_hectareas,
+    cantidad_hectareas_lotes: data.cantidad_hectareas_lotes ?? data.cantidad_hectareas,
+    observaciones:           data.observaciones
+  });
+
+  // Inserción batch: un solo query en lugar de N inserts secuenciales
+  await addLotesToHoja(hojaId, data.lotes);
+  return hojaId;
+}
+
+export async function actualizarHojaCabecera(id, data) {
+  if (!id) throw new Error('Hoja inválida');
+  if (!data.empresa_id) throw new Error('Empresa requerida');
+  if (!data.campana) throw new Error('Campaña requerida');
+
+  await updateHojaCab(id, data);
+}
+
+export async function listarHojas(estado = null) {
+  return await getHojas(estado);
+}
+
+export async function marcarComoExportado(ids) {
+  for (const id of ids) {
+    await updateEstadoHoja(id, 'EXPORTADO');
+  }
+}
+
+export async function eliminarHoja(id) {
+  return await deleteHojaCab(id);
+}
+
+// Función helper para obtener modelo del dispositivo
+async function getModeloDispositivo() {
+  try {
+    // Forma 1: API moderna de Capacitor
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
+      const info = await window.Capacitor.Plugins.Device.getInfo();
+      return info.model
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 10);
+    }
+
+    // Forma 2: fallback con userAgent
+    const ua = navigator.userAgent;
+    // Android: busca el modelo entre paréntesis
+    const match = ua.match(/\(.*?;\s*([^;)]+)\s*Build/);
+    if (match && match[1]) {
+      return match[1]
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 10);
+    }
+
+    return 'LOCAL';
+
+  } catch (err) {
+    console.error('❌ getModeloDispositivo error:', err);
+    return 'LOCAL';
+  }
+}

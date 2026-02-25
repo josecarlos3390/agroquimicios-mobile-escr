@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">agroquimicos.mobile</string>
+    <string name="title_activity_main">agroquimicos.mobile</string>
+    <string name="package_name">com.gir.agroquimicos</string>
+    <string name="custom_url_scheme">com.gir.agroquimicos</string>
+</resources>

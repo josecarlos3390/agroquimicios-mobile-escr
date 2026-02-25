@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>AgroApp – Hojas de Trabajo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/sidebar.css" />
+</head>
+
+<body>
+
+<div id="overlay" class="overlay"></div>
+
+<header class="app-header">
+  <button id="menu-btn" class="menu-btn">☰</button>
+  <span class="header-title">🌱 Hoja de Trabajo – Agroquímicos</span>
+</header>
+
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🌱</div>
+    <div class="sidebar-header-title">AgroApp</div>
+    <div class="sidebar-header-subtitle">Gestión Agroquímica</div>
+  </div>
+  <nav class="sidebar-menu">
+
+    <p class="menu-title">📋 Operación</p>
+    <a href="#" data-view="hojas">📝 Hojas de trabajo</a>
+    <a href="#" data-view="nueva-hoja" class="active">➕ Nueva hoja</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">🌱 Maestros</p>
+    <a href="#" data-view="empresas">🏢 Empresas</a>
+    <a href="#" data-view="sectores">🗺️ Sectores</a>
+    <a href="#" data-view="lotes">🌿 Lotes</a>
+    <a href="#" data-view="cultivos">🌾 Cultivos</a>
+    <a href="#" data-view="variedades">🌱 Variedades</a>
+    <a href="#" data-view="tecnicos">👨‍🌾 Técnicos</a>
+    <a href="#" data-view="productos">🧪 Productos</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">⚙️ Configuración</p>
+    <a href="#" data-view="tipos-producto">🏷️ Tipos de producto</a>
+    <a href="#" data-view="tipos-aplicacion">🚜 Tipos de aplicación</a>
+    <a href="#" data-view="unidades">📏 Unidades de medida</a>
+    <a href="#" data-view="caudales">💧 Caudales</a>
+    <a href="#" data-view="importacion">📥 Actualizar datos</a>
+
+  </nav>
+  <div class="sidebar-footer">
+    <div class="dark-mode-toggle" id="dark-mode-toggle">
+      <div class="dark-mode-toggle-label">
+        <span id="dark-mode-icon">🌙</span>
+        <span id="dark-mode-label">Modo oscuro</span>
+      </div>
+      <div class="toggle-pill" id="toggle-pill"></div>
+    </div>
+  </div>
+</aside>
+
+<main id="app-content" class="container">
+
+  <!-- ======================
+      HOJAS DE TRABAJO
+  ====================== -->
+  <section id="view-hojas" class="view">
+
+    <!-- Cabecera -->
+    <div class="card">
+      <h3>📝 Hojas de trabajo</h3>
+      <div style="display:flex; gap:0.65rem">
+        <button id="btn-nueva-hoja" class="btn-primary" style="flex:1; margin:0">
+          ➕ Nueva hoja
+        </button>
+        <button id="btn-seleccionar-hojas" class="btn-secondary" style="margin:0">
+          ☑️ Seleccionar
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra acciones múltiples (oculta por defecto) -->
+    <div id="barra-acciones-multiple" class="hidden barra-acciones-multiple">
+      <div class="barra-acciones-fila">
+        <button id="btn-marcar-todas">☑️ Todas</button>
+        <button id="btn-cancelar-seleccion" class="btn-cancelar">✖ Cancelar</button>
+      </div>
+      <div class="barra-acciones-fila">
+        <button id="btn-exportar-seleccionadas" class="btn-accion-multiple btn-exportar">
+          📤 Exportar
+        </button>
+        <button id="btn-sincronizar-seleccionadas" class="btn-accion-multiple btn-sincronizar" disabled title="Sincronización próximamente">
+          🔄 Sincronizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtro de estado -->
+    <div class="card filtro-estado-card">
+      <div class="filtro-estado-row">
+        <span class="filtro-estado-label">📋 Ver:</span>
+        <select id="filtro-estado-hojas" class="filtro-estado-select">
+          <option value="BORRADOR">📝 Borrador</option>
+          <option value="EXPORTADO">📤 Exportado</option>
+          <option value="SINCRONIZADO">🔄 Sincronizado</option>
+          <option value="">📚 Todas</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="hojas-lista"></div>
+
+  </section>
+  <!-- ======================
+       NUEVA HOJA
+  ====================== -->
+  <section id="view-nueva-hoja" class="view hidden">
+  <form id="form-hoja-trabajo" class="card">
+    <h3>📝 Datos generales</h3>
+    <div class="grid">
+      <label>Empresa <select id="empresa-select" required></select></label>
+      <label>Sector <select id="sector-select" disabled required></select></label>
+      <label>Técnico <select id="tecnico-select" required></select></label>
+      <label>Tipo aplicación <select id="tipo-aplicacion-select" required></select></label>
+      <label>Caudal <select id="caudal-select" required></select></label>
+      <label>Campaña <input type="text" id="campana-input" class="input-upper" required></label>
+      <label>Fecha inicio <input type="date" id="fecha-inicio" required placeholder="dd/mm/aaaa"></label>
+      <label>Fecha fin <input type="date" id="fecha-fin" required placeholder="dd/mm/aaaa"></label>
+      <label>Cultivo <select id="cultivo-select" disabled required>
+        <option value="">Seleccione lotes primero</option>
+      </select></label>
+      <label>Variedad <select id="variedad-select" disabled>
+        <option value="">Seleccione cultivo</option>
+      </select></label>
+      <label>Hectáreas <input type="number" id="cantidad-hectareas" step="0.01" required></label>
+    </div>
+
+    <label>
+      Observaciones <textarea id="observaciones" class="input-upper"></textarea>
+    </label>
+
+    <div id="lotes-container">
+      <strong>🌿 Lotes</strong>
+      <p>Seleccione un sector para ver los lotes</p>
+    </div>
+
+    <button type="submit" class="btn-primary">📌 Crear hoja de trabajo</button>
+  </form>
+  </section>
+
+  <!-- ======================
+      EDITAR HOJA
+  ====================== -->
+  <section id="view-editar-hoja" class="view hidden">
+  <div class="card">
+    <div class="vista-header">
+      <button id="btn-editar-hoja-volver" class="btn-volver">← Volver</button>
+      <h3>✏️ Editar hoja <span id="editar-hoja-numero" style="color:var(--primary)"></span></h3>
+    </div>
+
+    <form id="form-editar-hoja">
+      <div class="grid">
+        <label>Empresa <select id="editar-empresa-select" required></select></label>
+        <label>Sector <select id="editar-sector-select" required></select></label>
+        <label>Técnico <select id="editar-tecnico-select" required></select></label>
+        <label>Tipo aplicación <select id="editar-tipo-aplicacion-select" required></select></label>
+        <label>Caudal <select id="editar-caudal-select" required></select></label>
+        <label>Campaña <input type="text" id="editar-campana-input" class="input-upper" required></label>
+        <label>Fecha inicio <input type="date" id="editar-fecha-inicio" required></label>
+        <label>Fecha fin <input type="date" id="editar-fecha-fin" required></label>
+        <label>Cultivo <select id="editar-cultivo-select" required></select></label>
+        <label>Variedad <select id="editar-variedad-select" disabled>
+          <option value="">Sin variedad</option>
+        </select></label>
+        <label>Hectáreas <input type="number" id="editar-cantidad-hectareas" step="0.01" required></label>
+        <label>Mes <span id="editar-mes" class="detalle-info"></span></label>
+      </div>
+
+      <label>
+        Observaciones <textarea id="editar-observaciones" class="input-upper"></textarea>
+      </label>
+
+      <!-- 👇 AGREGAR ESTO -->
+      <div id="editar-lotes-container" style="margin-top:0.75rem">
+        <strong>🌿 Lotes</strong>
+        <p>Cargando lotes...</p>
+      </div>
+
+      <button type="submit" class="btn-primary">💾 Guardar cambios</button>
+    </form>
+  </div>
+  </section>
+
+  <!-- ======================
+       EMPRESAS
+  ====================== -->
+  <section id="view-empresas" class="view hidden">
+  <div class="card">
+    <h3>🏢 Empresas</h3>
+    <button id="btn-nueva-empresa" class="btn-primary">➕ Nueva</button>
+    <table>
+      <thead><tr><th>Nombre</th><th>RUT</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+      <tbody id="empresas-body"></tbody>
+    </table>
+  </div>
+  <div id="empresa-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>🏢 Empresa</h3>
+    <form id="empresa-form">
+      <input type="hidden" id="empresa-id">
+      <label>Nombre <input type="text" id="empresa-nombre"></label>
+      <label>RUT <input type="text" id="empresa-rut"></label>
+      <label>Teléfono <input type="text" id="empresa-telefono"></label>
+      <label>Email <input type="email" id="empresa-email"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-empresa">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       SECTORES
+  ====================== -->
+  <section id="view-sectores" class="view hidden">
+  <div class="card">
+    <h3>🗺️ Sectores</h3>
+    <label>Empresa <select id="sector-empresa-select"></select></label>
+    <button id="btn-nuevo-sector" class="btn-primary">➕ Nuevo sector</button>
+    <table>
+      <thead><tr><th>Nombre</th><th>Hectáreas</th><th>Acciones</th></tr></thead>
+      <tbody id="sectores-body"></tbody>
+    </table>
+  </div>
+  <div id="sector-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>🗺️ Sector</h3>
+    <form id="sector-form">
+      <input type="hidden" id="sector-id">
+      <label>Nombre <input type="text" id="sector-nombre"></label>
+      <label>Hectáreas <input type="number" id="sector-hectareas" step="0.01"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-sector">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       LOTES
+  ====================== -->
+  <section id="view-lotes" class="view hidden">
+  <div class="card">
+    <h3>🌿 Lotes</h3>
+    <label>Empresa <select id="selectEmpresaLotes"></select></label>
+    <label>Sector <select id="selectSectorLotes" disabled></select></label>
+    <button id="btnNuevoLote" class="btn-primary" disabled>➕ Nuevo lote</button>
+    <table>
+      <tbody id="tablaLotes"></tbody>
+    </table>
+  </div>
+  <div id="modalLote" class="modal hidden">
+  <div class="modal-content">
+    <h3 id="tituloModalLote">➕ Nuevo lote</h3>
+    <label>Código ERP <input type="number" id="loteCodigo" placeholder="Ej: 10045"></label>
+    <label>Nombre <input type="text" id="loteNombre"></label>
+    <label>Hectáreas <input type="number" id="loteHectareas" step="0.01"></label>
+    <label>Cultivo <select id="loteCultivo"></select></label>
+    <label>Variedad
+      <select id="loteVariedad" disabled>
+        <option value="">Seleccione cultivo</option>
+      </select>
+    </label>
+    <label>Fecha siembra <input type="date" id="loteFechaSiembra"></label>
+    <div class="modal-actions">
+      <button type="button" id="btnCancelarLote">Cancelar</button>
+      <button id="btnGuardarLote" class="btn-primary">Guardar</button>
+    </div>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       CULTIVOS
+  ====================== -->
+  <section id="view-cultivos" class="view hidden">
+  <div class="card">
+    <h3>🌾 Cultivos</h3>
+    <button id="btn-nueva-cultivo" class="btn-primary">➕ Nuevo</button>
+    <table>
+      <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+      <tbody id="cultivos-body"></tbody>
+    </table>
+  </div>
+  <div id="cultivo-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>🌾 Cultivo</h3>
+    <form id="cultivo-form">
+      <input type="hidden" id="cultivo-id">
+      <label>Nombre <input type="text" id="cultivo-nombre"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-cultivo">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       VARIEDADES
+  ====================== -->
+  <section id="view-variedades" class="view hidden">
+  <div class="card">
+    <h3>🌱 Variedades</h3>
+    <label>Cultivo <select id="selectCultivoVariedades"></select></label>
+    <button id="btnNuevaVariedad" class="btn-primary" disabled>➕ Nueva variedad</button>
+    <table>
+      <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+      <tbody id="tablaVariedades"></tbody>
+    </table>
+  </div>
+  <div id="modalVariedad" class="modal hidden">
+  <div class="modal-content">
+    <h3 id="tituloModalVariedad">🌱 Variedad</h3>  <!-- 👈 necesita id -->
+    <form id="variedad-form">
+      <input type="hidden" id="variedadId">
+      <label>Nombre <input type="text" id="variedadNombre"></label>
+      <div class="modal-actions">
+        <button type="button" id="btnCancelarVariedad">Cancelar</button>  <!-- 👈 btn no type submit -->
+        <button type="button" id="btnGuardarVariedad" class="btn-primary">Guardar</button>  <!-- 👈 type button no submit -->
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       TECNICOS
+  ====================== -->
+  <section id="view-tecnicos" class="view hidden">
+  <div class="card">
+    <h3>👨‍🌾 Técnicos</h3>
+    <button id="btn-nuevo-tecnico" class="btn-primary">➕ Nuevo</button>
+    <table>
+      <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+      <tbody id="tecnicos-body"></tbody>
+    </table>
+  </div>
+  <div id="tecnico-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>👨‍🌾 Técnico</h3>
+    <form id="tecnico-form">
+      <input type="hidden" id="tecnico-id">
+      <label>Nombre <input type="text" id="tecnico-nombre"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-tecnico">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       PRODUCTOS
+  ====================== -->
+  <section id="view-productos" class="view hidden">
+  <div class="card">
+    <h3>🧪 Productos</h3>
+    <button id="btn-nuevo-producto" class="btn-primary">➕ Nuevo</button>
+    <div id="productos-body"></div>   <!-- 👈 div en lugar de table -->
+  </div>
+  <div id="producto-modal" class="modal hidden">
+    <div class="modal-content" style="max-width:480px">
+      <h3 id="producto-modal-titulo">🧪 Producto</h3>
+      <form id="producto-form">
+        <input type="hidden" id="producto-id">
+        <label>Código <input type="text" id="producto-codigo"></label>
+        <label>Nombre <input type="text" id="producto-nombre"></label>
+        <label>Tipo <select id="producto-tipo"></select></label>
+
+        <!-- UNIDADES -->
+        <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border)">
+          <strong style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--primary); margin-bottom:0.5rem">
+            📏 Unidades de medida
+          </strong>
+
+          <label>
+            Unidad por defecto
+            <select id="producto-unidad-default"></select>
+          </label>
+
+          <div id="producto-unidades-extra" style="margin-top:0.5rem; display:flex; flex-direction:column; gap:0.4rem"></div>
+
+          <button type="button" id="btn-agregar-unidad-extra"
+            style="margin-top:0.5rem; width:auto; font-size:0.82rem; padding:0.4rem 0.85rem;
+                  background:var(--gray-100); color:var(--text); border:1.5px solid var(--border)">
+            ➕ Agregar otra unidad
+          </button>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancelar-producto">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       TIPOS DE PRODUCTO
+  ====================== -->
+  <section id="view-tipos-producto" class="view hidden">
+  <div class="card">
+    <h3>🏷️ Tipos de producto</h3>
+    <button id="btn-nuevo-tipo-producto" class="btn-primary">➕ Nuevo</button>
+    <table>
+      <thead><tr><th>Nombre</th><th>Cuenta contable</th><th>Acciones</th></tr></thead>
+      <tbody id="tipos-producto-body"></tbody>
+    </table>
+  </div>
+  <div id="tipo-producto-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>🏷️ Tipo de producto</h3>
+    <form id="tipo-producto-form">
+      <input type="hidden" id="tipo-producto-id">
+      <label>Nombre <input type="text" id="tipo-producto-nombre"></label>
+      <label>Cuenta contable <input type="text" id="tipo-producto-cuenta"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-tipo-producto">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       TIPOS DE APLICACION
+  ====================== -->
+  <section id="view-tipos-aplicacion" class="view hidden">
+  <div class="card">
+    <h3>🚜 Tipos de aplicación</h3>
+    <button id="btn-nuevo-tipo-aplicacion" class="btn-primary">➕ Nuevo</button>
+    <table>
+      <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+      <tbody id="tipos-aplicacion-body"></tbody>
+    </table>
+  </div>
+  <div id="tipo-aplicacion-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>🚜 Tipo de aplicación</h3>
+    <form id="tipo-aplicacion-form">
+      <input type="hidden" id="tipo-aplicacion-id">
+      <label>Nombre <input type="text" id="tipo-aplicacion-nombre"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-tipo-aplicacion">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+       UNIDADES DE MEDIDA
+  ====================== -->
+  <section id="view-unidades" class="view hidden">
+  <div class="card">
+    <h3>📏 Unidades de medida</h3>
+    <button id="btn-nueva-unidad" class="btn-primary">➕ Nueva</button>
+    <table>
+      <thead><tr><th>Código</th><th>Nombre</th><th>Factor</th><th>Acciones</th></tr></thead>
+      <tbody id="unidades-body"></tbody>
+    </table>
+  </div>
+  <div id="unidad-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>📏 Unidad de medida</h3>
+    <form id="unidad-form">
+      <input type="hidden" id="unidad-id">
+      <label>Código <input type="text" id="unidad-codigo" placeholder="Ej: L, KG, CC"></label>
+      <label>Nombre <input type="text" id="unidad-nombre" placeholder="Ej: Litros"></label>
+      <label>Factor <input type="number" id="unidad-factor" step="0.001" value="1"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-unidad">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
+      HOJA DETALLE
+  ====================== -->
+  <section id="view-hoja-detalle" class="view hidden">
+
+    <!-- Resumen cabecera -->
+    <div class="card">
+      <div class="vista-header">
+        <button id="btn-detalle-volver" class="btn-volver">← Volver</button>
+        <h3>📋 Hoja de trabajo</h3>
+      </div>
+      <div class="grid">
+        <label>Número <span id="detalle-hoja-numero" class="detalle-info">—</span></label>
+        <label>Campaña <span id="detalle-hoja-campana" class="detalle-info">—</span></label>
+        <label>Fechas <span id="detalle-hoja-fecha" class="detalle-info">—</span></label>
+        <label>Hectáreas <span id="detalle-hoja-hectareas" class="detalle-info">—</span></label>
+      </div>
+    </div>
+
+    <!-- Agregar producto -->
+    <div class="card">
+      <h3>➕ Agregar producto</h3>
+
+      <!-- Buscador FUERA del grid -->
+      <label>Producto
+        <div class="buscar-wrapper">
+          <input type="text" id="detalle-producto-buscar" 
+                placeholder="Buscar por nombre o código...">
+          <div id="detalle-producto-resultados" style="display:none"></div>
+          <input type="hidden" id="detalle-producto">
+        </div>
+      </label>
+
+      <!-- Unidad y cantidad en su propio grid -->
+      <div class="grid" style="margin-top:0.5rem">
+        <label>Unidad <select id="detalle-unidad" disabled></select></label>
+        <label>Cantidad <input type="number" id="detalle-cantidad" step="0.01" placeholder="0.00"></label>
+      </div>
+
+      <button id="btn-agregar-detalle" class="btn-primary" style="margin-top:0.75rem">
+        ➕ Agregar
+      </button>
+    </div>
+
+    <!-- Modal editar línea -->
+    <div id="modal-editar-linea" class="modal hidden">
+    <div class="modal-content">
+      <h3>✏️ Editar línea</h3>
+      <form id="form-editar-linea">
+        <input type="hidden" id="edit-linea-id">
+        <p id="edit-linea-producto-nombre"
+           style="font-size:0.85rem; font-weight:600; color:var(--primary);
+                  margin-bottom:0.5rem; padding:0.4rem 0.6rem;
+                  background:var(--primary-pale); border-radius:var(--radius-sm)"></p>
+        <label>Cantidad <input type="number" id="edit-linea-cantidad" step="0.01"></label>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancelar-editar-linea">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+    </div>
+
+    <!-- Tabla detalle -->
+    <div class="card">
+      <h3>🧪 Productos agregados</h3>
+      <div id="detalle-body"></div>
+    </div>
+
+    <button id="btn-finalizar-hoja" class="btn-primary">✅ Finalizar hoja</button>
+
+  </section>
+
+
+
+  <!-- ======================
+       IMPORTACIÓN DE DATOS
+  ====================== -->
+  <section id="view-importacion" class="view hidden">
+
+    <div class="card">
+      <h3>📥 Actualizar datos</h3>
+      <p class="import-subtitulo">
+        Importá productos o lotes desde un archivo Excel. El sistema detecta automáticamente el tipo de archivo y muestra una previsualización antes de aplicar cambios.
+      </p>
+    </div>
+
+    <!-- SECCIÓN INICIO -->
+    <div id="import-inicio-section">
+
+      <!-- Botones de acción principal -->
+      <div class="import-opciones">
+
+        <button id="btn-import-productos" class="import-opcion-btn">
+          <span class="import-opcion-icon">🧪</span>
+          <div class="import-opcion-texto">
+            <strong>Actualizar productos</strong>
+            <small>Agroquímicos, fungicidas, herbicidas, etc.</small>
+          </div>
+          <span class="import-opcion-arrow">›</span>
+        </button>
+
+        <button id="btn-import-lotes" class="import-opcion-btn">
+          <span class="import-opcion-icon">🌿</span>
+          <div class="import-opcion-texto">
+            <strong>Actualizar lotes</strong>
+            <small>Lotes, sectores, cultivos y variedades</small>
+          </div>
+          <span class="import-opcion-arrow">›</span>
+        </button>
+
+      </div>
+
+      <!-- Sugerencia de ruta (se muestra dinámicamente) -->
+      <div id="import-ruta-sugerida" class="import-ruta-badge" style="display:none"></div>
+
+      <!-- Botón ubicación alternativa -->
+      <div class="import-alt-ubicacion">
+        <span style="font-size:0.82rem; color:var(--text-muted)">¿El archivo está en otra carpeta?</span>
+        <button id="btn-import-otra-ubicacion" class="import-btn-alt">
+          📂 Elegir ubicación manualmente
+        </button>
+      </div>
+
+      <!-- Error inline -->
+      <div id="import-error-inline" class="import-error-box hidden">
+        <div class="import-error-titulo"></div>
+        <div class="import-error-msg"></div>
+      </div>
+
+      <!-- Instrucciones -->
+      <div class="card import-instrucciones">
+        <div class="import-instr-titulo">📋 Formato esperado de los archivos</div>
+        <div class="import-instr-grid">
+          <div class="import-instr-col">
+            <div class="import-instr-label">🧪 Productos</div>
+            <div class="import-instr-cols">CODIGO · DESCRIPCION · UNIDAD · LINEA DE PRODUCTO</div>
+          </div>
+          <div class="import-instr-col">
+            <div class="import-instr-label">🌿 Lotes</div>
+            <div class="import-instr-cols">LOTE · CODIGO · HECTAREAS · VARIEDAD · CULTIVO · SECTOR</div>
+          </div>
+        </div>
+        <div class="import-instr-tip">
+          💡 El archivo puede tener cualquier nombre. La app detecta el tipo automáticamente por sus columnas.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Input file oculto -->
+    <input type="file" id="import-file-input" accept=".xlsx,.xls" style="display:none">
+
+    <!-- SECCIÓN LEYENDO (sin spinner, es instantáneo) -->
+    <div id="import-leyendo-section" class="hidden card" style="text-align:center; padding:1.5rem 1rem;">
+      <p style="font-size:0.95rem; color:var(--text-muted);">📂 Leyendo archivo...</p>
+    </div>
+
+    <!-- SECCIÓN PROCESANDO (spinner — solo durante importación real) -->
+    <div id="import-progreso-section" class="hidden card import-progreso-card">
+      <div class="import-spinner-wrapper">
+        <div class="import-spinner"></div>
+      </div>
+      <div class="import-progreso-label">
+        <span id="import-progreso-msg">Importando datos…</span>
+      </div>
+      <p class="import-progreso-sub">Por favor esperá, esto puede tardar unos segundos…</p>
+    </div>
+
+    <!-- SECCIÓN PREVIEW -->
+    <div id="import-preview-section" class="hidden card">
+      <h3>🔍 Previsualización</h3>
+      <div id="import-preview-panel"></div>
+    </div>
+
+    <!-- BOTONES CONFIRMAR/CANCELAR -->
+    <div id="import-actions" class="hidden import-action-btns">
+      <button id="btn-import-cancelar" class="btn-secondary" style="margin-top:0; flex:1">
+        ✖ Cancelar
+      </button>
+      <button id="btn-import-confirmar" class="btn-primary" style="margin-top:0; flex:2">
+        ✅ Confirmar importación
+      </button>
+    </div>
+
+    <!-- SECCIÓN RESULTADO -->
+    <div id="import-resultado-panel" class="hidden card import-resultado">
+      <div class="import-resultado-check">
+        <svg viewBox="0 0 52 52" class="import-check-svg">
+          <circle class="import-check-circle" cx="26" cy="26" r="24" fill="none"/>
+          <path class="import-check-mark" fill="none" d="M14 27 l8 8 l16-16"/>
+        </svg>
+      </div>
+      <div class="import-resultado-titulo">¡Importación completada!</div>
+      <div id="import-resultado-texto"></div>
+      <button id="btn-import-nuevo" class="btn-primary" style="margin-top:1rem">
+        📥 Hacer otra importación
+      </button>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ======================
+     MODAL EXPORTAR
+====================== -->
+<div id="modal-exportar" class="modal hidden">
+  <div class="modal-content modal-exportar-content">
+    <h3>📤 Exportar hojas</h3>
+
+    <p id="modal-exportar-subtitulo" class="modal-exportar-sub"></p>
+
+    <div class="export-opciones">
+
+      <button id="btn-export-compartir" class="export-opcion">
+        <span class="export-opcion-icono">📨</span>
+        <div class="export-opcion-texto">
+          <strong>Compartir</strong>
+          <small>WhatsApp, Gmail, Drive y más · Excel (.xlsx)</small>
+        </div>
+        <span class="export-opcion-flecha">›</span>
+      </button>
+
+      <button id="btn-export-guardar" class="export-opcion">
+        <span class="export-opcion-icono">💾</span>
+        <div class="export-opcion-texto">
+          <strong>Guardar en dispositivo</strong>
+          <small>Excel o CSV · Carpeta Documentos</small>
+        </div>
+        <span class="export-opcion-flecha">›</span>
+      </button>
+
+    </div>
+
+    <button type="button" id="btn-export-cancelar" class="export-cancelar">
+      Cancelar
+    </button>
+  </div>
+</div>
+
+<!-- SheetJS: generación de XLSX en el navegador (sin servidor) -->
+<script src="js/xlsx.full.min.js"></script>
+
+<!-- Modal de confirmación custom (reemplaza confirm() nativo) -->
+<div id="modal-confirm" class="modal-confirm hidden">
+  <div class="modal-confirm-content">
+    <div id="modal-confirm-icon" class="modal-confirm-icon">⚠️</div>
+    <div id="modal-confirm-title" class="modal-confirm-title"></div>
+    <div id="modal-confirm-msg" class="modal-confirm-msg"></div>
+    <div class="modal-confirm-actions">
+      <button id="modal-confirm-cancel" class="modal-confirm-btn-cancel">Cancelar</button>
+      <button id="modal-confirm-ok" class="modal-confirm-btn-danger">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+
+<!-- Botón flotante scroll -->
+<button id="scroll-fab" aria-label="Scroll" title="Ir al final">
+  <svg id="fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline id="fab-arrow" points="6 9 12 15 18 9"></polyline>
+  </svg>
+</button>
+
+<script>
+(function () {
+  const fab   = document.getElementById('scroll-fab');
+  const arrow = document.getElementById('fab-arrow');
+
+  function getScrollY()   { return window.scrollY || document.documentElement.scrollTop; }
+  function getMaxScroll() { return document.documentElement.scrollHeight - window.innerHeight; }
+
+  let goingDown = true;
+
+  function updateDirection() {
+    const pct = getMaxScroll() > 10 ? getScrollY() / getMaxScroll() : 0;
+    goingDown  = pct < 0.85;
+    arrow.setAttribute('points', goingDown ? '6 9 12 15 18 9' : '6 15 12 9 18 15');
+    fab.setAttribute('title',      goingDown ? 'Ir al final'   : 'Ir al inicio');
+    fab.setAttribute('aria-label', goingDown ? 'Ir al final'   : 'Ir al inicio');
+  }
+
+  function actualizarFab() {
+    // Mostrar si hay suficiente contenido para scrollear (más de 80px)
+    const scrollable = getMaxScroll() > 80;
+    fab.classList.toggle('visible', scrollable);
+    if (scrollable) updateDirection();
+  }
+
+  // Observar cambios de clase en todas las vistas (cambio de vista activa)
+  document.querySelectorAll('section[id^="view-"]').forEach(el => {
+    new MutationObserver(actualizarFab).observe(el, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  // Actualizar flecha mientras se scrollea
+  window.addEventListener('scroll', () => {
+    updateDirection();
+  }, { passive: true });
+
+  // Resize por si cambia el contenido dinámicamente
+  window.addEventListener('resize', actualizarFab, { passive: true });
+
+  fab.addEventListener('click', () => {
+    window.scrollTo({ top: goingDown ? document.documentElement.scrollHeight : 0, behavior: 'smooth' });
+  });
+
+  // Revisar al cargar y cada vez que el DOM cambie de tamaño (lotes, productos dinámicos)
+  const resizeObs = new ResizeObserver(actualizarFab);
+  resizeObs.observe(document.getElementById('app-content') || document.body);
+
+  actualizarFab();
+})();
+</script>
+</body>
+</html>

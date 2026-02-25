@@ -1,0 +1,267 @@
+/* ================================
+   MENU BTN
+================================ */
+.menu-btn {
+  background: transparent;
+  color: white;
+  border: none;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: background 0.18s, transform 0.1s;
+  box-shadow: none;
+}
+
+.menu-btn:hover  { background: rgba(255,255,255,0.15); }
+.menu-btn:active { background: rgba(255,255,255,0.25); transform: scale(0.93); }
+
+/* ================================
+   SIDEBAR — panel flotante redondeado
+================================ */
+.sidebar {
+  position: fixed;
+  top: 12px;
+  left: 0;
+  bottom: 12px;
+  width: 82%;
+  max-width: 300px;
+  background: var(--sidebar-bg);
+  box-shadow: var(--shadow-lg);
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+  /* transform es 100% GPU — no causa layout reflow como left */
+  transform: translateX(-110%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  z-index: 1200;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sidebar-border);
+  border-left: none;
+}
+
+.sidebar.open { transform: translateX(0); }
+
+/* ================================
+   SIDEBAR HEADER
+================================ */
+.sidebar-header {
+  background: linear-gradient(150deg, var(--primary) 0%, var(--primary-mid) 70%, var(--primary-light) 100%);
+  color: white;
+  padding: 1.5rem 1.4rem 1.3rem;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-header::after {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+.sidebar-logo {
+  width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+}
+
+.sidebar-header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-header-subtitle {
+  font-size: 0.78rem;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+/* ================================
+   SIDEBAR MENU
+================================ */
+.sidebar-menu {
+  padding: 0.5rem 0.75rem 1rem;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.9rem;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: background 0.15s, color 0.15s;
+  min-height: 44px;
+  margin-bottom: 2px;
+}
+
+.sidebar-menu a:hover {
+  background: var(--sidebar-hover);
+  color: var(--primary);
+}
+
+.sidebar-menu a:active {
+  background: var(--sidebar-active);
+  transform: scale(0.98);
+}
+
+.sidebar-menu a.active {
+  background: var(--sidebar-active);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Icono destacado en item activo */
+.sidebar-menu a.active .menu-icon {
+  filter: drop-shadow(0 0 4px rgba(74,124,74,0.4));
+}
+
+/* ================================
+   TÍTULOS DE SECCIÓN
+================================ */
+.menu-title {
+  margin: 0.9rem 0 0.3rem 0.5rem;
+  font-weight: 700;
+  color: var(--sidebar-muted);
+  font-size: 0.63rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.menu-title:first-child { margin-top: 0.4rem; }
+
+/* ================================
+   SEPARADOR
+================================ */
+.menu-divider {
+  height: 1px;
+  background: var(--sidebar-divider);
+  margin: 0.5rem 0.5rem;
+}
+
+/* ================================
+   OVERLAY
+================================ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+  z-index: 1150;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.overlay.show { opacity: 1; visibility: visible; }
+
+/* ================================
+   SIDEBAR FOOTER — dark mode toggle
+================================ */
+.sidebar-footer {
+  padding: 0.75rem;
+  border-top: 1px solid var(--sidebar-divider);
+  background: var(--sidebar-footer-bg);
+  flex-shrink: 0;
+  border-radius: 0 0 var(--radius-xl) 0;
+}
+
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.dark-mode-toggle:hover  { background: var(--sidebar-hover); }
+.dark-mode-toggle:active { background: var(--sidebar-active); }
+
+.dark-mode-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--sidebar-text);
+}
+
+/* Toggle pill */
+.toggle-pill {
+  width: 40px;
+  height: 22px;
+  border-radius: 99px;
+  background: var(--sidebar-divider);
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-pill::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), background 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+body.dark .toggle-pill {
+  background: var(--primary-light);
+}
+
+body.dark .toggle-pill::after {
+  transform: translateX(18px);
+}
+
+/* En dark mode el header del sidebar conserva el verde oscuro original
+   independientemente de los colores --primary redefinidos para legibilidad */
+body.dark .sidebar-header {
+  background: linear-gradient(150deg, #1e3d1e 0%, #2d5a2d 70%, #4a7c4a 100%);
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
+@media (max-width: 640px) {
+  .sidebar { width: 86%; max-width: none; top: 8px; bottom: 8px; }
+}
+
+@media (min-width: 769px) {
+  .sidebar { max-width: 300px; }
+}
