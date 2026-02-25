@@ -30,7 +30,7 @@
   /* Texto — LIGHT MODE */
   --text:           #1a2e1a;
   --text-soft:      #3d563d;
-  --text-muted:     #7a9a7a;
+  --text-muted:     #4a6a4a;
 
   /* Sidebar — LIGHT MODE */
   --sidebar-bg:         #ffffff;
@@ -120,12 +120,18 @@ body.dark {
   --primary-faint:  #131f13;
   --accent:         #8ed84a;
   --accent-light:   #1a2e0a;
+
+  /* Grises adaptados al dark */
+  --gray-50:        #151f15;
+  --gray-100:       #2a3e2a;
+  --gray-200:       #344e34;
 }
 
 /* ================================
    RESET
 ================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button, a { -webkit-tap-highlight-color: transparent; }
 
 body {
   font-family: var(--font);
@@ -233,7 +239,7 @@ textarea.input-upper {
 /* ================================
    VIEWS
 ================================ */
-.view { display: block; animation: fadeIn 0.18s ease; will-change: opacity, transform; }
+.view { display: block; animation: fadeIn 0.18s ease; }
 .hidden { display: none !important; }
 .view.hidden { display: none; }
 
@@ -2308,6 +2314,23 @@ body.dark .modal-content {
   border: 1px solid var(--border);
 }
 
+/* Botón Cancelar (type=button) dentro de modales en dark mode */
+body.dark .modal-actions button[type="button"] {
+  background: #2a3e2a;
+  color: #d0e8d0;
+  border-color: #3e5a3e;
+}
+
+body.dark .modal-actions button[type="button"]:hover {
+  background: #344e34;
+  color: #e2f0e2;
+}
+
+/* Botón "Elegir ubicación manualmente" en dark mode */
+body.dark .import-btn-alt {
+  color: #d0e8d0;
+}
+
 body.dark .modal-confirm {
   background: rgba(0,0,0,0.7);
 }
@@ -2374,8 +2397,9 @@ body.dark .menu-divider { border-color: var(--border); background: var(--border)
     0 1px 4px rgba(0,0,0,0.14),
     inset 0 1px 0 rgba(255,255,255,0.12);
 
-  /* Borde sutil */
-  outline: 1.5px solid rgba(255,255,255,0.13);
+  /* Sin outline nativo (se maneja manualmente) */
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 
   transition:
     transform  0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -2408,9 +2432,19 @@ body.dark .menu-divider { border-color: var(--border); background: var(--border)
     inset 0 1px 0 rgba(255,255,255,0.18);
 }
 
+#scroll-fab:focus,
+#scroll-fab:focus-visible {
+  outline: none;
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.22),
+    0 1px 4px rgba(0,0,0,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
 #scroll-fab:active {
-  transform: scale(0.94);
-  transition: transform 0.08s ease;
+  transform: scale(0.88);
+  opacity: 0.85;
+  transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
 /* Light mode */

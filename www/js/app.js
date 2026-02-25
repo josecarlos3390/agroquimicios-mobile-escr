@@ -10,16 +10,11 @@ import { initSchema } from './db/schema.js';
 import {
   seedEmpresas,
   seedCultivos,
-  seedSectoresDemo,
-  seedLotesDemo,
   seedTecnicos,
   seedTiposAplicacion,
   seedCaudales,
-  seedVariedades,
   seedTiposProducto,
-  seedProductos,
   seedUnidadesMedida,
-  seedProductosUnidades
 } from './db/seed.js';
 
 // Views
@@ -39,11 +34,6 @@ import { initHojasView, cargarHojas } from './views/hojas.view.js';
 import { initHojaEditarView, cargarHojaEditar } from './views/hojaEditar.view.js';
 import { initImportacionView, cargarImportacion } from './views/importacion.view.js';
 
-
-// Servicios generales
-import { listarTecnicos } from './services/tecnicos.service.js';
-import { listarTiposAplicacion } from './services/tiposAplicacion.service.js';
-import { listarCaudales } from './services/caudales.service.js';
 async function initApp() {
   try {
   
