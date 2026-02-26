@@ -94,9 +94,8 @@ export async function previsualizarProductos(headers, filas) {
     // Normalizar unidad: LTS → L, KGS → KG
     const unidadCodigo = unidRaw === 'LTS' ? 'L' : unidRaw === 'KGS' ? 'KG' : unidRaw;
     const unidadId     = unidadByCodigo[unidadCodigo] ?? null;
-    const unidadNueva  = !unidadId && unidadCodigo;  // se creará automáticamente
+    const unidadNueva  = !unidadId && unidadCodigo;
 
-    // Si la línea no existe en BD, se creará automáticamente durante la importación
     const tipoId    = tipoByNombre[linea] ?? null;
     const tipoNuevo = !tipoId && linea;
 
@@ -151,11 +150,9 @@ export async function importarProductos(nuevos, actualizados) {
       );
       tiposCreados[p.linea] = row?.id;
     }
-    // Asignar el id recién creado si no lo tenía
     if (!p.tipoId && tiposCreados[p.linea]) {
       p.tipoId = tiposCreados[p.linea];
     }
-    // Último fallback: AGROQUIMICOS
     if (!p.tipoId) {
       const [fallback] = await executeQuery(
         `SELECT id FROM tipos_producto WHERE nombre = 'AGROQUIMICOS' LIMIT 1`
@@ -171,13 +168,11 @@ export async function importarProductos(nuevos, actualizados) {
        VALUES (?, ?, ?, ?, 1)`,
       [id, p.codigo, p.nombre, p.tipoId]
     );
-    // Asignar unidad default
     await executeRun(
       `INSERT OR IGNORE INTO productos_unidades (producto_id, unidad_medida_id, es_default)
        VALUES (?, ?, 1)`,
       [id, p.unidadId]
     );
-    // Unidad alternativa
     await _insertarUnidadAlternativa(id, p.unidadId);
     insertados++;
   }
@@ -187,7 +182,6 @@ export async function importarProductos(nuevos, actualizados) {
       `UPDATE productos SET nombre = ?, tipo_producto_id = ? WHERE id = ?`,
       [p.nombre, p.tipoId, p.id]
     );
-    // Actualizar unidad default sin borrar las existentes
     await executeRun(
       `UPDATE productos_unidades SET es_default = 0 WHERE producto_id = ?`,
       [p.id]
@@ -231,9 +225,9 @@ export async function previsualizarLotes(headers, filas) {
   const cultivoByNombre  = Object.fromEntries(cultivos.map(c => [c.nombre.toUpperCase(), c.id]));
   const variedadByNombre = Object.fromEntries(variedades.map(v => [v.nombre.toUpperCase(), v.id]));
 
-  // Identificar lotes por código (más estable que el nombre)
-  const loteByCodigoNombre = Object.fromEntries(
-    lotesExist.map(l => [`${String(l.codigo).toUpperCase()}_${l.nombre.toUpperCase()}`, l.id])
+  // Identificar lotes por nombre+sector_id (más confiable que codigo que puede venir vacío)
+  const loteByNombreSector = Object.fromEntries(
+    lotesExist.map(l => [`${l.nombre.toUpperCase()}_${String(l.sector_id)}`, l.id])
   );
 
   const nuevos              = [];
@@ -260,17 +254,18 @@ export async function previsualizarLotes(headers, filas) {
     const cultivoId  = cultivoByNombre[cultNombre] ?? null;
     const variedadId = variedadByNombre[varNombre] ?? null;
 
-    // Registrar los que se crearán automáticamente (solo para informar en preview)
     if (!sectorId)                sectoresNuevos.add(sectNombre);
     if (cultNombre && !cultivoId) cultivosNuevos.add(cultNombre);
     if (varNombre  && !variedadId) variedadesNuevas.add(varNombre);
 
-    const key = `${codigo}_${nombre}`;
+    // La clave usa nombre+sectorId para comparar con la BD.
+    // sectorId puede ser null si el sector todavía no existe => será nuevo.
+    const key  = `${nombre}_${String(sectorId ?? '')}`;
     const item = { nombre, codigo, hectareas, cultivoId, variedadId, sectorId,
                    sectorNombre: sectNombre, cultivoNombre: cultNombre, variedadNombre: varNombre };
 
-    if (loteByCodigoNombre[key]) {
-      actualizados.push({ ...item, id: loteByCodigoNombre[key] });
+    if (loteByNombreSector[key]) {
+      actualizados.push({ ...item, id: loteByNombreSector[key] });
     } else {
       nuevos.push(item);
     }
@@ -290,16 +285,14 @@ export async function previsualizarLotes(headers, filas) {
    IMPORTAR LOTES
 ========================================================= */
 export async function importarLotes(nuevos, actualizados) {
-  // Obtener empresa base para sectores nuevos
   const [empresa] = await executeQuery('SELECT id FROM empresas LIMIT 1');
   const empresaId = empresa?.id ?? 1;
 
   let insertados = 0;
   let modificados = 0;
 
-  // Crear automáticamente sectores, cultivos y variedades que no existan
-  const sectoresCreados  = {};
-  const cultivosCreados  = {};
+  const sectoresCreados   = {};
+  const cultivosCreados   = {};
   const variedadesCreadas = {};
 
   for (const l of [...nuevos, ...actualizados]) {
@@ -333,7 +326,7 @@ export async function importarLotes(nuevos, actualizados) {
       l.cultivoId = cultivosCreados[l.cultivoNombre];
     }
 
-    // Variedad (necesita cultivoId para la FK)
+    // Variedad
     if (!l.variedadId && l.variedadNombre && l.cultivoId && !variedadesCreadas[l.variedadNombre]) {
       await executeRun(
         'INSERT OR IGNORE INTO variedades (cultivo_id, nombre) VALUES (?, ?)',
