@@ -1,5 +1,5 @@
 import { listarHojas, eliminarHoja, marcarComoExportado } from '../services/hojas.service.js';
-import { exportarHojas, lineasACSV, lineasAXLSX } from '../services/exportacion.service.js';
+import { exportarHojas, lineasAXLSX } from '../services/exportacion.service.js';
 import { confirmar } from '../utils/confirm.js';
 
 let inicializado = false;
@@ -330,7 +330,8 @@ async function _prepararXLSX(hojaIds) {
   const lineas  = await exportarHojas(hojaIds);
   const base64  = lineasAXLSX(lineas);
   const fecha   = new Date().toISOString().slice(0, 10);
-  const nombre  = `hojas_trabajo_${fecha}.xlsx`;
+  const hora   = new Date().toTimeString().slice(0, 8).replace(/:/g, '');
+  const nombre  = `hojas_trabajo_${fecha}_${hora}.xlsx`;
   return { base64, nombre, lineas };
 }
 
@@ -365,6 +366,7 @@ async function exportarCompartiendo(hojaIds) {
 
     await marcarComoExportado(hojaIds);
     cerrarModalExportar();
+    filtroEstado = 'BORRADOR';
     await cargarHojas();
 
   } catch (err) {
@@ -378,55 +380,78 @@ async function exportarCompartiendo(hojaIds) {
 }
 
 // Opción 2: Guardar en dispositivo
-// El usuario elige entre XLSX (recomendado) y CSV
+// Intenta guardar en Descargas (visible en WhatsApp al adjuntar).
+// Si el directorio no está disponible cae a DOCUMENTS como fallback.
 async function exportarGuardando(hojaIds) {
   const btnGuardar = document.getElementById('btn-export-guardar');
   _setBtnCargando(btnGuardar, '⏳');
-
-  const usarXLSX = confirm(
-    '¿En qué formato querés guardar?\n\n' +
-    '✅ Aceptar → Excel (.xlsx)\n' +
-    '❌ Cancelar → CSV (.csv)'
-  );
 
   try {
     const { Filesystem } = window.Capacitor.Plugins;
     await Filesystem.requestPermissions();
 
-    const fecha = new Date().toISOString().slice(0, 10);
+    const { base64, nombre } = await _prepararXLSX(hojaIds);
 
-    if (usarXLSX) {
-      const { base64, nombre } = await _prepararXLSX(hojaIds);
-      const base64Limpio = base64.includes(',') ? base64.split(',')[1] : base64;
-      const dataUri = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Limpio}`;
-      await Filesystem.writeFile({
-        path:      nombre,
-        data:      dataUri,
-        directory: 'DOCUMENTS',
-        recursive: true
-      });
-      // Marcar hojas como EXPORTADO
-      await marcarComoExportado(hojaIds);
-      cerrarModalExportar();
-      await cargarHojas();
-      alert(`✅ Excel guardado en:\nDocumentos/${nombre}`);
+    // Capacitor espera base64 puro (sin prefijo data URI) cuando no se
+    // especifica encoding — así funciona en todas las versiones.
+    const base64Puro = base64.includes(',') ? base64.split(',')[1] : base64;
 
-    } else {
-      const lineas = await exportarHojas(hojaIds);
-      const csv    = lineasACSV(lineas);
-      const nombre = `hojas_trabajo_${fecha}.csv`;
-      await Filesystem.writeFile({
+    // Estrategia en cascada: External → Downloads → Documents
+    let rutaFinal   = null;
+    let dirFinal    = null;
+
+    const intentos = [
+      // Android: ruta absoluta a /storage/emulated/0/Download
+      {
+        path:      `Download/${nombre}`,
+        directory: 'EXTERNAL_STORAGE',
+        label:     'Descargas'
+      },
+      // Capacitor >=4 tiene el alias DOWNLOADS
+      {
         path:      nombre,
-        data:      csv,
+        directory: 'DOWNLOADS',
+        label:     'Descargas'
+      },
+      // Fallback universal: Documentos internos
+      {
+        path:      nombre,
         directory: 'DOCUMENTS',
-        encoding:  'utf8'
-      });
-      // Marcar hojas como EXPORTADO
-      await marcarComoExportado(hojaIds);
-      cerrarModalExportar();
-      await cargarHojas();
-      alert(`✅ CSV guardado en:\nDocumentos/${nombre}`);
+        label:     'Documentos'
+      },
+    ];
+
+    let ultimoError = null;
+
+    for (const intento of intentos) {
+      try {
+        await Filesystem.writeFile({
+          path:      intento.path,
+          data:      base64Puro,
+          directory: intento.directory,
+          recursive: true,
+        });
+        rutaFinal = intento.path;
+        dirFinal  = intento.label;
+        break;
+      } catch (e) {
+        ultimoError = e;
+        // Seguir con el próximo intento
+      }
     }
+
+    if (!rutaFinal) {
+      throw ultimoError ?? new Error('No se pudo escribir el archivo en ningún directorio.');
+    }
+
+    await marcarComoExportado(hojaIds);
+    cerrarModalExportar();
+    filtroEstado = 'BORRADOR';
+    await cargarHojas();
+    alert(
+      `✅ Excel guardado en:\n${dirFinal}/${nombre}\n\n` +
+      `Para enviarlo por WhatsApp:\nAdjuntar → Archivos → ${dirFinal}`
+    );
 
   } catch (err) {
     cerrarModalExportar();

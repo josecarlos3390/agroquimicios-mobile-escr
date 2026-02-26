@@ -86,4 +86,7 @@ export function initSidebar() {
     });
   });
 
+  // Mostrar sidebar desplegado al iniciar
+  openMenu();
+
 }

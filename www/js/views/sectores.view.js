@@ -5,6 +5,7 @@ import {
   guardarSector,
   eliminarSector
 } from '../services/sectores.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 let empresaActual = null;
 let eventosRegistrados = false; // 👈 CLAVE
@@ -76,7 +77,8 @@ export function initSectoresView() {
       }
 
       if (e.target.dataset.delete) {
-        if (confirm('¿Eliminar sector?')) {
+        const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar sector?', msg: 'Se eliminarán también todos los lotes del sector.' });
+        if (ok) {
           await eliminarSector(e.target.dataset.delete);
           cargarSectores();
         }

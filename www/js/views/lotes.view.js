@@ -3,6 +3,7 @@ import {
   guardarLote,
   eliminarLote
 } from '../services/lotes.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 import { listarEmpresas } from '../services/empresas.service.js';
 import { listarSectores } from '../services/sectores.service.js';
@@ -174,7 +175,8 @@ function editarLote(lote) {
 }
 
 async function borrarLote(id) {
-  if (!confirm('¿Eliminar lote?')) return;
+  const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar lote?', msg: 'Esta acción no se puede deshacer.' });
+  if (!ok) return;
   await eliminarLote(id);
   cargarLotes();
 }

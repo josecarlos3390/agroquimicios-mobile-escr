@@ -4,6 +4,7 @@ import {
   guardarCultivo,
   eliminarCultivo
 } from '../services/cultivos.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 let inicializado = false;
 
@@ -54,7 +55,8 @@ export function initCultivosView() {
       }
 
       if (e.target.dataset.delete) {
-        if (confirm('¿Eliminar cultivo?')) {
+        const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar cultivo?', msg: 'Esta acción no se puede deshacer.' });
+        if (ok) {
           await eliminarCultivo(e.target.dataset.delete);
           cargarCultivos();
         }

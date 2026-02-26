@@ -2457,3 +2457,144 @@ body.dark #scroll-fab {
   background: rgba(58, 110, 58, 0.80);
   outline-color: rgba(255,255,255,0.10);
 }
+
+/* =========================
+   VALIDACIÓN DE FORMULARIOS
+========================= */
+
+/* Campo inválido después de intentar enviar */
+input:user-invalid,
+select:user-invalid {
+  border-color: #e53e3e !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.25);
+}
+
+/* Fallback para browsers sin :user-invalid */
+input:invalid:not(:placeholder-shown):not(:focus),
+select:invalid:not(:focus) {
+  border-color: #e53e3e !important;
+  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.25);
+}
+
+/* Mensaje de validación nativo más visible */
+input:required:focus:invalid {
+  border-color: #e53e3e !important;
+}
+
+
+/* =========================
+   SPLASH SCREEN
+========================= */
+
+#splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: linear-gradient(145deg, #1a3a1a 0%, #1e3d1e 45%, #2d5a2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Fase 3: desvanecer y encoger todo el splash al salir */
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+#splash-screen.splash-hide {
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+}
+
+/* Anillos de fondo decorativos */
+.splash-bg-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(106, 170, 42, 0.15);
+  animation: splash-ring-pulse 3s ease-in-out infinite;
+}
+.splash-ring-1 {
+  width: 280px; height: 280px;
+  animation-delay: 0s;
+}
+.splash-ring-2 {
+  width: 420px; height: 420px;
+  animation-delay: 0.4s;
+  border-color: rgba(106, 170, 42, 0.09);
+}
+.splash-ring-3 {
+  width: 560px; height: 560px;
+  animation-delay: 0.8s;
+  border-color: rgba(106, 170, 42, 0.05);
+}
+@keyframes splash-ring-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.04); opacity: 0.6; }
+}
+
+/* Contenedor central */
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  /* Fase 1: entrar creciendo de pequeño */
+  animation: splash-enter 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes splash-enter {
+  from { transform: scale(0.3); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Fase 2: al prepararse para salir, el contenido se encoge */
+#splash-screen.splash-hide .splash-content {
+  animation: splash-exit 0.6s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+@keyframes splash-exit {
+  from { transform: scale(1);   opacity: 1; }
+  to   { transform: scale(0.4); opacity: 0; }
+}
+
+/* Logo */
+.splash-logo-wrap {
+  width: 90px;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(106, 170, 42, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.splash-logo {
+  font-size: 2.8rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+
+/* Textos */
+.splash-texts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+.splash-name {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.splash-tagline {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(106, 170, 42, 0.9);
+}

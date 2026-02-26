@@ -4,6 +4,7 @@ import {
   actualizarUnidadMedida,
   eliminarUnidadMedida
 } from '../services/unidadesMedida.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 let inicializado = false;
 
@@ -58,7 +59,8 @@ export function initUnidadesMedidaView() {
     }
 
     if (e.target.dataset.delete) {
-      if (confirm('¿Eliminar unidad de medida?')) {
+      const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar unidad de medida?', msg: 'Esta acción no se puede deshacer.' });
+      if (ok) {
         await eliminarUnidadMedida(e.target.dataset.delete);
         cargarUnidadesMedida();
       }

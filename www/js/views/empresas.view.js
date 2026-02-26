@@ -5,6 +5,7 @@ import {
   eliminarEmpresa,
   setEmpresaActiva
 } from '../services/empresas.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 const tbody = document.getElementById('empresas-body');
 const modal = document.getElementById('empresa-modal');
@@ -103,7 +104,8 @@ document
 
     // ELIMINAR
     if (e.target.dataset.delete) {
-      if (confirm('¿Eliminar empresa?')) {
+      const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar empresa?', msg: 'Se eliminarán también todos sus sectores y lotes.' });
+      if (ok) {
         await eliminarEmpresa(e.target.dataset.delete);
         cargarEmpresas();
       }

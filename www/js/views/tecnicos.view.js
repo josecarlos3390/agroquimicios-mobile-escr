@@ -4,6 +4,7 @@ import {
   guardarTecnico,
   eliminarTecnico
 } from '../services/tecnicos.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 let inicializado = false;
 
@@ -53,7 +54,8 @@ export function initTecnicosView() {
     }
 
     if (e.target.dataset.delete) {
-      if (confirm('¿Eliminar técnico?')) {
+      const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar técnico?', msg: 'Esta acción no se puede deshacer.' });
+      if (ok) {
         await eliminarTecnico(e.target.dataset.delete);
         cargarTecnicos();
       }

@@ -2,6 +2,7 @@ import {
   listarTiposProducto,
   crearTipoProducto
 } from '../services/tiposProducto.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 import { executeRun } from '../db/sqlite.js';
 
@@ -58,7 +59,8 @@ export function initTiposProductoView() {
     }
 
     if (e.target.dataset.delete) {
-      if (confirm('¿Eliminar tipo de producto?')) {
+      const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar tipo de producto?', msg: 'Esta acción no se puede deshacer.' });
+      if (ok) {
         await executeRun('DELETE FROM tipos_producto WHERE id = ?', [e.target.dataset.delete]);
         cargarTiposProducto();
       }

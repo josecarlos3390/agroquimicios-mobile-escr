@@ -5,6 +5,7 @@ import {
   eliminarProducto,
   asignarUnidadesAProducto
 } from '../services/productos.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 import { executeQuery } from '../db/sqlite.js';
 import { getUnidadesByProducto, replaceUnidadesProducto } from '../repositories/productosUnidades.repo.js';
@@ -116,7 +117,8 @@ export function initProductosView() {
     }
 
     if (e.target.dataset.delete) {
-      if (confirm('¿Desactivar producto?')) {
+      const ok = await confirmar({ icon: '⚠️', titulo: '¿Desactivar producto?', msg: 'El producto quedará inactivo y no aparecerá en nuevas hojas.', okLabel: 'Sí, desactivar', okClass: 'modal-confirm-btn-danger' });
+      if (ok) {
         await eliminarProducto(e.target.dataset.delete);
         cargarProductos();
       }

@@ -10,6 +10,22 @@
 
 <body>
 
+<!-- ===================== SPLASH SCREEN ===================== -->
+<div id="splash-screen">
+  <div class="splash-bg-ring splash-ring-1"></div>
+  <div class="splash-bg-ring splash-ring-2"></div>
+  <div class="splash-bg-ring splash-ring-3"></div>
+  <div class="splash-content">
+    <div class="splash-logo-wrap">
+      <div class="splash-logo">🌱</div>
+    </div>
+    <div class="splash-texts">
+      <div class="splash-name">AgroApp</div>
+      <div class="splash-tagline">Gestión Agroquímica</div>
+    </div>
+  </div>
+</div>
+
 <div id="overlay" class="overlay"></div>
 
 <header class="app-header">
@@ -210,7 +226,7 @@
     <h3>🏢 Empresa</h3>
     <form id="empresa-form">
       <input type="hidden" id="empresa-id">
-      <label>Nombre <input type="text" id="empresa-nombre"></label>
+      <label>Nombre <input type="text" id="empresa-nombre" required></label>
       <label>RUT <input type="text" id="empresa-rut"></label>
       <label>Teléfono <input type="text" id="empresa-telefono"></label>
       <label>Email <input type="email" id="empresa-email"></label>
@@ -241,7 +257,7 @@
     <h3>🗺️ Sector</h3>
     <form id="sector-form">
       <input type="hidden" id="sector-id">
-      <label>Nombre <input type="text" id="sector-nombre"></label>
+      <label>Nombre <input type="text" id="sector-nombre" required></label>
       <label>Hectáreas <input type="number" id="sector-hectareas" step="0.01"></label>
       <div class="modal-actions">
         <button type="button" id="btn-cancelar-sector">Cancelar</button>
@@ -269,7 +285,7 @@
   <div class="modal-content">
     <h3 id="tituloModalLote">➕ Nuevo lote</h3>
     <label>Código ERP <input type="number" id="loteCodigo" placeholder="Ej: 10045"></label>
-    <label>Nombre <input type="text" id="loteNombre"></label>
+    <label>Nombre <input type="text" id="loteNombre" required></label>
     <label>Hectáreas <input type="number" id="loteHectareas" step="0.01"></label>
     <label>Cultivo <select id="loteCultivo"></select></label>
     <label>Variedad
@@ -303,7 +319,7 @@
     <h3>🌾 Cultivo</h3>
     <form id="cultivo-form">
       <input type="hidden" id="cultivo-id">
-      <label>Nombre <input type="text" id="cultivo-nombre"></label>
+      <label>Nombre <input type="text" id="cultivo-nombre" required></label>
       <div class="modal-actions">
         <button type="button" id="btn-cancelar-cultivo">Cancelar</button>
         <button type="submit" class="btn-primary">Guardar</button>
@@ -331,7 +347,7 @@
     <h3 id="tituloModalVariedad">🌱 Variedad</h3>  <!-- 👈 necesita id -->
     <form id="variedad-form">
       <input type="hidden" id="variedadId">
-      <label>Nombre <input type="text" id="variedadNombre"></label>
+      <label>Nombre <input type="text" id="variedadNombre" required></label>
       <div class="modal-actions">
         <button type="button" id="btnCancelarVariedad">Cancelar</button>  <!-- 👈 btn no type submit -->
         <button type="button" id="btnGuardarVariedad" class="btn-primary">Guardar</button>  <!-- 👈 type button no submit -->
@@ -358,9 +374,43 @@
     <h3>👨‍🌾 Técnico</h3>
     <form id="tecnico-form">
       <input type="hidden" id="tecnico-id">
-      <label>Nombre <input type="text" id="tecnico-nombre"></label>
+      <label>Nombre <input type="text" id="tecnico-nombre" required></label>
       <div class="modal-actions">
         <button type="button" id="btn-cancelar-tecnico">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ===================== CAUDALES ===================== -->
+  <section id="view-caudales" class="view hidden">
+  <div class="card">
+    <h3>💧 Caudales</h3>
+    <button id="btn-nuevo-caudal" class="btn-primary">➕ Nuevo</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Valor</th>
+          <th>Unidad</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="caudales-body"></tbody>
+    </table>
+  </div>
+  <div id="caudal-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>💧 Caudal</h3>
+    <form id="caudal-form">
+      <input type="hidden" id="caudal-id">
+      <label>Nombre <input type="text" id="caudal-nombre" required></label>
+      <label>Valor <input type="number" step="any" id="caudal-valor"></label>
+      <label>Unidad <input type="text" id="caudal-unidad" placeholder="L/ha, cc/ha..."></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-caudal">Cancelar</button>
         <button type="submit" class="btn-primary">Guardar</button>
       </div>
     </form>
@@ -382,8 +432,8 @@
       <h3 id="producto-modal-titulo">🧪 Producto</h3>
       <form id="producto-form">
         <input type="hidden" id="producto-id">
-        <label>Código <input type="text" id="producto-codigo"></label>
-        <label>Nombre <input type="text" id="producto-nombre"></label>
+        <label>Código <input type="text" id="producto-codigo" required></label>
+        <label>Nombre <input type="text" id="producto-nombre" required></label>
         <label>Tipo <select id="producto-tipo"></select></label>
 
         <!-- UNIDADES -->
@@ -432,8 +482,8 @@
     <h3>🏷️ Tipo de producto</h3>
     <form id="tipo-producto-form">
       <input type="hidden" id="tipo-producto-id">
-      <label>Nombre <input type="text" id="tipo-producto-nombre"></label>
-      <label>Cuenta contable <input type="text" id="tipo-producto-cuenta"></label>
+      <label>Nombre <input type="text" id="tipo-producto-nombre" required></label>
+      <label>Cuenta contable <input type="text" id="tipo-producto-cuenta" required></label>
       <div class="modal-actions">
         <button type="button" id="btn-cancelar-tipo-producto">Cancelar</button>
         <button type="submit" class="btn-primary">Guardar</button>
@@ -460,7 +510,7 @@
     <h3>🚜 Tipo de aplicación</h3>
     <form id="tipo-aplicacion-form">
       <input type="hidden" id="tipo-aplicacion-id">
-      <label>Nombre <input type="text" id="tipo-aplicacion-nombre"></label>
+      <label>Nombre <input type="text" id="tipo-aplicacion-nombre" required></label>
       <div class="modal-actions">
         <button type="button" id="btn-cancelar-tipo-aplicacion">Cancelar</button>
         <button type="submit" class="btn-primary">Guardar</button>
@@ -487,8 +537,8 @@
     <h3>📏 Unidad de medida</h3>
     <form id="unidad-form">
       <input type="hidden" id="unidad-id">
-      <label>Código <input type="text" id="unidad-codigo" placeholder="Ej: L, KG, CC"></label>
-      <label>Nombre <input type="text" id="unidad-nombre" placeholder="Ej: Litros"></label>
+      <label>Código <input type="text" id="unidad-codigo" required placeholder="Ej: L, KG, CC"></label>
+      <label>Nombre <input type="text" id="unidad-nombre" required placeholder="Ej: Litros"></label>
       <label>Factor <input type="number" id="unidad-factor" step="0.001" value="1"></label>
       <div class="modal-actions">
         <button type="button" id="btn-cancelar-unidad">Cancelar</button>
@@ -727,7 +777,7 @@
         <span class="export-opcion-icono">💾</span>
         <div class="export-opcion-texto">
           <strong>Guardar en dispositivo</strong>
-          <small>Excel o CSV · Carpeta Documentos</small>
+          <small>Excel (.xlsx) · Carpeta Descargas</small>
         </div>
         <span class="export-opcion-flecha">›</span>
       </button>

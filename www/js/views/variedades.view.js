@@ -4,6 +4,7 @@ import {
   guardarVariedad,
   borrarVariedad
 } from '../services/variedades.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 let cultivoSeleccionado = null;
 let variedadEditando = null;
@@ -153,7 +154,8 @@ function editarVariedad(variedad) {
 }
 
 async function eliminar(id) {
-  if (!confirm('¿Eliminar variedad?')) return;
+  const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar variedad?', msg: 'Esta acción no se puede deshacer.' });
+  if (!ok) return;
   await borrarVariedad(id);
   cargarVariedades();
 }

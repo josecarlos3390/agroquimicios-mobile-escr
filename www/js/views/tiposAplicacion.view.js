@@ -4,6 +4,7 @@ import {
   actualizarTipoAplicacion,
   eliminarTipoAplicacion
 } from '../services/tiposAplicacion.service.js';
+import { confirmar } from '../utils/confirm.js';
 
 let inicializado = false;
 
@@ -48,7 +49,8 @@ export function initTiposAplicacionView() {
     }
 
     if (e.target.dataset.delete) {
-      if (confirm('¿Eliminar tipo de aplicación?')) {
+      const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar tipo de aplicación?', msg: 'Esta acción no se puede deshacer.' });
+      if (ok) {
         await eliminarTipoAplicacion(e.target.dataset.delete);
         cargarTiposAplicacion();
       }
