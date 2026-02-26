@@ -4,7 +4,6 @@ import { listarEmpresas } from '../services/empresas.service.js';
 import { listarSectores } from '../services/sectores.service.js';
 import { listarTecnicos } from '../services/tecnicos.service.js';
 import { listarTiposAplicacion } from '../services/tiposAplicacion.service.js';
-import { listarCaudales } from '../services/caudales.service.js';
 import { listarCultivos } from '../services/cultivos.service.js';
 import { listarVariedades } from '../services/variedades.service.js';
 import { getLotesByHojaId, replaceLotesHoja } from '../repositories/hojasLotes.repo.js';
@@ -140,7 +139,7 @@ export function initHojaEditarView() {
         sector_id:          sectorSelect.value,
         tecnico_id:         document.getElementById('editar-tecnico-select').value,
         tipo_aplicacion_id: document.getElementById('editar-tipo-aplicacion-select').value,
-        caudal_id:          document.getElementById('editar-caudal-select').value,
+        caudal_descripcion: document.getElementById('editar-caudal-input').value.toUpperCase() || null,
         cultivo_id:         cultivoSelect.value,
         campana:            document.getElementById('editar-campana-input').value.toUpperCase(),
         fecha_inicio:       fechaInicio,
@@ -177,25 +176,23 @@ export async function cargarHojaEditar(hojaId) {
   document.getElementById('editar-mes').textContent = hojaActual.mes;
 
   // Cargar todos los selects en paralelo
-  const [empresas, tecnicos, tiposAplicacion, caudales, cultivos] = await Promise.all([
+  const [empresas, tecnicos, tiposAplicacion, cultivos] = await Promise.all([
     listarEmpresas(),
     listarTecnicos(),
     listarTiposAplicacion(),
-    listarCaudales(),
     listarCultivos()
   ]);
 
   poblarSelect(document.getElementById('editar-empresa-select'), empresas, 'Seleccione empresa');
   poblarSelect(document.getElementById('editar-tecnico-select'), tecnicos, 'Seleccione técnico');
   poblarSelect(document.getElementById('editar-tipo-aplicacion-select'), tiposAplicacion, 'Seleccione tipo');
-  poblarSelect(document.getElementById('editar-caudal-select'), caudales, 'Seleccione caudal');
   poblarSelect(document.getElementById('editar-cultivo-select'), cultivos, 'Seleccione cultivo');
 
   // Setear valores actuales
   document.getElementById('editar-empresa-select').value       = hojaActual.empresa_id;
   document.getElementById('editar-tecnico-select').value       = hojaActual.tecnico_id;
   document.getElementById('editar-tipo-aplicacion-select').value = hojaActual.tipo_aplicacion_id;
-  document.getElementById('editar-caudal-select').value        = hojaActual.caudal_id;
+  document.getElementById('editar-caudal-input').value         = hojaActual.caudal_descripcion ?? '';
   document.getElementById('editar-cultivo-select').value       = hojaActual.cultivo_id;
   document.getElementById('editar-campana-input').value        = hojaActual.campana;
   document.getElementById('editar-fecha-inicio').value         = hojaActual.fecha_inicio;

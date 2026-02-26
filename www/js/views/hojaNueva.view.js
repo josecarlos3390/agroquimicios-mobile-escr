@@ -2,7 +2,6 @@ import { listarEmpresas } from '../services/empresas.service.js';
 import { listarSectores } from '../services/sectores.service.js';
 import { listarTecnicos } from '../services/tecnicos.service.js';
 import { listarTiposAplicacion } from '../services/tiposAplicacion.service.js';
-import { listarCaudales } from '../services/caudales.service.js';
 import { listarVariedades } from '../services/variedades.service.js';
 import { listarLotesPorSector } from '../services/lotes.service.js';
 import { crearHojaTrabajoCabecera } from '../services/hojas.service.js';
@@ -107,7 +106,7 @@ export function initNuevaHojaView() {
         sector_id:           sectorSelect.value,
         tecnico_id:          document.getElementById('tecnico-select').value,
         tipo_aplicacion_id:  document.getElementById('tipo-aplicacion-select').value,
-        caudal_id:           document.getElementById('caudal-select').value,
+        caudal_descripcion:  document.getElementById('caudal-input').value.toUpperCase() || null,
         cultivo_id:          cultivoSelect.value,
         variedad_id:         variedadSelect.value || null,
         campana:             document.getElementById('campana-input').value,
@@ -162,7 +161,6 @@ export async function cargarNuevaHoja() {
     listarEmpresas().then(data         => poblarSelect(document.getElementById('empresa-select'), data, 'Seleccione empresa')),
     listarTecnicos().then(data         => poblarSelect(document.getElementById('tecnico-select'), data, 'Seleccione técnico')),
     listarTiposAplicacion().then(data  => poblarSelect(document.getElementById('tipo-aplicacion-select'), data, 'Seleccione tipo')),
-    listarCaudales().then(data         => poblarSelect(document.getElementById('caudal-select'), data, 'Seleccione caudal')),
   ]);
 
   // Resetear cascada desde sector hacia abajo

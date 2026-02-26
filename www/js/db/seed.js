@@ -11,10 +11,6 @@ export async function seedEmpresas() {
     VALUES ('CURICHI', '12345678-9')
   `);
 
-  await executeRun(`
-    INSERT INTO empresas (nombre, rut)
-    VALUES ('GIR', '12345678-9')
-  `);
 }
 
 /* =========================================================
