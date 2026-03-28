@@ -3,7 +3,7 @@ import { listarSectores } from '../services/sectores.service.js';
 import { listarTecnicos } from '../services/tecnicos.service.js';
 import { listarTiposAplicacion } from '../services/tiposAplicacion.service.js';
 import { listarVariedades } from '../services/variedades.service.js';
-import { listarLotesPorSector } from '../services/lotes.service.js';
+import { listarLotesPorSectores } from '../services/lotes.service.js';
 import { crearHojaTrabajoCabecera } from '../services/hojas.service.js';
 
 const MESES = [
@@ -11,53 +11,47 @@ const MESES = [
   'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'
 ];
 
-let lotesDisponibles = []; // cache de lotes del sector actual
-let inicializado = false;  // FIX #1: flag para registrar listeners solo una vez
+let todosLosSectores  = [];
+let lotesDisponibles  = [];
+let inicializado      = false;
 
 export function initNuevaHojaView() {
-
   const empresaSelect  = document.getElementById('empresa-select');
-  const sectorSelect   = document.getElementById('sector-select');
   const cultivoSelect  = document.getElementById('cultivo-select');
   const variedadSelect = document.getElementById('variedad-select');
   const form           = document.getElementById('form-hoja-trabajo');
 
-  if (inicializado) return; // listeners ya registrados, no duplicar
+  if (inicializado) return;
   inicializado = true;
 
-  // 1️⃣ EMPRESA → carga sectores
+  // 1: EMPRESA -> carga sectores como checkboxes
   empresaSelect.onchange = async () => {
-    resetDesde('sector');
+    resetDesde('sectores');
     if (!empresaSelect.value) return;
-    const sectores = await listarSectores(empresaSelect.value);
-    poblarSelect(sectorSelect, sectores, 'Seleccione sector');
-    sectorSelect.disabled = false;
+    todosLosSectores = await listarSectores(empresaSelect.value);
+    renderSectores(todosLosSectores);
   };
 
-  // 2️⃣ SECTOR → carga lotes
-  sectorSelect.onchange = async () => {
-    resetDesde('lotes');
-    if (!sectorSelect.value) return;
-    lotesDisponibles = await listarLotesPorSector(sectorSelect.value);
-    renderLotes(lotesDisponibles);
-  };
+  // 2: SECTORES / LOTES / cambios de checkbox — delegado en el form
+  form.addEventListener('change', async (e) => {
 
-  // 3️⃣ LOTES — FIX #1: escuchar sobre el FORM, no sobre el container
-  //    Así el listener sobrevive aunque resetDesde() reemplace el innerHTML del container
-  form.addEventListener('change', (e) => {
-    // Solo reaccionar a checkboxes de lotes
-    if (!e.target.classList.contains('chk-lote') &&
-        e.target.id !== 'chk-todos-lotes') return;
+    if (e.target.classList.contains('chk-sector')) {
+      resetDesde('lotes');
+      const sectorIds = getSectoresSeleccionados();
+      if (sectorIds.length === 0) return;
+      lotesDisponibles = await listarLotesPorSectores(sectorIds);
+      // Todos los lotes seleccionados por defecto
+      renderLotes(lotesDisponibles, true);
+      actualizarTodo();
+      return;
+    }
 
-    resetDesde('cultivo');
-    const cultivosUnicos = getCultivosDeLotesSeleccionados();
-    if (cultivosUnicos.length === 0) return;
-
-    poblarSelect(cultivoSelect, cultivosUnicos, 'Seleccione cultivo');
-    cultivoSelect.disabled = false;
+    if (e.target.classList.contains('chk-lote')) {
+      actualizarTodo();
+    }
   });
 
-  // 4️⃣ CULTIVO → carga variedades
+  // 3: CULTIVO -> carga variedades
   cultivoSelect.onchange = async () => {
     resetDesde('variedad');
     if (!cultivoSelect.value) return;
@@ -68,9 +62,15 @@ export function initNuevaHojaView() {
     }
   };
 
-  // 5️⃣ SUBMIT
+  // 4: SUBMIT
   form.addEventListener('submit', async e => {
     e.preventDefault();
+
+    const sectoresSeleccionados = getSectoresSeleccionados();
+    if (sectoresSeleccionados.length === 0) {
+      alert('Seleccione al menos un sector');
+      return;
+    }
 
     const lotesSeleccionados = getLotesSeleccionados();
     if (lotesSeleccionados.length === 0) {
@@ -81,16 +81,14 @@ export function initNuevaHojaView() {
     const fechaInicio = document.getElementById('fecha-inicio').value;
     const fechaFin    = document.getElementById('fecha-fin').value;
 
-    // FIX #3: validar que fecha fin no sea anterior a fecha inicio
     if (fechaFin < fechaInicio) {
       alert('La fecha de fin no puede ser anterior a la fecha de inicio');
       return;
     }
 
-    // FIX #2: parsear número correctamente antes de guardar
     const cantidadHectareas = parseFloat(document.getElementById('cantidad-hectareas').value);
     if (!cantidadHectareas || cantidadHectareas <= 0) {
-      alert('Ingrese una cantidad de hectáreas válida');
+      alert('Ingrese una cantidad de hectareas valida');
       return;
     }
 
@@ -98,47 +96,44 @@ export function initNuevaHojaView() {
 
     const btnSubmit = form.querySelector('button[type="submit"]');
     btnSubmit.disabled = true;
-    btnSubmit.textContent = '⏳ Guardando...';
+    btnSubmit.textContent = 'Guardando...';
 
     try {
       const hojaId = await crearHojaTrabajoCabecera({
-        empresa_id:          empresaSelect.value,
-        sector_id:           sectorSelect.value,
-        tecnico_id:          document.getElementById('tecnico-select').value,
-        tipo_aplicacion_id:  document.getElementById('tipo-aplicacion-select').value,
-        caudal_descripcion:  document.getElementById('caudal-input').value.toUpperCase() || null,
-        cultivo_id:          cultivoSelect.value,
-        variedad_id:         variedadSelect.value || null,
-        campana:             document.getElementById('campana-input').value,
-        fecha_inicio:        fechaInicio,
-        fecha_fin:           fechaFin,
-        cantidad_hectareas:  cantidadHectareas,  // FIX #2: número, no string
-        observaciones:       document.getElementById('observaciones').value || null,
+        empresa_id:         empresaSelect.value,
+        sectores:           sectoresSeleccionados,
+        tecnico_id:         document.getElementById('tecnico-select').value,
+        tipo_aplicacion_id: document.getElementById('tipo-aplicacion-select').value,
+        caudal_descripcion: document.getElementById('caudal-input').value.toUpperCase() || null,
+        cultivo_id:         cultivoSelect.value,
+        variedad_id:        variedadSelect.value || null,
+        campana:            document.getElementById('campana-input').value,
+        fecha_inicio:       fechaInicio,
+        fecha_fin:          fechaFin,
+        cantidad_hectareas: cantidadHectareas,
+        observaciones:      document.getElementById('observaciones').value || null,
         mes,
-        lotes:               lotesSeleccionados
+        lotes: lotesSeleccionados
       });
 
       window.showView('hoja-detalle', hojaId);
 
     } catch (err) {
-      alert('❌ ' + err.message);
+      alert('Error: ' + err.message);
       btnSubmit.disabled = false;
-      btnSubmit.textContent = '📌 Crear hoja de trabajo';
+      btnSubmit.textContent = 'Crear hoja de trabajo';
     }
   });
 }
 
-/* =========================
-   CARGA INICIAL
-========================= */
+/* ========================= CARGA INICIAL ========================= */
 export async function cargarNuevaHoja() {
+  todosLosSectores = [];
   lotesDisponibles = [];
 
-  // FIX #7: Resetear el form y todos los estados en cascada desde empresa
   document.getElementById('form-hoja-trabajo').reset();
   document.getElementById('campana-input').value = String(new Date().getFullYear());
 
-  // Fecha actual en formato yyyy-mm-dd para los inputs
   const hoy = new Date();
   const fechaHoy = [
     hoy.getFullYear(),
@@ -149,40 +144,34 @@ export async function cargarNuevaHoja() {
   document.getElementById('fecha-inicio').value = fechaHoy;
   document.getElementById('fecha-fin').value    = fechaHoy;
 
-  // Restaurar texto del botón submit por si quedó en "Guardando..."
   const btnSubmit = document.querySelector('#form-hoja-trabajo button[type="submit"]');
   if (btnSubmit) {
     btnSubmit.disabled = false;
-    btnSubmit.textContent = '📌 Crear hoja de trabajo';
+    btnSubmit.textContent = 'Crear hoja de trabajo';
   }
 
-  // Cargar datos independientes en paralelo
   await Promise.all([
-    listarEmpresas().then(data         => poblarSelect(document.getElementById('empresa-select'), data, 'Seleccione empresa')),
-    listarTecnicos().then(data         => poblarSelect(document.getElementById('tecnico-select'), data, 'Seleccione técnico')),
-    listarTiposAplicacion().then(data  => poblarSelect(document.getElementById('tipo-aplicacion-select'), data, 'Seleccione tipo')),
+    listarEmpresas().then(data        => poblarSelect(document.getElementById('empresa-select'), data, 'Seleccione empresa')),
+    listarTecnicos().then(data        => poblarSelect(document.getElementById('tecnico-select'), data, 'Seleccione tecnico')),
+    listarTiposAplicacion().then(data => poblarSelect(document.getElementById('tipo-aplicacion-select'), data, 'Seleccione tipo')),
   ]);
 
-  // Resetear cascada desde sector hacia abajo
-  resetDesde('sector');
+  resetDesde('sectores');
 }
 
-/* =========================
-   RESET EN CASCADA
-========================= */
+/* ========================= RESET EN CASCADA ========================= */
 function resetDesde(desde) {
-  const orden = ['sector', 'lotes', 'cultivo', 'variedad'];
-  const idx = orden.indexOf(desde);
+  const orden = ['sectores', 'lotes', 'cultivo', 'variedad'];
+  const idx   = orden.indexOf(desde);
 
-  if (idx <= orden.indexOf('sector')) {
-    const s = document.getElementById('sector-select');
-    s.innerHTML = '<option value="">Seleccione sector</option>';
-    s.disabled = true;
+  if (idx <= orden.indexOf('sectores')) {
+    document.getElementById('sectores-container').innerHTML =
+      '<strong>Sectores</strong><p>Seleccione una empresa para ver los sectores</p>';
   }
 
   if (idx <= orden.indexOf('lotes')) {
     document.getElementById('lotes-container').innerHTML =
-      '<strong>🌿 Lotes</strong><p>Seleccione un sector para ver los lotes</p>';
+      '<strong>Lotes</strong><p>Seleccione al menos un sector para ver los lotes</p>';
   }
 
   if (idx <= orden.indexOf('cultivo')) {
@@ -198,76 +187,156 @@ function resetDesde(desde) {
   }
 }
 
-/* =========================
-   RENDER LOTES
-========================= */
-function renderLotes(lotes) {
-  const container = document.getElementById('lotes-container');
+/* ========================= RENDER SECTORES (chips opción C) ========================= */
+function renderSectores(sectores) {
+  const container = document.getElementById('sectores-container');
 
-  if (lotes.length === 0) {
-    container.innerHTML = '<strong>🌿 Lotes</strong><p>No hay lotes en este sector</p>';
+  if (sectores.length === 0) {
+    container.innerHTML = '<strong>🗺️ Sectores</strong><p>No hay sectores en esta empresa</p>';
     return;
   }
 
   container.innerHTML = `
-    <strong>🌿 Lotes (${lotes.length})</strong>
-
-    <div style="position:relative; margin: 0.6rem 0 0.5rem;">
-      <input type="text" id="lotes-buscar"
-        placeholder="🔍 Buscar lote..."
-        style="padding-left: 0.85rem; font-size:0.88rem;"
-        autocomplete="off">
-    </div>
-
-    <label style="display:flex; gap:0.5rem; align-items:center; padding-bottom:0.5rem; border-bottom: 1px solid var(--border);">
-      <input type="checkbox" id="chk-todos-lotes">
-      <em style="font-size:0.85rem; color: var(--text-soft)">Seleccionar / deseleccionar todos</em>
-    </label>
-
-    <div id="lotes-lista">
-      ${lotes.map(l => `
-        <label style="display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem">
-          <input type="checkbox" class="chk-lote" value="${l.id}" 
-            data-cultivo-id="${l.cultivo_id ?? ''}" 
-            data-cultivo-nombre="${l.cultivo_nombre ?? ''}"
-            data-nombre="${(l.nombre ?? '').toLowerCase()}"
-            >
-          <span>
-            <strong style="font-size:0.88rem">${l.nombre}</strong>
-            <span style="font-size:0.8rem; color:var(--text-muted)"> · ${l.hectareas ?? '-'} ha</span>
-            ${l.cultivo_nombre ? `<span style="font-size:0.8rem; color:var(--text-soft)"> — ${l.cultivo_nombre}</span>` : ''}
-            ${l.variedad_nombre ? `<span style="font-size:0.8rem; color:var(--text-muted)"> / ${l.variedad_nombre}</span>` : ''}
-          </span>
+    <strong>🗺️ Sectores</strong>
+    <div class="chip-row" id="sectores-lista">
+      ${sectores.map(s => `
+        <label class="sector-chip" data-sector-id="${s.id}">
+          <input type="checkbox" class="chk-sector" value="${s.id}">
+          <svg class="chip-leaf" viewBox="0 0 14 14" fill="none">
+            <path class="chip-leaf-bg" d="M7 1C4 1 2 4 2 7s2 6 5 6 5-3 5-6-2-6-5-6z"/>
+            <path class="chip-leaf-vein" d="M7 3v8M4 6c1-1 2-1 3 0s2 1 3 0" stroke-width="0.8" stroke-linecap="round"/>
+          </svg>
+          <span class="chip-nombre">${s.nombre}</span>
+          ${s.hectareas ? `<span class="chip-ha">${s.hectareas} ha</span>` : ''}
         </label>
       `).join('')}
     </div>
   `;
 
-  // Filtro en tiempo real
-  document.getElementById('lotes-buscar').addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase().trim();
-    document.querySelectorAll('#lotes-lista .chk-lote').forEach(cb => {
-      const label = cb.closest('label');
-      label.style.display = (!q || cb.dataset.nombre.includes(q)) ? 'flex' : 'none';
+  container.querySelectorAll('.sector-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      requestAnimationFrame(() => {
+        const cb = chip.querySelector('.chk-sector');
+        chip.classList.toggle('activo', cb.checked);
+      });
+    });
+  });
+}
+
+/* ========================= RENDER LOTES (acordeón por sector) ========================= */
+function renderLotes(lotes, todosSeleccionados = false) {
+  const container = document.getElementById('lotes-container');
+
+  if (lotes.length === 0) {
+    container.innerHTML = '<strong>🌿 Lotes</strong><p>No hay lotes en los sectores seleccionados</p>';
+    return;
+  }
+
+  const porSector = new Map();
+  lotes.forEach(l => {
+    if (!porSector.has(l.sector_id)) {
+      porSector.set(l.sector_id, { nombre: l.sector_nombre, lotes: [], haTotal: 0 });
+    }
+    const g = porSector.get(l.sector_id);
+    g.lotes.push(l);
+    g.haTotal += parseFloat(l.hectareas ?? 0);
+  });
+
+  const totalLotes = lotes.length;
+
+  const acordeonesHTML = [...porSector.entries()].map(([sId, grupo]) => `
+    <div class="sector-acordeon" data-sector-id="${sId}">
+      <div class="sector-acordeon-header">
+        <div class="sector-acordeon-titulo">
+          <span>🗺️ ${grupo.nombre}</span>
+          <span class="sector-acordeon-meta sector-ha-meta" data-sector-id="${sId}">
+            ${grupo.lotes.length} lote${grupo.lotes.length !== 1 ? 's' : ''}
+            · <span class="sector-ha-valor">${fmtHa(grupo.haTotal)}</span> ha selec.
+          </span>
+        </div>
+        <div class="sector-acordeon-acciones">
+          <button type="button" class="sector-acordeon-todos todos-activo" data-sector-id="${sId}">
+            ☑ Todos
+          </button>
+          <span class="sector-acordeon-chevron">▼</span>
+        </div>
+      </div>
+      <div class="sector-acordeon-body">
+        ${grupo.lotes.map(l => `
+          <label class="lote-label">
+            <input type="checkbox" class="chk-lote" value="${l.id}"
+              data-sector-id="${sId}"
+              data-hectareas="${l.hectareas ?? 0}"
+              data-cultivo-id="${l.cultivo_id ?? ''}"
+              data-cultivo-nombre="${l.cultivo_nombre ?? ''}"
+              data-nombre="${(l.nombre ?? '').toLowerCase()}"
+              checked>
+            <span class="lote-label-info">
+              <span class="lote-nombre">${l.nombre}</span>
+              <span class="lote-meta">
+                ${l.hectareas ?? '-'} ha
+                ${l.cultivo_nombre ? ` · ${l.cultivo_nombre}` : ''}
+                ${l.variedad_nombre ? ` / ${l.variedad_nombre}` : ''}
+              </span>
+            </span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <strong>🌿 Lotes (${totalLotes})</strong>
+    <input type="text" id="lotes-buscar"
+      placeholder="🔍 Buscar lote..."
+      style="margin: 0.5rem 0 0.25rem; font-size:0.88rem;"
+      autocomplete="off">
+    ${acordeonesHTML}
+  `;
+
+  // Abrir/cerrar acordeón
+  container.querySelectorAll('.sector-acordeon-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      if (e.target.closest('.sector-acordeon-todos')) return;
+      header.closest('.sector-acordeon').classList.toggle('abierto');
     });
   });
 
-  // Seleccionar todos (solo los visibles)
-  document.getElementById('chk-todos-lotes').onchange = (e) => {
-    document.querySelectorAll('#lotes-lista .chk-lote').forEach(cb => {
-      const label = cb.closest('label');
-      if (label.style.display !== 'none') {
-        cb.checked = e.target.checked;
-      }
+  // Botón "Todos" — toggle selección + sincronizar todo
+  container.querySelectorAll('.sector-acordeon-todos').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const sId      = btn.dataset.sectorId;
+      const lotesCbs = [...container.querySelectorAll(`.chk-lote[data-sector-id="${sId}"]`)]
+        .filter(cb => cb.closest('.lote-label').style.display !== 'none');
+      const todosOn  = lotesCbs.every(cb => cb.checked);
+      lotesCbs.forEach(cb => cb.checked = !todosOn);
+      actualizarTodo();
     });
-    // Disparar el evento change para recalcular cultivos
-    document.getElementById('lotes-lista').dispatchEvent(new Event('change', { bubbles: true }));
-  };
+  });
+
+  // Checkbox individual → ya lo maneja el listener del form (actualizarTodo)
+  // pero también necesitamos reaccionar al filtro de búsqueda
+
+  // Filtro en tiempo real
+  document.getElementById('lotes-buscar').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    container.querySelectorAll('.sector-acordeon').forEach(acordeon => {
+      let hayCoincidencia = false;
+      acordeon.querySelectorAll('.chk-lote').forEach(cb => {
+        const label   = cb.closest('.lote-label');
+        const visible = !q || cb.dataset.nombre.includes(q);
+        label.style.display = visible ? 'flex' : 'none';
+        if (visible) hayCoincidencia = true;
+      });
+      acordeon.classList.toggle('abierto', q.length > 0 && hayCoincidencia);
+    });
+    // Re-sincronizar botones "Todos" según visibles
+    sincronizarTodosBotones();
+  });
 }
 
-/* =========================
-   HELPERS
-========================= */
+/* ========================= HELPERS ========================= */
 function poblarSelect(select, items, placeholder) {
   select.innerHTML = `<option value="">${placeholder}</option>`;
   items.forEach(item => {
@@ -278,22 +347,104 @@ function poblarSelect(select, items, placeholder) {
   });
 }
 
+/* Formatea hectáreas: sin decimales si es entero, 2 decimales si no */
+function fmtHa(ha) {
+  if (!ha || isNaN(ha)) return '0';
+  return ha % 1 === 0 ? ha.toString() : parseFloat(ha.toFixed(2)).toString();
+}
+
+/* Actualiza chips, agrupadores, campo hectáreas, cultivos — todo de una vez */
+function actualizarTodo() {
+  const container = document.getElementById('lotes-container');
+  if (!container) return;
+
+  // Recalcular ha seleccionadas por sector
+  const haPorSector = new Map();
+  container.querySelectorAll('.chk-lote').forEach(cb => {
+    const sId = cb.dataset.sectorId;
+    if (!haPorSector.has(sId)) haPorSector.set(sId, 0);
+    if (cb.checked) {
+      haPorSector.set(sId, haPorSector.get(sId) + parseFloat(cb.dataset.hectareas || 0));
+    }
+  });
+
+  // Actualizar ha en el agrupador (meta del acordeón)
+  haPorSector.forEach((ha, sId) => {
+    const meta = container.querySelector(`.sector-ha-meta[data-sector-id="${sId}"] .sector-ha-valor`);
+    if (meta) meta.textContent = fmtHa(ha);
+  });
+
+  // Actualizar chip de cada sector con ha seleccionadas
+  haPorSector.forEach((ha, sId) => {
+    const chip = document.querySelector(`#sectores-lista .sector-chip[data-sector-id="${sId}"]`);
+    if (!chip) return;
+    let haSpan = chip.querySelector('.chip-ha');
+    if (!haSpan) {
+      haSpan = document.createElement('span');
+      haSpan.className = 'chip-ha';
+      chip.appendChild(haSpan);
+    }
+    haSpan.textContent = ha > 0 ? `${fmtHa(ha)} ha` : '';
+  });
+
+  // Sincronizar botones "Todos"
+  sincronizarTodosBotones();
+
+  // Actualizar campo Hectáreas con la suma total
+  actualizarHectareasSugeridas();
+
+  // Actualizar cultivos
+  const cultivoSelect  = document.getElementById('cultivo-select');
+  const variedadSelect = document.getElementById('variedad-select');
+  const cultivosUnicos = getCultivosDeLotesSeleccionados();
+  if (cultivosUnicos.length === 0) {
+    cultivoSelect.innerHTML = '<option value="">Seleccione cultivo</option>';
+    cultivoSelect.disabled = true;
+    variedadSelect.innerHTML = '<option value="">Sin variedad</option>';
+    variedadSelect.disabled = true;
+  } else {
+    poblarSelect(cultivoSelect, cultivosUnicos, 'Seleccione cultivo');
+    cultivoSelect.disabled = false;
+  }
+}
+
+/* Resalta/apaga el botón "Todos" según si todos los lotes visibles están marcados */
+function sincronizarTodosBotones() {
+  const container = document.getElementById('lotes-container');
+  if (!container) return;
+  container.querySelectorAll('.sector-acordeon-todos').forEach(btn => {
+    const sId     = btn.dataset.sectorId;
+    const visibles = [...container.querySelectorAll(`.chk-lote[data-sector-id="${sId}"]`)]
+      .filter(cb => cb.closest('.lote-label').style.display !== 'none');
+    const todosOn = visibles.length > 0 && visibles.every(cb => cb.checked);
+    btn.classList.toggle('todos-activo', todosOn);
+  });
+}
+
+function getSectoresSeleccionados() {
+  return [...document.querySelectorAll('#sectores-container .chk-sector:checked')]
+    .map(cb => cb.value);
+}
+
 function getLotesSeleccionados() {
   return [...document.querySelectorAll('#lotes-container .chk-lote:checked')]
     .map(cb => cb.value);
 }
 
 function getCultivosDeLotesSeleccionados() {
-  const checkeados = [...document.querySelectorAll('#lotes-container .chk-lote:checked')];
   const mapa = new Map();
-
-  checkeados.forEach(cb => {
-    const id = cb.dataset.cultivoId;
+  document.querySelectorAll('#lotes-container .chk-lote:checked').forEach(cb => {
+    const id     = cb.dataset.cultivoId;
     const nombre = cb.dataset.cultivoNombre;
-    if (id && !mapa.has(id)) {
-      mapa.set(id, { id, nombre });
-    }
+    if (id && !mapa.has(id)) mapa.set(id, { id, nombre });
   });
-
   return [...mapa.values()];
+}
+
+/* Suma las hectáreas de los lotes seleccionados y actualiza el campo */
+function actualizarHectareasSugeridas() {
+  const total = [...document.querySelectorAll('#lotes-container .chk-lote:checked')]
+    .reduce((sum, cb) => sum + parseFloat(cb.dataset.hectareas || 0), 0);
+  const campo = document.getElementById('cantidad-hectareas');
+  if (campo) campo.value = total > 0 ? fmtHa(total) : '';
 }

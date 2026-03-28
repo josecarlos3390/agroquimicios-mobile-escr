@@ -2598,3 +2598,292 @@ input:required:focus:invalid {
   text-transform: uppercase;
   color: rgba(106, 170, 42, 0.9);
 }
+
+/* ================================
+   SECTOR CHIPS (opción C — nueva hoja)
+================================ */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 0.6rem;
+}
+
+.sector-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sector-chip input[type="checkbox"] {
+  display: none;
+}
+
+.sector-chip:hover {
+  border-color: var(--primary-light);
+}
+
+.sector-chip.activo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* hoja SVG dentro del chip */
+.chip-leaf {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.chip-leaf-bg {
+  fill: var(--border);
+  transition: fill 0.15s;
+}
+
+.chip-leaf-vein {
+  stroke: var(--text-muted);
+  transition: stroke 0.15s;
+}
+
+.sector-chip.activo .chip-leaf-bg  { fill: #97C459; }
+.sector-chip.activo .chip-leaf-vein { stroke: #EAF3DE; }
+
+.chip-nombre {
+  color: inherit;
+}
+
+.chip-ha {
+  font-size: 0.72rem;
+  font-weight: 400;
+  opacity: 0.65;
+  color: inherit;
+  padding-left: 2px;
+  border-left: 1px solid currentColor;
+  margin-left: 2px;
+}
+
+/* ================================
+   LOTES ACORDEÓN POR SECTOR
+================================ */
+.sector-acordeon {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 0.6rem;
+}
+
+.sector-acordeon-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: var(--primary-pale);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  gap: 0.5rem;
+}
+
+.sector-acordeon-header:active {
+  background: var(--primary-faint);
+}
+
+.sector-acordeon-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  flex: 1;
+  min-width: 0;
+}
+
+.sector-acordeon-titulo span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sector-acordeon-meta {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sector-acordeon-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sector-acordeon-todos {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sector-acordeon-todos.todos-activo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.sector-acordeon-chevron {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.sector-acordeon.abierto .sector-acordeon-chevron {
+  transform: rotate(180deg);
+}
+
+.sector-acordeon-body {
+  display: none;
+  padding: 0.5rem 0.75rem 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.sector-acordeon.abierto .sector-acordeon-body {
+  display: block;
+}
+
+.lote-label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.lote-label:last-child {
+  border-bottom: none;
+}
+
+.lote-label input[type="checkbox"] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.lote-label-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.lote-nombre {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lote-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* dark mode */
+body.dark .sector-chip {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text-soft);
+}
+
+body.dark .sector-chip.activo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #0a1a0a;
+}
+
+body.dark .sector-chip.activo .chip-leaf-bg  { fill: #639922; }
+body.dark .sector-chip.activo .chip-leaf-vein { stroke: #C0DD97; }
+
+body.dark .sector-acordeon-header {
+  background: var(--primary-pale);
+}
+
+body.dark .sector-acordeon-todos {
+  background: var(--gray-100);
+  border-color: var(--border);
+  color: var(--text-soft);
+}
+
+/* ================================
+   LOTE EDITAR — HECTÁREAS PARCIALES
+================================ */
+.lote-editar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.lote-editar-row:last-child {
+  border-bottom: none;
+}
+
+.lote-ha-editar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.lote-ha-input {
+  width: 64px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.82rem;
+  text-align: right;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--text);
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.lote-ha-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.lote-ha-input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.lote-ha-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+body.dark .lote-ha-input {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
+}

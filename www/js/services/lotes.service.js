@@ -1,5 +1,6 @@
 import {
   getLotesBySector,
+  getLotesBySectores,
   insertLote,
   updateLote,
   deleteLote
@@ -7,6 +8,10 @@ import {
 
 export async function listarLotesPorSector(sectorId) {
   return await getLotesBySector(sectorId);
+}
+
+export async function listarLotesPorSectores(sectorIds) {
+  return await getLotesBySectores(sectorIds);
 }
 
 export async function guardarLote(lote) {

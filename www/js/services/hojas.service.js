@@ -1,11 +1,18 @@
 import { createHojaCab, getNextNumeroSecuencial, getHojas, deleteHojaCab, updateHojaCab, updateEstadoHoja } from '../repositories/hojasCab.repo.js';
-import { addLotesToHoja } from '../repositories/hojasLotes.repo.js';
+import { addLotesToHoja, replaceLotesHoja } from '../repositories/hojasLotes.repo.js';
+import { addSectoresToHoja, replaceSectoresHoja } from '../repositories/hojasSectores.repo.js';
+import { recalcularDosisHoja } from '../repositories/hojasDetalle.repo.js';
+import { executeQuery } from '../db/sqlite.js';
 import { uuid } from '../utils/uuid.js';
 
 export async function crearHojaTrabajoCabecera(data) {
 
   if (!data.lotes || data.lotes.length === 0) {
     throw new Error('Debe seleccionar al menos un lote');
+  }
+
+  if (!data.sectores || data.sectores.length === 0) {
+    throw new Error('Debe seleccionar al menos un sector');
   }
 
   if (!data.fecha_inicio || !data.fecha_fin) {
@@ -26,7 +33,7 @@ export async function crearHojaTrabajoCabecera(data) {
   const modelo = await getModeloDispositivo();
 
   const numeroCompleto = `${modelo}-${fecha}${hora}${minuto}${corr}`;
-  // Ejemplo: SAMSUNGS21-20250219-1430-00001
+
   await createHojaCab({
     id:                      hojaId,
     numero_secuencial:       numeroSecuencial,
@@ -36,7 +43,6 @@ export async function crearHojaTrabajoCabecera(data) {
     empresa_id:              data.empresa_id,
     cultivo_id:              data.cultivo_id,
     tecnico_id:              data.tecnico_id,
-    sector_id:               data.sector_id,
     tipo_aplicacion_id:      data.tipo_aplicacion_id,
     caudal_id:               data.caudal_id ?? null,
     caudal_descripcion:      data.caudal_descripcion ?? null,
@@ -48,7 +54,8 @@ export async function crearHojaTrabajoCabecera(data) {
     observaciones:           data.observaciones
   });
 
-  // Inserción batch: un solo query en lugar de N inserts secuenciales
+  // Insertar sectores y lotes en batch
+  await addSectoresToHoja(hojaId, data.sectores);
   await addLotesToHoja(hojaId, data.lotes);
   return hojaId;
 }
@@ -57,8 +64,26 @@ export async function actualizarHojaCabecera(id, data) {
   if (!id) throw new Error('Hoja inválida');
   if (!data.empresa_id) throw new Error('Empresa requerida');
   if (!data.campana) throw new Error('Campaña requerida');
+  if (!data.sectores || data.sectores.length === 0) throw new Error('Debe seleccionar al menos un sector');
+
+  // Obtener hectáreas anteriores para detectar si cambiaron
+  const [anterior] = await executeQuery(
+    'SELECT cantidad_hectareas FROM hojas_cab WHERE id = ?', [id]
+  );
 
   await updateHojaCab(id, data);
+  await replaceSectoresHoja(id, data.sectores);
+
+  // Reemplazar lotes con sus hectáreas parciales si vienen en data
+  if (data.lotes && data.lotes.length > 0) {
+    await replaceLotesHoja(id, data.lotes);
+  }
+
+  // Recalcular dosis si las hectáreas cambiaron
+  const hectareasNuevas = parseFloat(data.cantidad_hectareas);
+  if (anterior && parseFloat(anterior.cantidad_hectareas) !== hectareasNuevas) {
+    await recalcularDosisHoja(id, hectareasNuevas);
+  }
 }
 
 export async function listarHojas(estado = null) {

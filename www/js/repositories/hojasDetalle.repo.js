@@ -66,3 +66,14 @@ export async function deleteDetalleLinea(id) {
     [id]
   );
 }
+
+/* Recalcula dosis de todas las líneas de una hoja dado nuevas hectáreas totales */
+export async function recalcularDosisHoja(hojaId, nuevasHectareas) {
+  if (!nuevasHectareas || nuevasHectareas <= 0) return;
+  await executeRun(
+    `UPDATE hojas_detalle
+     SET dosis = cantidad / ?
+     WHERE hoja_id = ?`,
+    [nuevasHectareas, hojaId]
+  );
+}

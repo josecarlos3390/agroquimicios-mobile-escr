@@ -152,12 +152,27 @@ export async function initSchema() {
     );
 
     CREATE TABLE IF NOT EXISTS hojas_lotes (
-      hoja_id TEXT NOT NULL,
-      lote_id INTEGER NOT NULL,
+      hoja_id              TEXT    NOT NULL,
+      lote_id              INTEGER NOT NULL,
+      hectareas_aplicadas  REAL,            -- NULL = usa el 100% del lote
       PRIMARY KEY (hoja_id, lote_id),
-      FOREIGN KEY (hoja_id) REFERENCES hojas_cab(id),
-      FOREIGN KEY (lote_id) REFERENCES lotes(id)
+      FOREIGN KEY (hoja_id)  REFERENCES hojas_cab(id),
+      FOREIGN KEY (lote_id)  REFERENCES lotes(id)
     );
+
+    /* =========================
+       TABLA HOJAS ↔ SECTORES (multi-sector)
+       ========================= */
+    CREATE TABLE IF NOT EXISTS hojas_sectores (
+      hoja_id   TEXT    NOT NULL,
+      sector_id INTEGER NOT NULL,
+      PRIMARY KEY (hoja_id, sector_id),
+      FOREIGN KEY (hoja_id)   REFERENCES hojas_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (sector_id) REFERENCES sectores(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_hojas_sectores_hoja
+      ON hojas_sectores (hoja_id);
 
 
     CREATE TABLE IF NOT EXISTS tipos_producto (
@@ -243,9 +258,28 @@ export async function initSchema() {
   await executeSet(statements);
 
   // Migraciones para bases de datos existentes
-  // Se ejecutan con try/catch para no fallar si la columna ya existe
-  const { executeRun } = await import('./sqlite.js');
+  const { executeRun, executeQuery, executeSet: execSet } = await import('./sqlite.js');
+
+  // Helper: ALTER TABLE solo si la columna no existe
+  async function addColumnIfNotExists(table, column, definition) {
+    try {
+      const cols = await executeQuery(`PRAGMA table_info(${table})`);
+      const exists = cols.some(c => c.name === column);
+      if (!exists) {
+        await execSet(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition};`);
+      }
+    } catch (_) { /* ignorar */ }
+  }
+
+  await addColumnIfNotExists('hojas_cab', 'caudal_descripcion', 'TEXT');
+  await addColumnIfNotExists('hojas_lotes', 'hectareas_aplicadas', 'REAL');
+
+  // Migración: backfill hojas_sectores desde sector_id legacy
   try {
-    await executeRun('ALTER TABLE hojas_cab ADD COLUMN caudal_descripcion TEXT');
-  } catch (_) { /* columna ya existe */ }
+    await executeRun(`
+      INSERT OR IGNORE INTO hojas_sectores (hoja_id, sector_id)
+      SELECT id, sector_id FROM hojas_cab
+      WHERE sector_id IS NOT NULL
+    `);
+  } catch (_) { /* tabla ya migrada o sin datos */ }
 }

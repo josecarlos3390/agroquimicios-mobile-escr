@@ -8,14 +8,40 @@ export async function getLotesBySector(sectorId) {
     SELECT
       l.*,
       c.nombre AS cultivo_nombre,
-      v.nombre AS variedad_nombre
+      v.nombre AS variedad_nombre,
+      s.nombre AS sector_nombre
     FROM lotes l
     LEFT JOIN cultivos c ON c.id = l.cultivo_id
     LEFT JOIN variedades v ON v.id = l.variedad_id
+    LEFT JOIN sectores s ON s.id = l.sector_id
     WHERE l.sector_id = ?
     ORDER BY l.nombre
   `;
   return await executeQuery(sql, [sectorId]);
+}
+
+/* =========================
+   LISTAR LOTES DE MÚLTIPLES SECTORES
+   Devuelve lotes ordenados por sector, luego nombre
+========================= */
+export async function getLotesBySectores(sectorIds) {
+  if (!sectorIds || sectorIds.length === 0) return [];
+  const placeholders = sectorIds.map(() => '?').join(', ');
+  const sql = `
+    SELECT
+      l.*,
+      c.nombre AS cultivo_nombre,
+      v.nombre AS variedad_nombre,
+      s.nombre AS sector_nombre,
+      s.id     AS sector_id_ref
+    FROM lotes l
+    LEFT JOIN cultivos c  ON c.id = l.cultivo_id
+    LEFT JOIN variedades v ON v.id = l.variedad_id
+    JOIN  sectores s      ON s.id = l.sector_id
+    WHERE l.sector_id IN (${placeholders})
+    ORDER BY s.nombre, l.nombre
+  `;
+  return await executeQuery(sql, sectorIds);
 }
 
 /* =========================

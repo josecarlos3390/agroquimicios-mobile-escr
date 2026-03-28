@@ -12,7 +12,6 @@ export async function createHojaCab(hoja) {
       empresa_id,
       cultivo_id,
       tecnico_id,
-      sector_id,
       tipo_aplicacion_id,
       caudal_id,
       caudal_descripcion,
@@ -23,7 +22,7 @@ export async function createHojaCab(hoja) {
       cantidad_hectareas_lotes,
       observaciones,
       estado
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BORRADOR')
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BORRADOR')
     `,
     [
       hoja.id,
@@ -34,7 +33,6 @@ export async function createHojaCab(hoja) {
       hoja.empresa_id,
       hoja.cultivo_id,
       hoja.tecnico_id,
-      hoja.sector_id,
       hoja.tipo_aplicacion_id,
       hoja.caudal_id,
       hoja.caudal_descripcion ?? null,
@@ -58,7 +56,6 @@ export async function updateHojaCab(id, data) {
       campana = ?,
       cultivo_id = ?,
       tecnico_id = ?,
-      sector_id = ?,
       tipo_aplicacion_id = ?,
       caudal_id = ?,
       caudal_descripcion = ?,
@@ -75,7 +72,6 @@ export async function updateHojaCab(id, data) {
       data.campana,
       data.cultivo_id,
       data.tecnico_id,
-      data.sector_id,
       data.tipo_aplicacion_id,
       data.caudal_id,
       data.caudal_descripcion ?? null,
@@ -109,7 +105,8 @@ export async function getNextNumeroSecuencial() {
 }
 
 export async function getHojas(estado = null) {
-  const whereClause = estado ? `WHERE h.estado = '${estado}'` : '';
+  const whereClause = estado ? `WHERE h.estado = ?` : '';
+  const values = estado ? [estado] : [];
   return await executeQuery(`
     SELECT 
       h.id,
@@ -124,16 +121,19 @@ export async function getHojas(estado = null) {
       e.nombre AS empresa_nombre,
       c.nombre AS cultivo_nombre,
       t.nombre AS tecnico_nombre,
-      COUNT(hd.id) AS total_productos
+      COUNT(DISTINCT hd.id) AS total_productos,
+      GROUP_CONCAT(DISTINCT s.nombre ORDER BY s.nombre) AS sectores_nombres
     FROM hojas_cab h
     LEFT JOIN empresas e ON e.id = h.empresa_id
     LEFT JOIN cultivos c ON c.id = h.cultivo_id
     LEFT JOIN tecnicos t ON t.id = h.tecnico_id
     LEFT JOIN hojas_detalle hd ON hd.hoja_id = h.id
+    LEFT JOIN hojas_sectores hs ON hs.hoja_id = h.id
+    LEFT JOIN sectores s ON s.id = hs.sector_id
     ${whereClause}
     GROUP BY h.id
     ORDER BY h.numero_secuencial DESC
-  `);
+  `, values);
 }
 
 export async function updateEstadoHoja(id, nuevoEstado) {
