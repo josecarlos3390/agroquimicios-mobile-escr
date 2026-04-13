@@ -1,17 +1,18 @@
 // repositories/tecnicos.repo.js
 import { executeQuery, executeRun } from '../db/sqlite.js';
 
-export async function getTecnicos() {
+export async function getTecnicos(empresaId) {
   return await executeQuery(
-    'SELECT * FROM tecnicos ORDER BY created_at DESC'
+    'SELECT * FROM tecnicos WHERE empresa_id = ? ORDER BY created_at DESC',
+    [empresaId]
   );
 }
 
 export async function createTecnico(tecnico) {
   const result = await executeRun(
-    `INSERT INTO tecnicos (nombre)
-     VALUES (?)`,
-    [tecnico.nombre]
+    `INSERT INTO tecnicos (empresa_id, nombre)
+     VALUES (?, ?)`,
+    [tecnico.empresa_id, tecnico.nombre]
   );
   return result.lastId;
 }

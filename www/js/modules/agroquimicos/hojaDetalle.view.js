@@ -1,9 +1,9 @@
-import { agregarDetalleHoja } from '../services/hojasDetalle.service.js';
-import { getHojaCabById } from '../repositories/hojasCab.repo.js';
-import { executeQuery, executeRun } from '../db/sqlite.js';
-import { listarProductosActivos } from '../services/productos.service.js';
-import { listarUnidadesByProducto } from '../services/unidadesMedida.service.js';
-import { confirmar } from '../utils/confirm.js';
+import { agregarDetalleHoja } from '../../services/hojasDetalle.service.js';
+import { getHojaCabById } from '../../repositories/hojasCab.repo.js';
+import { executeQuery, executeRun } from '../../db/sqlite.js';
+import { listarProductosActivos } from '../../services/productos.service.js';
+import { listarUnidadesByProducto } from '../../services/unidadesMedida.service.js';
+import { confirmar } from '../../utils/confirm.js';
 
 let hojaActual        = null;
 let todosLosProductos = [];

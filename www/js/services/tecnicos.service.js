@@ -6,8 +6,8 @@ import {
   deleteTecnico
 } from '../repositories/tecnicos.repo.js';
 
-export async function listarTecnicos() {
-  return await getTecnicos();
+export async function listarTecnicos(empresaId) {
+  return await getTecnicos(empresaId);
 }
 
 export async function guardarTecnico(tecnico) {

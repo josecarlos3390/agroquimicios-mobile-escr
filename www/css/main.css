@@ -155,6 +155,15 @@ textarea.input-upper {
 /* ================================
    HEADER
 ================================ */
+/* Ocultar UI principal hasta que el usuario elija propiedad y tipo de uso (solo arranque inicial) */
+body.app-inactiva .app-header,
+body.app-inactiva #sidebar,
+body.app-inactiva #overlay,
+body.app-inactiva section.view {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 .app-header {
   position: sticky;
   top: 0;
@@ -2887,3 +2896,270 @@ body.dark .lote-ha-input {
   border-color: var(--border);
   color: var(--text);
 }
+/* ================================
+   PANTALLA SELECCIÓN DE PROPIEDAD
+================================ */
+#propiedad-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: linear-gradient(145deg, #1a3a1a 0%, #1e3d1e 45%, #2d5a2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+#propiedad-screen.hidden {
+  display: none;
+}
+
+#propiedad-screen.propiedad-hide {
+  opacity: 0;
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
+.propiedad-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.8rem;
+  padding: 2rem 1.5rem;
+  width: 100%;
+  max-width: 360px;
+  animation: splash-enter 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.propiedad-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: 100%;
+}
+
+.propiedad-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(106, 170, 42, 0.25);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.15s;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.propiedad-card:active {
+  transform: scale(0.97);
+  background: rgba(106, 170, 42, 0.18);
+  border-color: rgba(106, 170, 42, 0.6);
+}
+
+.propiedad-card-icon {
+  width: 46px;
+  height: 46px;
+  background: rgba(106, 170, 42, 0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  border: 1px solid rgba(106, 170, 42, 0.2);
+}
+
+.propiedad-card-info {
+  flex: 1;
+}
+
+.propiedad-card-nombre {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.propiedad-card-sub {
+  font-size: 0.72rem;
+  color: rgba(106, 170, 42, 0.8);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 0.15rem;
+}
+
+.propiedad-card-arrow {
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+}
+
+/* ================================
+   BOTÓN CAMBIAR PROPIEDAD (sidebar)
+================================ */
+.btn-cambiar-propiedad {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(106, 170, 42, 0.1);
+  border: 1px solid rgba(106, 170, 42, 0.25);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-cambiar-propiedad:active {
+  background: rgba(106, 170, 42, 0.22);
+  border-color: rgba(106, 170, 42, 0.5);
+}
+
+#sidebar-propiedad-nombre {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ================================
+   PANTALLA TIPO DE USO
+================================ */
+#uso-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  background: linear-gradient(145deg, #1a3a1a 0%, #1e3d1e 45%, #2d5a2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+#uso-screen.hidden {
+  display: none;
+}
+
+#uso-screen.propiedad-hide {
+  opacity: 0;
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
+/* Badge que muestra la propiedad elegida */
+.uso-propiedad-badge {
+  background: rgba(106, 170, 42, 0.15);
+  border: 1px solid rgba(106, 170, 42, 0.35);
+  border-radius: 20px;
+  padding: 0.35rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(106, 170, 42, 1);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Card deshabilitada (próximamente) */
+.propiedad-card--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.propiedad-card--disabled .propiedad-card-nombre {
+  color: rgba(255, 255, 255, 0.6);
+}
+/* ================================
+   MÓDULO CAÑA — FILAS DE INSUMOS
+================================ */
+.insumo-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.insumo-fila input {
+  margin-bottom: 0;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.88rem;
+}
+
+.corte-fila {
+  border-left: 3px solid var(--primary-pale);
+}
+
+/* =========================================================
+   MÓDULO CAÑA — estilos de formulario
+========================================================= */
+.cana-plantacion-bloque {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
+  background: var(--surface);
+}
+
+.cana-bloque-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.cana-bloque-titulo {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.cana-corte-fila {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem;
+  margin-bottom: 0.5rem;
+  background: var(--primary-faint);
+}
+
+.cana-insumos-grupo {
+  margin-bottom: 1rem;
+}
+
+.insumo-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.insumo-unidad-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 24px;
+  font-weight: 600;
+}
+
+.btn-icon-danger {
+  background: none;
+  border: none;
+  color: var(--danger, #c0392b);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.btn-icon-danger:hover { background: rgba(192,57,43,0.1); }

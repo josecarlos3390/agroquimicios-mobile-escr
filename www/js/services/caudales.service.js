@@ -6,8 +6,8 @@ import {
   deleteCaudal
 } from '../repositories/caudales.repo.js';
 
-export async function listarCaudales() {
-  return await getCaudales();
+export async function listarCaudales(empresaId) {
+  return await getCaudales(empresaId);
 }
 
 export async function guardarCaudal(caudal) {

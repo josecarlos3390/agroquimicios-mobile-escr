@@ -11,6 +11,38 @@
 <body>
 
 <!-- ===================== SPLASH SCREEN ===================== -->
+<div id="propiedad-screen" class="hidden">
+  <div class="splash-bg-ring splash-ring-1"></div>
+  <div class="splash-bg-ring splash-ring-2"></div>
+  <div class="splash-bg-ring splash-ring-3"></div>
+  <div class="propiedad-content">
+    <div class="splash-logo-wrap">
+      <div class="splash-logo">🌱</div>
+    </div>
+    <div class="splash-texts">
+      <div class="splash-name">AgroApp</div>
+      <div class="splash-tagline">Seleccioná tu propiedad</div>
+    </div>
+    <div class="propiedad-cards" id="propiedad-cards">
+      <!-- Se genera dinámicamente desde app.js -->
+    </div>
+  </div>
+</div>
+
+<div id="uso-screen" class="hidden">
+  <div class="splash-bg-ring splash-ring-1"></div>
+  <div class="splash-bg-ring splash-ring-2"></div>
+  <div class="splash-bg-ring splash-ring-3"></div>
+  <div class="propiedad-content">
+    <div class="uso-propiedad-badge" id="uso-propiedad-badge">🏡</div>
+    <div class="splash-texts">
+      <div class="splash-name">¿Qué vas a hacer?</div>
+      <div class="splash-tagline">Seleccioná el tipo de uso</div>
+    </div>
+    <div class="propiedad-cards" id="uso-cards"></div>
+  </div>
+</div>
+
 <div id="splash-screen">
   <div class="splash-bg-ring splash-ring-1"></div>
   <div class="splash-bg-ring splash-ring-2"></div>
@@ -66,6 +98,12 @@
 
   </nav>
   <div class="sidebar-footer">
+    <button class="btn-cambiar-propiedad" onclick="cambiarPropiedad()">
+      🏡 <span id="sidebar-propiedad-nombre">Cambiar propiedad</span>
+    </button>
+    <button class="btn-cambiar-propiedad" onclick="cambiarUso()" style="margin-bottom:0">
+      🔄 <span id="sidebar-uso-nombre">Cambiar tipo de uso</span>
+    </button>
     <div class="dark-mode-toggle" id="dark-mode-toggle">
       <div class="dark-mode-toggle-label">
         <span id="dark-mode-icon">🌙</span>
@@ -755,6 +793,97 @@
       </button>
     </div>
 
+  </section>
+
+  <!-- ======================
+       MÓDULO: PLANTACIÓN DE CAÑA
+  ======================= -->
+
+  <!-- Listado de notas -->
+  <section id="view-cana-registros" class="view hidden">
+    <div class="card">
+      <h3>🌾 Notas de plantación</h3>
+      <button id="btn-nueva-nota-cana" class="btn-primary" style="width:100%;margin:0">
+        ➕ Nueva nota
+      </button>
+    </div>
+    <div class="card filtro-estado-card">
+      <div class="filtro-estado-row">
+        <span class="filtro-estado-label">📋 Ver:</span>
+        <select id="filtro-estado-cana" class="filtro-estado-select">
+          <option value="BORRADOR">📝 Borrador</option>
+          <option value="EXPORTADO">📤 Exportado</option>
+          <option value="">📚 Todas</option>
+        </select>
+      </div>
+    </div>
+    <div id="cana-lista"></div>
+  </section>
+
+  <!-- Formulario nueva nota -->
+  <section id="view-cana-nuevo" class="view hidden">
+    <form id="form-cana-nueva-nota">
+
+      <!-- Cabecera -->
+      <div class="card">
+        <div class="vista-header">
+          <button type="button" id="btn-cana-nuevo-volver" class="btn-volver">← Volver</button>
+          <h3>🌾 Nueva nota de plantación</h3>
+        </div>
+        <div class="grid">
+          <label>Empresa
+            <select id="cana-empresa-select" required></select>
+          </label>
+          <label>Enc. de Siembra
+            <select id="cana-tecnico-select"></select>
+          </label>
+          <label>Campaña
+            <input type="text" id="cana-campana-input" class="input-upper" required>
+          </label>
+          <label>Fecha inicio
+            <input type="date" id="cana-fecha-inicio" required>
+          </label>
+          <label>Fecha fin
+            <input type="date" id="cana-fecha-fin">
+          </label>
+        </div>
+      </div>
+
+      <!-- Sectores -->
+      <div class="card">
+        <strong>🗺️ Sectores</strong>
+        <div id="cana-sectores-container" style="margin-top:0.5rem">
+          <p style="color:var(--text-muted);font-size:0.9rem">Seleccioná una empresa para ver los sectores.</p>
+        </div>
+      </div>
+
+      <!-- Plantaciones -->
+      <div class="card">
+        <div id="cana-plantaciones-container"></div>
+      </div>
+
+      <!-- Insumos -->
+      <div class="card">
+        <div id="cana-insumos-container"></div>
+      </div>
+
+      <!-- Maquinaria / Observaciones -->
+      <div class="card">
+        <label>
+          <strong>🚜 Maquinaria y observaciones</strong>
+          <textarea id="cana-observaciones" class="input-upper"
+            placeholder="Ej: 2 cargadoras 6-63, 2 surcadoras 4-136..."
+            rows="4" style="margin-top:0.4rem"></textarea>
+        </label>
+      </div>
+
+      <div style="padding:0 0 1rem">
+        <button type="submit" class="btn-primary" style="width:100%">
+          📌 Crear nota de plantación
+        </button>
+      </div>
+
+    </form>
   </section>
 
 </main>

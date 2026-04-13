@@ -5,7 +5,7 @@ import {
 } from '../services/lotes.service.js';
 import { confirmar } from '../utils/confirm.js';
 
-import { listarEmpresas } from '../services/empresas.service.js';
+import { listarEmpresas, getEmpresaActiva } from '../services/empresas.service.js';
 import { listarSectores } from '../services/sectores.service.js';
 import { listarCultivos } from '../services/cultivos.service.js';
 import { listarVariedades } from '../services/variedades.service.js';
@@ -46,9 +46,15 @@ export async function cargarVistaLotes() {
    EMPRESAS / SECTORES
 ========================= */
 async function cargarEmpresas() {
-  const select   = document.getElementById('selectEmpresaLotes');
+  const select = document.getElementById('selectEmpresaLotes');
+  const activa = getEmpresaActiva();
+  if (activa) {
+    select.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
+    select.value = activa.id;
+    select.dispatchEvent(new Event('change'));
+    return;
+  }
   const empresas = await listarEmpresas();
-
   select.innerHTML = '<option value="">Seleccione empresa</option>';
   empresas.forEach(e => {
     const opt = document.createElement('option');

@@ -11,25 +11,26 @@ import { addUnidadToProducto } from '../repositories/productosUnidades.repo.js';
 
 import { uuid } from '../utils/uuid.js';
 
-export async function listarProductos() {
-  return await getProductos();
+export async function listarProductos(empresaId) {
+  return await getProductos(empresaId);
 }
 
-export async function listarProductosActivos() {
-  return await getProductosActivos();
+export async function listarProductosActivos(empresaId) {
+  return await getProductosActivos(empresaId);
 }
 
-export async function obtenerProducto(id) {
-  return await getProductoById(id);
+export async function obtenerProducto(id, empresaId = null) {
+  return await getProductoById(id, empresaId);
 }
 
 export async function crearProducto(data) {
-  if (!data.codigo || !data.nombre || !data.tipo_producto_id) {
-    throw new Error('Código, nombre y tipo de producto son obligatorios');
+  if (!data.codigo || !data.nombre || !data.tipo_producto_id || !data.empresa_id) {
+    throw new Error('Código, nombre, tipo de producto y empresa son obligatorios');
   }
 
   const producto = {
     id: uuid(),
+    empresa_id: data.empresa_id,
     codigo: data.codigo,
     nombre: data.nombre,
     tipo_producto_id: data.tipo_producto_id,

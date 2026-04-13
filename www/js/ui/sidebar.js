@@ -28,6 +28,58 @@ function applyDark(isDark, animate) {
   }
 }
 
+/* =========================================================
+   MENÚS POR MÓDULO
+========================================================= */
+const MENUS = {
+  agroquimicos: `
+    <p class="menu-title">📋 Operación</p>
+    <a href="#" data-view="hojas">📝 Hojas de trabajo</a>
+    <a href="#" data-view="nueva-hoja">➕ Nueva hoja</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">🌱 Maestros</p>
+    <a href="#" data-view="empresas">🏢 Empresas</a>
+    <a href="#" data-view="sectores">🗺️ Sectores</a>
+    <a href="#" data-view="lotes">🌿 Lotes</a>
+    <a href="#" data-view="cultivos">🌾 Cultivos</a>
+    <a href="#" data-view="variedades">🌱 Variedades</a>
+    <a href="#" data-view="tecnicos">👨‍🌾 Técnicos</a>
+    <a href="#" data-view="productos">🧪 Productos</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">⚙️ Configuración</p>
+    <a href="#" data-view="tipos-producto">🏷️ Tipos de producto</a>
+    <a href="#" data-view="tipos-aplicacion">🚜 Tipos de aplicación</a>
+    <a href="#" data-view="unidades">📏 Unidades de medida</a>
+    <a href="#" data-view="importacion">📥 Actualizar datos</a>
+  `,
+
+  cana: `
+    <p class="menu-title">🌾 Operación</p>
+    <a href="#" data-view="cana-registros">📋 Registros</a>
+    <a href="#" data-view="cana-nuevo">➕ Nuevo registro</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">📂 Maestros compartidos</p>
+    <a href="#" data-view="sectores">🗺️ Sectores</a>
+    <a href="#" data-view="lotes">🌿 Lotes</a>
+    <a href="#" data-view="productos">🧪 Productos</a>
+    <a href="#" data-view="tecnicos">👨‍🌾 Técnicos</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">⚙️ Configuración</p>
+    <a href="#" data-view="importacion">📥 Actualizar datos</a>
+  `,
+};
+
+/* =========================================================
+   INIT SIDEBAR
+========================================================= */
 export function initSidebar() {
   initDarkMode();
 
@@ -56,37 +108,49 @@ export function initSidebar() {
     sidebar.classList.contains('open') ? closeMenu() : openMenu();
   }
 
-  // Botón hamburguesa
   menuBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     toggleMenu();
   });
 
-  // Cerrar al tocar el overlay
   overlay.addEventListener('click', () => closeMenu());
 
-  // Cerrar con ESC (teclado físico en Android)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && sidebar.classList.contains('open')) closeMenu();
   });
 
-  // FIX #9: cerrar sidebar al navegar Y activar el item seleccionado
-  document.querySelectorAll('.sidebar-menu a').forEach(link => {
+  openMenu();
+}
+
+/* =========================================================
+   RENDER DINÁMICO SEGÚN MÓDULO
+========================================================= */
+export function renderMenuModulo(moduloId) {
+  const nav = document.querySelector('#sidebar .sidebar-menu');
+  if (!nav) return;
+
+  const html = MENUS[moduloId] ?? MENUS['agroquimicos'];
+  nav.innerHTML = html;
+
+  // Re-registrar listeners en los nuevos links
+  nav.querySelectorAll('a[data-view]').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const view = link.dataset.view;
-
-      // Marcar el item activo visualmente
-      document.querySelectorAll('.sidebar-menu a').forEach(l => l.classList.remove('active'));
+      nav.querySelectorAll('a').forEach(l => l.classList.remove('active'));
       link.classList.add('active');
-
-      closeMenu();
-      window.showView(view);  // navegar después de cerrar
+      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('overlay')?.classList.remove('show');
+      document.body.style.overflow = '';
+      window.showView(link.dataset.view);
     });
   });
 
-  // Mostrar sidebar desplegado al iniciar
-  openMenu();
-
+  // Actualizar subtítulo del header del sidebar
+  const subtitles = {
+    agroquimicos: 'Gestión Agroquímica',
+    cana: 'Plantación de Caña',
+  };
+  const subtitle = document.querySelector('.sidebar-header-subtitle');
+  if (subtitle) subtitle.textContent = subtitles[moduloId] ?? '';
 }

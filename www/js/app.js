@@ -1,10 +1,10 @@
-  /* ===============================
+/* ===============================
    IMPORTS
 ================================ */
 import { borrarBaseDeDatos } from './db/sqlite.js';
+import { setEmpresaActiva, getEmpresaActiva, listarEmpresas } from './services/empresas.service.js';
 
-
-import { initSidebar } from './ui/sidebar.js';
+import { initSidebar, renderMenuModulo } from './ui/sidebar.js';
 import { initSchema } from './db/schema.js';
 
 import {
@@ -15,9 +15,10 @@ import {
   seedCaudales,
   seedTiposProducto,
   seedUnidadesMedida,
+  seedProductosCana,
 } from './db/seed.js';
 
-// Views
+// ── Módulo: Agroquímicos ──────────────────────────────────
 import { cargarEmpresas } from './views/empresas.view.js';
 import { initCultivosView, cargarCultivos } from './views/cultivos.view.js';
 import { initTecnicosView, cargarTecnicos } from './views/tecnicos.view.js';
@@ -29,26 +30,98 @@ import { initProductosView, cargarProductos } from './views/productos.view.js';
 import { initTiposProductoView, cargarTiposProducto } from './views/tiposProducto.view.js';
 import { initTiposAplicacionView, cargarTiposAplicacion } from './views/tiposAplicacion.view.js';
 import { initUnidadesMedidaView, cargarUnidadesMedida } from './views/unidadesMedida.view.js';
-import { initNuevaHojaView, cargarNuevaHoja } from './views/hojaNueva.view.js';
-import { initHojaDetalleView, cargarHojaDetalle } from './views/hojaDetalle.view.js';
-import { initHojasView, cargarHojas } from './views/hojas.view.js';
-import { initHojaEditarView, cargarHojaEditar } from './views/hojaEditar.view.js';
 import { initImportacionView, cargarImportacion } from './views/importacion.view.js';
 
+import { initNuevaHojaView, cargarNuevaHoja } from './modules/agroquimicos/hojaNueva.view.js';
+import { initHojaDetalleView, cargarHojaDetalle } from './modules/agroquimicos/hojaDetalle.view.js';
+import { initHojasView, cargarHojas } from './modules/agroquimicos/hojas.view.js';
+import { initHojaEditarView, cargarHojaEditar } from './modules/agroquimicos/hojaEditar.view.js';
+
+// ── Módulo: Caña ──────────────────────────────────────────
+import { initRegistrosCanaView, cargarRegistrosCana } from './modules/cana/views/registros.view.js';
+import { initNuevaNotaCanaView, cargarNuevaNotaCana } from './modules/cana/views/nuevaNota.view.js';
+
+/* ===============================
+   SPLASH
+================================ */
 function ocultarSplash() {
   const splash = document.getElementById('splash-screen');
   if (!splash) return;
-  // Lanzar animación de salida (encoge + desvanece)
   splash.classList.add('splash-hide');
-  // Remover del DOM al terminar la transición
   splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+}
+
+/* ===============================
+   TIPOS DE USO
+================================ */
+const TIPOS_USO = [
+  {
+    id: 'agroquimicos',
+    nombre: 'Descargo de Agroquímicos',
+    icono: '🧪',
+    sub: 'Hojas de trabajo',
+    disponible: true,
+  },
+  {
+    id: 'cana',
+    nombre: 'Plantación de Caña',
+    icono: '🌾',
+    sub: 'Registros de plantación',
+    disponible: true,
+  },
+];
+
+let tipoUsoActivo = null;
+
+function getTipoUsoActivo() { return tipoUsoActivo; }
+window.getTipoUsoActivo = getTipoUsoActivo;
+
+/* ===============================
+   SELECCIÓN DE PROPIEDAD
+================================ */
+async function mostrarSelectorPropiedad(empresas) {
+  return new Promise(resolve => {
+    const screen = document.getElementById('propiedad-screen');
+    const cards  = document.getElementById('propiedad-cards');
+
+    cards.innerHTML = empresas.map(e => `
+      <div class="propiedad-card" data-id="${e.id}">
+        <div class="propiedad-card-icon">🏡</div>
+        <div class="propiedad-card-info">
+          <div class="propiedad-card-nombre">${e.nombre}</div>
+          <div class="propiedad-card-sub">Propiedad</div>
+        </div>
+        <div class="propiedad-card-arrow">›</div>
+      </div>
+    `).join('');
+
+    screen.classList.remove('hidden');
+
+    cards.querySelectorAll('.propiedad-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        const empresa = empresas.find(e => String(e.id) === String(id));
+        setEmpresaActiva(empresa);
+
+        screen.classList.add('propiedad-hide');
+        screen.addEventListener('transitionend', () => {
+          screen.remove();
+          actualizarHeaderPropiedad(empresa.nombre);
+          resolve(empresa);
+        }, { once: true });
+      });
+    });
+  });
 }
 
 async function initApp() {
   try {
-  
+
     //await borrarBaseDeDatos();
-    
+
+    // Ocultar header y sidebar hasta que el usuario elija el tipo de uso
+    document.body.classList.add('app-inactiva');
+
     await initSchema();
 
     await seedEmpresas();
@@ -58,27 +131,177 @@ async function initApp() {
     await seedTiposProducto();
     await seedUnidadesMedida();
     await seedTecnicos();
-    //await seedVariedades();
-    //await seedSectoresDemo();
-    //await seedLotesDemo();
-    //await seedProductos();
-    //await seedProductosUnidades();
+    await seedProductosCana();
 
     initSidebar();
-    
     initHojasView();
-    
     await cargarHojas();
 
-    // Mínimo 1.8 s de splash para que la animación se vea completa,
-    // luego desvanece con la animación de salida.
-    setTimeout(ocultarSplash, 1800);
+    setTimeout(async () => {
+      ocultarSplash();
+
+      const empresas = await listarEmpresas();
+
+      if (empresas.length === 1) {
+        setEmpresaActiva(empresas[0]);
+        actualizarHeaderPropiedad(empresas[0].nombre);
+        await mostrarSelectorUso(empresas[0]);
+        return;
+      }
+
+      const empresa = await mostrarSelectorPropiedad(empresas);
+      await mostrarSelectorUso(empresa);
+
+    }, 1800);
 
   } catch (e) {
     console.error('[APP] ❌ Error fatal:', e);
     ocultarSplash();
     alert(e.message);
   }
+}
+
+/* ===============================
+   SELECCIÓN DE TIPO DE USO
+================================ */
+function crearUsoScreen() {
+  let screen = document.getElementById('uso-screen');
+  if (!screen) {
+    screen = document.createElement('div');
+    screen.id = 'uso-screen';
+    screen.innerHTML = `
+      <div class="splash-bg-ring splash-ring-1"></div>
+      <div class="splash-bg-ring splash-ring-2"></div>
+      <div class="splash-bg-ring splash-ring-3"></div>
+      <div class="propiedad-content">
+        <div class="uso-propiedad-badge" id="uso-propiedad-badge">🏡</div>
+        <div class="splash-texts">
+          <div class="splash-name">¿Qué vas a hacer?</div>
+          <div class="splash-tagline">Seleccioná el tipo de uso</div>
+        </div>
+        <div class="propiedad-cards" id="uso-cards"></div>
+      </div>
+    `;
+    document.body.prepend(screen);
+  }
+  return screen;
+}
+
+async function mostrarSelectorUso(empresa) {
+  return new Promise(resolve => {
+    const screen = crearUsoScreen();
+    const cards  = document.getElementById('uso-cards');
+
+    const badge = document.getElementById('uso-propiedad-badge');
+    if (badge) badge.textContent = `🏡 ${empresa.nombre}`;
+
+    cards.innerHTML = TIPOS_USO.map(t => `
+      <div class="propiedad-card ${!t.disponible ? 'propiedad-card--disabled' : ''}" data-id="${t.id}" ${!t.disponible ? 'aria-disabled="true"' : ''}>
+        <div class="propiedad-card-icon">${t.icono}</div>
+        <div class="propiedad-card-info">
+          <div class="propiedad-card-nombre">${t.nombre}</div>
+          <div class="propiedad-card-sub">${t.sub}</div>
+        </div>
+        <div class="propiedad-card-arrow">${t.disponible ? '›' : '🔒'}</div>
+      </div>
+    `).join('');
+
+    screen.classList.remove('hidden', 'propiedad-hide');
+
+    cards.querySelectorAll('.propiedad-card:not(.propiedad-card--disabled)').forEach(card => {
+      card.addEventListener('click', () => {
+        const uso = TIPOS_USO.find(t => t.id === card.dataset.id);
+        tipoUsoActivo = uso;
+
+        screen.classList.add('propiedad-hide');
+        screen.addEventListener('transitionend', () => {
+          screen.remove();
+          document.body.classList.remove('app-inactiva');
+
+          // Renderizar el menú correcto según el módulo elegido
+          renderMenuModulo(uso.id);
+
+          actualizarHeaderUso(uso);
+
+          // Navegar a la vista de inicio del módulo
+          if (uso.id === 'cana') {
+            window.showView('cana-registros');
+          } else {
+            window.showView('hojas');
+          }
+
+          resolve(uso);
+        }, { once: true });
+      });
+    });
+  });
+}
+
+async function cambiarUso() {
+  const empresa = getEmpresaActiva();
+  if (!empresa) return;
+
+  const screen = crearUsoScreen();
+  screen.classList.remove('hidden', 'propiedad-hide');
+
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('overlay')?.classList.remove('active');
+
+  await mostrarSelectorUso(empresa);
+}
+
+window.cambiarUso = cambiarUso;
+
+function actualizarHeaderUso(uso) {
+  const header = document.querySelector('.header-title');
+  const empresa = getEmpresaActiva();
+  if (header && empresa) {
+    header.textContent = `${uso.icono} ${empresa.nombre} · ${uso.nombre}`;
+  }
+  const sidebarUso = document.getElementById('sidebar-uso-nombre');
+  if (sidebarUso) sidebarUso.textContent = uso.nombre;
+}
+
+async function cambiarPropiedad() {
+  const empresas = await listarEmpresas();
+  if (empresas.length <= 1) return;
+
+  let screen = document.getElementById('propiedad-screen');
+  if (!screen) {
+    screen = document.createElement('div');
+    screen.id = 'propiedad-screen';
+    screen.innerHTML = `
+      <div class="splash-bg-ring splash-ring-1"></div>
+      <div class="splash-bg-ring splash-ring-2"></div>
+      <div class="splash-bg-ring splash-ring-3"></div>
+      <div class="propiedad-content">
+        <div class="splash-logo-wrap"><div class="splash-logo">🌱</div></div>
+        <div class="splash-texts">
+          <div class="splash-name">AgroApp</div>
+          <div class="splash-tagline">Seleccioná tu propiedad</div>
+        </div>
+        <div class="propiedad-cards" id="propiedad-cards"></div>
+      </div>
+    `;
+    document.body.prepend(screen);
+  }
+  screen.classList.remove('hidden', 'propiedad-hide');
+
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('overlay')?.classList.remove('active');
+
+  const empresa = await mostrarSelectorPropiedad(empresas);
+  await mostrarSelectorUso(empresa);
+  window.showView('hojas');
+}
+
+window.cambiarPropiedad = cambiarPropiedad;
+
+function actualizarHeaderPropiedad(nombre) {
+  const header = document.querySelector('.header-title');
+  if (header) header.textContent = `🌱 ${nombre}`;
+  const sidebarBtn = document.getElementById('sidebar-propiedad-nombre');
+  if (sidebarBtn) sidebarBtn.textContent = nombre;
 }
 
 /* ===============================
@@ -93,95 +316,34 @@ function showView(view, param = null) {
   if (section) section.classList.remove('hidden');
 
   switch (view) {
-    case 'empresas':
-      cargarEmpresas();
-      break;
 
-    case 'cultivos':
-      initCultivosView();
-      cargarCultivos();
-      break;
+    // ── Vistas compartidas (maestros) ──
+    case 'empresas':          cargarEmpresas(); break;
+    case 'cultivos':          initCultivosView(); cargarCultivos(); break;
+    case 'tecnicos':          initTecnicosView(); cargarTecnicos(); break;
+    case 'caudales':          initCaudalesView(); cargarCaudales(); break;
+    case 'sectores':          initSectoresView(); break;
+    case 'lotes':             initLotesView(); cargarVistaLotes(); break;
+    case 'variedades':        initVariedadesView(); cargarVistaVariedades(); break;
+    case 'productos':         initProductosView(); cargarProductos(); break;
+    case 'tipos-producto':    initTiposProductoView(); cargarTiposProducto(); break;
+    case 'tipos-aplicacion':  initTiposAplicacionView(); cargarTiposAplicacion(); break;
+    case 'unidades':          initUnidadesMedidaView(); cargarUnidadesMedida(); break;
+    case 'importacion':       initImportacionView(); cargarImportacion(); break;
 
-    case 'tecnicos':
-      initTecnicosView();
-      cargarTecnicos();
-      break;
+    // ── Módulo Agroquímicos ──
+    case 'hoja-detalle':  initHojaDetalleView(); if (param) cargarHojaDetalle(param); break;
+    case 'hojas':         initHojasView(); cargarHojas(); break;
+    case 'nueva-hoja':    initNuevaHojaView(); cargarNuevaHoja(); break;
+    case 'editar-hoja':   initHojaEditarView(); if (param) cargarHojaEditar(param); break;
 
-    case 'caudales':
-      initCaudalesView();
-      cargarCaudales();
-      break;
-    
-    case 'sectores':
-      initSectoresView();
-      break;
-    
-    case 'lotes':
-      initLotesView();
-      cargarVistaLotes();
-      break;
-    
-    case 'variedades':
-      initVariedadesView();  // 👈 faltaba esto
-      cargarVistaVariedades();
-      break;
-
-    case 'productos':
-      initProductosView();
-      cargarProductos();
-      break;  
-
-    case 'tipos-producto':
-      initTiposProductoView();
-      cargarTiposProducto();
-      break;
-
-    case 'tipos-aplicacion':
-      initTiposAplicacionView();
-      cargarTiposAplicacion();
-      break;
-
-    case 'unidades':
-      initUnidadesMedidaView();
-      cargarUnidadesMedida();
-      break;
-
-    case 'hoja-detalle':
-      initHojaDetalleView();
-      if (param) cargarHojaDetalle(param);
-      break;
-
-    case 'hojas':
-      initHojasView();
-      cargarHojas();
-      break;
-
-    case 'nueva-hoja':
-      initNuevaHojaView();
-      cargarNuevaHoja();
-      break; 
-    
-    case 'editar-hoja':
-      initHojaEditarView();
-      if (param) cargarHojaEditar(param);
-      break;
-
-    case 'importacion':
-      initImportacionView();
-      cargarImportacion();
-      break;
+    // ── Módulo Caña ──
+    case 'cana-registros': initRegistrosCanaView(); cargarRegistrosCana(); break;
+    case 'cana-nuevo':     initNuevaNotaCanaView(); cargarNuevaNotaCana(); break;
   }
 }
 
-// 👇 DEBE IR AQUÍ, después de definir showView
 window.showView = showView;
-
-document.querySelectorAll('[data-view]').forEach(link => {
-  link.addEventListener('click', e => {
-    e.preventDefault();
-    showView(link.dataset.view);
-  });
-});
 
 /* ===============================
    NAVEGACIÓN CON HISTORIAL (BACK)
@@ -204,10 +366,6 @@ window.showView = function(view, param = null) {
 function _manejarBack() {
   const modales = [...document.querySelectorAll('.modal')]
     .filter(m => !m.classList.contains('hidden') && m.offsetParent !== null);
-  
-  console.log('[BACK] modales abiertos:', modales.map(m => m.id));
-  console.log('[BACK] historial:', _historial.length);
-  console.log('[BACK] backPresionado:', _backPresionado);
 
   if (modales.length > 0) {
     modales[0].classList.add('hidden');
@@ -247,8 +405,6 @@ function _manejarBack() {
 
 window._manejarBack = _manejarBack;
 
-// Solo un listener — MainActivity.java llama window._manejarBack() directamente
-// Los eventos de abajo son solo fallback para desarrollo en navegador
 if (!window.Capacitor?.isNativePlatform?.()) {
   document.addEventListener('backbutton', _manejarBack, false);
 }

@@ -1,5 +1,6 @@
 import {
   obtenerVariedadesPorCultivo,
+  obtenerVariedadesPorEmpresa,
   insertarVariedad,
   actualizarVariedad,
   eliminarVariedad
@@ -8,6 +9,11 @@ import {
 export async function listarVariedades(cultivoId) {
   if (!cultivoId) return [];
   return await obtenerVariedadesPorCultivo(cultivoId);
+}
+
+export async function listarVariedadesPorEmpresa(empresaId) {
+  if (!empresaId) return [];
+  return await obtenerVariedadesPorEmpresa(empresaId);
 }
 
 export async function guardarVariedad(data) {

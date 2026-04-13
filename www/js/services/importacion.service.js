@@ -10,10 +10,12 @@ export function detectarTipoExcel(headers) {
   const h = headers.map(c => String(c ?? '').trim().toUpperCase());
 
   const esProductos = h.includes('CODIGO') && h.includes('DESCRIPCION') &&
-                      h.includes('UNIDAD') && h.includes('LINEA DE PRODUCTO');
+                      h.includes('UNIDAD') && h.includes('LINEA DE PRODUCTO') &&
+                      h.includes('EMPRESA');
 
   const esLotes     = h.includes('LOTE') && h.includes('HECTAREAS') &&
-                      h.includes('SECTOR') && h.includes('CULTIVO');
+                      h.includes('SECTOR') && h.includes('CULTIVO') &&
+                      h.includes('EMPRESA');
 
   if (esProductos) return 'productos';
   if (esLotes)     return 'lotes';
@@ -64,11 +66,18 @@ export async function previsualizarProductos(headers, filas) {
     nombre:  headers.findIndex(h => h.toUpperCase() === 'DESCRIPCION'),
     unidad:  headers.findIndex(h => h.toUpperCase() === 'UNIDAD'),
     linea:   headers.findIndex(h => h.toUpperCase() === 'LINEA DE PRODUCTO'),
+    empresa: headers.findIndex(h => h.toUpperCase() === 'EMPRESA'),
   };
 
-  // Cargar datos actuales de la BD para comparar
-  const existentes = await executeQuery('SELECT id, codigo, nombre FROM productos');
-  const codigoToId = Object.fromEntries(existentes.map(p => [p.codigo.toUpperCase(), p.id]));
+  // Cargar empresas para mapear por nombre
+  const empresas = await executeQuery('SELECT id, nombre FROM empresas');
+  const empresaByNombre = Object.fromEntries(empresas.map(e => [e.nombre.toUpperCase(), e.id]));
+
+  // Cargar datos actuales de la BD para comparar (por empresa también)
+  const existentes = await executeQuery('SELECT id, codigo, nombre, empresa_id FROM productos');
+  const codigoEmpresaToId = Object.fromEntries(
+    existentes.map(p => [`${p.codigo.toUpperCase()}_${p.empresa_id}`, p.id])
+  );
 
   const tiposProducto = await executeQuery('SELECT id, nombre FROM tipos_producto');
   const tipoByNombre  = Object.fromEntries(tiposProducto.map(t => [t.nombre.toUpperCase(), t.id]));
@@ -85,9 +94,21 @@ export async function previsualizarProductos(headers, filas) {
     const nombre  = String(fila[idx.nombre]  ?? '').trim().toUpperCase();
     const unidRaw = String(fila[idx.unidad]  ?? '').trim().toUpperCase();
     const linea   = String(fila[idx.linea]   ?? '').trim().toUpperCase();
+    const empNombre = String(fila[idx.empresa] ?? '').trim().toUpperCase();
 
     if (!codigo || !nombre) {
       errores.push({ fila: i + 2, msg: `Código o nombre vacío` });
+      continue;
+    }
+
+    if (!empNombre) {
+      errores.push({ fila: i + 2, msg: `Fila ${i+2}: columna EMPRESA vacía — no se puede asignar el producto` });
+      continue;
+    }
+
+    const empresaId = empresaByNombre[empNombre] ?? null;
+    if (!empresaId) {
+      errores.push({ fila: i + 2, msg: `Empresa "${empNombre}" no encontrada en la app` });
       continue;
     }
 
@@ -99,10 +120,11 @@ export async function previsualizarProductos(headers, filas) {
     const tipoId    = tipoByNombre[linea] ?? null;
     const tipoNuevo = !tipoId && linea;
 
-    const item = { codigo, nombre, linea, unidadCodigo, tipoId, tipoNuevo, unidadId, unidadNueva };
+    const item = { codigo, nombre, linea, unidadCodigo, tipoId, tipoNuevo, unidadId, unidadNueva, empresaId, empresaNombre: empNombre };
 
-    if (codigoToId[codigo]) {
-      actualizados.push({ ...item, id: codigoToId[codigo] });
+    const key = `${codigo}_${empresaId}`;
+    if (codigoEmpresaToId[key]) {
+      actualizados.push({ ...item, id: codigoEmpresaToId[key] });
     } else {
       nuevos.push(item);
     }
@@ -164,9 +186,9 @@ export async function importarProductos(nuevos, actualizados) {
   for (const p of nuevos) {
     const id = uuid();
     await executeRun(
-      `INSERT OR IGNORE INTO productos (id, codigo, nombre, tipo_producto_id, activo)
-       VALUES (?, ?, ?, ?, 1)`,
-      [id, p.codigo, p.nombre, p.tipoId]
+      `INSERT OR IGNORE INTO productos (id, empresa_id, codigo, nombre, tipo_producto_id, activo)
+       VALUES (?, ?, ?, ?, ?, 1)`,
+      [id, p.empresaId, p.codigo, p.nombre, p.tipoId]
     );
     await executeRun(
       `INSERT OR IGNORE INTO productos_unidades (producto_id, unidad_medida_id, es_default)
@@ -213,15 +235,23 @@ export async function previsualizarLotes(headers, filas) {
     variedad: headers.findIndex(h => h.toUpperCase() === 'VARIEDAD'),
     cultivo:  headers.findIndex(h => h.toUpperCase() === 'CULTIVO'),
     sector:   headers.findIndex(h => h.toUpperCase() === 'SECTOR'),
+    empresa:  headers.findIndex(h => h.toUpperCase() === 'EMPRESA'),
   };
 
   // Cargar catálogos de la BD
-  const sectores   = await executeQuery('SELECT id, nombre FROM sectores');
+  const empresas   = await executeQuery('SELECT id, nombre FROM empresas');
+  const sectores   = await executeQuery('SELECT id, nombre, empresa_id FROM sectores');
   const cultivos   = await executeQuery('SELECT id, nombre FROM cultivos');
   const variedades = await executeQuery('SELECT id, nombre FROM variedades');
   const lotesExist = await executeQuery('SELECT id, codigo, nombre, sector_id FROM lotes');
 
-  const sectorByNombre   = Object.fromEntries(sectores.map(s => [s.nombre.toUpperCase(), s.id]));
+  const empresaByNombre  = Object.fromEntries(empresas.map(e => [e.nombre.toUpperCase(), e.id]));
+
+  // Sectores indexados por NOMBRE+EMPRESA_ID para no confundir sectores homónimos de distintas empresas
+  const sectorByNombreEmpresa = Object.fromEntries(
+    sectores.map(s => [`${s.nombre.toUpperCase()}_${s.empresa_id}`, s.id])
+  );
+
   const cultivoByNombre  = Object.fromEntries(cultivos.map(c => [c.nombre.toUpperCase(), c.id]));
   const variedadByNombre = Object.fromEntries(variedades.map(v => [v.nombre.toUpperCase(), v.id]));
 
@@ -244,24 +274,36 @@ export async function previsualizarLotes(headers, filas) {
     const varNombre = String(fila[idx.variedad]  ?? '').trim().toUpperCase();
     const cultNombre= String(fila[idx.cultivo]   ?? '').trim().replace(/\s+/g, ' ').toUpperCase();
     const sectNombre= String(fila[idx.sector]    ?? '').trim().toUpperCase();
+    const empNombre = String(fila[idx.empresa]   ?? '').trim().toUpperCase();
 
     if (!nombre || !sectNombre) {
       errores.push({ fila: i + 2, msg: 'Nombre o sector vacío' });
       continue;
     }
 
-    const sectorId   = sectorByNombre[sectNombre]  ?? null;
+    if (!empNombre) {
+      errores.push({ fila: i + 2, msg: `Fila ${i+2}: columna EMPRESA vacía — no se puede asignar el sector` });
+      continue;
+    }
+
+    const empresaId  = empresaByNombre[empNombre] ?? null;
+    if (!empresaId) {
+      errores.push({ fila: i + 2, msg: `Empresa "${empNombre}" no encontrada en la app` });
+      continue;
+    }
+
+    // Buscar sector filtrando por empresa
+    const sectorId   = sectorByNombreEmpresa[`${sectNombre}_${empresaId}`] ?? null;
     const cultivoId  = cultivoByNombre[cultNombre] ?? null;
     const variedadId = variedadByNombre[varNombre] ?? null;
 
-    if (!sectorId)                sectoresNuevos.add(sectNombre);
+    if (!sectorId)                sectoresNuevos.add(`${sectNombre}||${empresaId}||${empNombre}`);
     if (cultNombre && !cultivoId) cultivosNuevos.add(cultNombre);
     if (varNombre  && !variedadId) variedadesNuevas.add(varNombre);
 
-    // La clave usa nombre+sectorId para comparar con la BD.
-    // sectorId puede ser null si el sector todavía no existe => será nuevo.
     const key  = `${nombre}_${String(sectorId ?? '')}`;
     const item = { nombre, codigo, hectareas, cultivoId, variedadId, sectorId,
+                   empresaId, empresaNombre: empNombre,
                    sectorNombre: sectNombre, cultivoNombre: cultNombre, variedadNombre: varNombre };
 
     if (loteByNombreSector[key]) {
@@ -275,7 +317,10 @@ export async function previsualizarLotes(headers, filas) {
     nuevos,
     actualizados,
     errores,
-    sectoresNuevos:    [...sectoresNuevos],
+    sectoresNuevos:    [...sectoresNuevos].map(s => {
+      const [nombre, empresaId, empresaNombre] = s.split('||');
+      return { nombre, empresaId, empresaNombre };
+    }),
     cultivosNuevos:    [...cultivosNuevos],
     variedadesNuevas:  [...variedadesNuevas],
   };
@@ -285,9 +330,6 @@ export async function previsualizarLotes(headers, filas) {
    IMPORTAR LOTES
 ========================================================= */
 export async function importarLotes(nuevos, actualizados) {
-  const [empresa] = await executeQuery('SELECT id FROM empresas LIMIT 1');
-  const empresaId = empresa?.id ?? 1;
-
   let insertados = 0;
   let modificados = 0;
 
@@ -296,19 +338,21 @@ export async function importarLotes(nuevos, actualizados) {
   const variedadesCreadas = {};
 
   for (const l of [...nuevos, ...actualizados]) {
-    // Sector
-    if (!l.sectorId && l.sectorNombre && !sectoresCreados[l.sectorNombre]) {
+    // Sector — crear bajo la empresa correcta del Excel
+    const sectorKey = `${l.sectorNombre}_${l.empresaId}`;
+    if (!l.sectorId && l.sectorNombre && l.empresaId && !sectoresCreados[sectorKey]) {
       await executeRun(
         'INSERT OR IGNORE INTO sectores (empresa_id, nombre) VALUES (?, ?)',
-        [empresaId, l.sectorNombre]
+        [l.empresaId, l.sectorNombre]
       );
       const [row] = await executeQuery(
-        'SELECT id FROM sectores WHERE nombre = ? LIMIT 1', [l.sectorNombre]
+        'SELECT id FROM sectores WHERE nombre = ? AND empresa_id = ? LIMIT 1',
+        [l.sectorNombre, l.empresaId]
       );
-      sectoresCreados[l.sectorNombre] = row?.id;
+      sectoresCreados[sectorKey] = row?.id;
     }
-    if (!l.sectorId && sectoresCreados[l.sectorNombre]) {
-      l.sectorId = sectoresCreados[l.sectorNombre];
+    if (!l.sectorId && sectoresCreados[sectorKey]) {
+      l.sectorId = sectoresCreados[sectorKey];
     }
 
     // Cultivo

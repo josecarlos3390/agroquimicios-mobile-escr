@@ -110,8 +110,8 @@ async function procesarArchivo(file) {
       mostrarErrorPopup(
         'Formato no reconocido',
         'El archivo no tiene las columnas esperadas.\n\n' +
-        '🧪 Productos necesita: CODIGO · DESCRIPCION · UNIDAD · LINEA DE PRODUCTO\n' +
-        '🌿 Lotes necesita: LOTE · CODIGO · HECTAREAS · VARIEDAD · CULTIVO · SECTOR'
+        '🧪 Productos necesita: CODIGO · DESCRIPCION · UNIDAD · LINEA DE PRODUCTO · EMPRESA\n' +
+        '🌿 Lotes necesita: LOTE · CODIGO · HECTAREAS · VARIEDAD · CULTIVO · SECTOR · EMPRESA'
       );
       return;
     }
@@ -251,7 +251,10 @@ function renderPreview() {
         <div class="import-info-titulo">ℹ️ Se crearán automáticamente</div>
         ${grupos.map(g => `
           <div class="import-info-grupo">${g.label}:</div>
-          ${g.lista.map(v => `<div class="import-info-item">• ${v}</div>`).join('')}
+          ${g.lista.map(v => {
+            const texto = (typeof v === 'object') ? v.nombre + ' (' + v.empresaNombre + ')' : v;
+            return '<div class="import-info-item">• ' + texto + '</div>';
+          }).join('')}
         `).join('')}
       </div>`;
     }

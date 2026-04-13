@@ -1,10 +1,10 @@
-import { listarEmpresas, getEmpresaActiva } from '../services/empresas.service.js';
-import { listarSectores } from '../services/sectores.service.js';
-import { listarTecnicos } from '../services/tecnicos.service.js';
-import { listarTiposAplicacion } from '../services/tiposAplicacion.service.js';
-import { listarVariedades } from '../services/variedades.service.js';
-import { listarLotesPorSectores } from '../services/lotes.service.js';
-import { crearHojaTrabajoCabecera } from '../services/hojas.service.js';
+import { listarEmpresas, getEmpresaActiva } from '../../services/empresas.service.js';
+import { listarSectores } from '../../services/sectores.service.js';
+import { listarTecnicos } from '../../services/tecnicos.service.js';
+import { listarTiposAplicacion } from '../../services/tiposAplicacion.service.js';
+import { listarVariedades } from '../../services/variedades.service.js';
+import { listarLotesPorSectores } from '../../services/lotes.service.js';
+import { crearHojaTrabajoCabecera } from '../../services/hojas.service.js';
 
 const MESES = [
   'ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',

@@ -1,14 +1,14 @@
-import { getHojaCabById, updateHojaCab } from '../repositories/hojasCab.repo.js';
-import { actualizarHojaCabecera } from '../services/hojas.service.js';
-import { listarEmpresas, getEmpresaActiva } from '../services/empresas.service.js';
-import { listarSectores } from '../services/sectores.service.js';
-import { listarTecnicos } from '../services/tecnicos.service.js';
-import { listarTiposAplicacion } from '../services/tiposAplicacion.service.js';
-import { listarVariedades } from '../services/variedades.service.js';
-import { getLotesByHojaId, replaceLotesHoja } from '../repositories/hojasLotes.repo.js';
-import { getSectoresByHojaId, replaceSectoresHoja } from '../repositories/hojasSectores.repo.js';
-import { listarLotesPorSectores } from '../services/lotes.service.js';
-import { recalcularDosisHoja } from '../repositories/hojasDetalle.repo.js';
+import { getHojaCabById, updateHojaCab } from '../../repositories/hojasCab.repo.js';
+import { actualizarHojaCabecera } from '../../services/hojas.service.js';
+import { listarEmpresas, getEmpresaActiva } from '../../services/empresas.service.js';
+import { listarSectores } from '../../services/sectores.service.js';
+import { listarTecnicos } from '../../services/tecnicos.service.js';
+import { listarTiposAplicacion } from '../../services/tiposAplicacion.service.js';
+import { listarVariedades } from '../../services/variedades.service.js';
+import { getLotesByHojaId, replaceLotesHoja } from '../../repositories/hojasLotes.repo.js';
+import { getSectoresByHojaId, replaceSectoresHoja } from '../../repositories/hojasSectores.repo.js';
+import { listarLotesPorSectores } from '../../services/lotes.service.js';
+import { recalcularDosisHoja } from '../../repositories/hojasDetalle.repo.js';
 
 let hojaActual = null;
 let _editarInicializado = false;
@@ -207,8 +207,8 @@ export async function cargarHojaEditar(hojaId) {
 
   const [empresas, tecnicos, tiposAplicacion] = await Promise.all([
     listarEmpresas(),
-    listarTecnicos(hojaActual.empresa_id),
-    listarTiposAplicacion(hojaActual.empresa_id),
+    listarTecnicos(),
+    listarTiposAplicacion(),
   ]);
 
   // Mostrar solo la empresa activa en el select

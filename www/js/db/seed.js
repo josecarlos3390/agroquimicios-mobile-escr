@@ -3,18 +3,19 @@ import { uuid } from '../utils/uuid.js';
 
 
 export async function seedEmpresas() {
-  const empresas = await executeQuery('SELECT id FROM empresas');
-  if (empresas.length > 0) return;
+  const empresas = await executeQuery('SELECT nombre FROM empresas');
+  const nombres = empresas.map(e => e.nombre);
 
-  await executeRun(`
-    INSERT INTO empresas (nombre, rut)
-    VALUES ('CURICHI', '12345678-9')
-  `);
-
+  if (!nombres.includes('CURICHI')) {
+    await executeRun(`INSERT INTO empresas (nombre, rut) VALUES ('CURICHI', '12345678-9')`);
+  }
+  if (!nombres.includes('NUEVA ERA')) {
+    await executeRun(`INSERT INTO empresas (nombre, rut) VALUES ('NUEVA ERA', '98765432-1')`);
+  }
 }
 
 /* =========================================================
-   CULTIVOS (NO SE TOCA)
+   CULTIVOS — por empresa
 ========================================================= */
 export async function seedCultivos() {
   try {
@@ -25,19 +26,23 @@ export async function seedCultivos() {
       return;
     }
 
+    const empresas = await executeQuery('SELECT id FROM empresas');
     const cultivosDemo = [
-      { nombre: 'SOYA', descripcion: 'Cultivo de soja' }, //1
-      { nombre: 'SORGO', descripcion: 'Cultivo de sorgo' }, //2
-      { nombre: 'PASTO', descripcion: 'Cultivo de pasto' }, //3
-      { nombre: 'MAIZ', descripcion: 'Cultivo de maiz' }, //4
-      { nombre: 'COVERTURA DE PASTO', descripcion: 'Covertura de pasto' } //5
+      { nombre: 'SOYA', descripcion: 'Cultivo de soja' },
+      { nombre: 'SORGO', descripcion: 'Cultivo de sorgo' },
+      { nombre: 'PASTO', descripcion: 'Cultivo de pasto' },
+      { nombre: 'MAIZ', descripcion: 'Cultivo de maiz' },
+      { nombre: 'COVERTURA DE PASTO', descripcion: 'Covertura de pasto' }
     ];
 
-    for (const cultivo of cultivosDemo) {
-      await executeRun(
-        'INSERT INTO cultivos (nombre, descripcion) VALUES (?, ?)',
-        [cultivo.nombre, cultivo.descripcion]
-      );
+    // Crear cultivos para cada empresa
+    for (const empresa of empresas) {
+      for (const cultivo of cultivosDemo) {
+        await executeRun(
+          'INSERT INTO cultivos (empresa_id, nombre, descripcion) VALUES (?, ?, ?)',
+          [empresa.id, cultivo.nombre, cultivo.descripcion]
+        );
+      }
     }
   } catch (error) {
     console.error('[SEED] Error en seedCultivos:', error);
@@ -46,7 +51,7 @@ export async function seedCultivos() {
 }
 
 /* =========================================================
-   VARIEDADES (NUEVO)
+   VARIEDADES — por empresa
 ========================================================= */
 export async function seedVariedades() {
   const existentes = await executeQuery(
@@ -55,9 +60,7 @@ export async function seedVariedades() {
 
   if (existentes[0].count > 0) return;
 
-  const cultivos = await executeQuery(
-    'SELECT id, nombre FROM cultivos'
-  );
+  const empresas = await executeQuery('SELECT id FROM empresas');
 
   const mapa = {
     'SOYA':               ['CARAVANA', 'CUATRIPLETA', 'GENERAL', 'MUNASQA REGISTRADA-1', 'MUNASQA REGISTRADA-2', 'NEGRITA', 'SW-4863', 'TMG-7363'],
@@ -67,15 +70,23 @@ export async function seedVariedades() {
     'COVERTURA DE PASTO': ['COVERTURA PASTO TRIPLETA']
   };
 
-  for (const cultivo of cultivos) {
-    const variedades = mapa[cultivo.nombre] || [];
+  // Crear variedades para cada empresa
+  for (const empresa of empresas) {
+    const cultivos = await executeQuery(
+      'SELECT id, nombre FROM cultivos WHERE empresa_id = ?',
+      [empresa.id]
+    );
 
-    for (const nombre of variedades) {
-      await executeRun(
-        `INSERT INTO variedades (cultivo_id, nombre)
-         VALUES (?, ?)`,
-        [cultivo.id, nombre]
-      );
+    for (const cultivo of cultivos) {
+      const variedades = mapa[cultivo.nombre] || [];
+
+      for (const nombre of variedades) {
+        await executeRun(
+          `INSERT INTO variedades (empresa_id, cultivo_id, nombre)
+           VALUES (?, ?, ?)`,
+          [empresa.id, cultivo.id, nombre]
+        );
+      }
     }
   }
 }
@@ -514,22 +525,25 @@ export async function seedTecnicos() {
     return;
   }
 
+  const empresas = await executeQuery('SELECT id FROM empresas');
   const tecnicosDemo = [
     'Juan Pérez',
     'María López',
     'Carlos Gómez'
   ];
 
-  for (const nombre of tecnicosDemo) {
-    await executeRun(
-      'INSERT INTO tecnicos (nombre) VALUES (?)',
-      [nombre]
-    );
+  for (const empresa of empresas) {
+    for (const nombre of tecnicosDemo) {
+      await executeRun(
+        'INSERT INTO tecnicos (empresa_id, nombre) VALUES (?, ?)',
+        [empresa.id, nombre]
+      );
+    }
   }
 }
 
 /* =========================================================
-   TIPOS DE APLICACIÓN
+   TIPOS DE APLICACIÓN — por empresa
 ========================================================= */
 export async function seedTiposAplicacion() {
   const [{ count }] = await executeQuery(
@@ -540,21 +554,24 @@ export async function seedTiposAplicacion() {
     return;
   }
 
+  const empresas = await executeQuery('SELECT id FROM empresas');
   const tiposDemo = [
     'AEREA',
     'TERRESTRE'
   ];
 
-  for (const nombre of tiposDemo) {
-    await executeRun(
-      'INSERT INTO tipos_aplicacion (nombre) VALUES (?)',
-      [nombre]
-    );
+  for (const empresa of empresas) {
+    for (const nombre of tiposDemo) {
+      await executeRun(
+        'INSERT INTO tipos_aplicacion (empresa_id, nombre) VALUES (?, ?)',
+        [empresa.id, nombre]
+      );
+    }
   }
 }
 
 /* =========================================================
-   CAUDALES
+   CAUDALES — por empresa
 ========================================================= */
 export async function seedCaudales() {
   const [{ count }] = await executeQuery(
@@ -565,17 +582,20 @@ export async function seedCaudales() {
     return;
   }
 
+  const empresas = await executeQuery('SELECT id FROM empresas');
   const caudalesDemo = [
     { nombre: 'Bajo', valor: 80, unidad: 'L/ha' },
     { nombre: 'Medio', valor: 120, unidad: 'L/ha' },
     { nombre: 'Alto', valor: 180, unidad: 'L/ha' }
   ];
 
-  for (const caudal of caudalesDemo) {
-    await executeRun(
-      'INSERT INTO caudales (nombre, valor, unidad) VALUES (?, ?, ?)',
-      [caudal.nombre, caudal.valor, caudal.unidad]
-    );
+  for (const empresa of empresas) {
+    for (const caudal of caudalesDemo) {
+      await executeRun(
+        'INSERT INTO caudales (empresa_id, nombre, valor, unidad) VALUES (?, ?, ?, ?)',
+        [empresa.id, caudal.nombre, caudal.valor, caudal.unidad]
+      );
+    }
   }
 }
 
@@ -851,15 +871,19 @@ export async function seedProductos() {
     { codigo: 'TRICHODERMA-BIO', nombre: 'TRICHODERMA', linea: 'PRODUCTO BIOLOGICO', unidad: 'L' },
   ];
 
-  for (const p of productos) {
-    // Buscar tipo por linea exacta, fallback a AGROQUIMICOS
-    const tipoId = tipoByNombre[p.linea] ?? tipoByNombre['AGROQUIMICOS'] ?? 1;
+  const empresas = await executeQuery('SELECT id FROM empresas');
 
-    await executeRun(
-      `INSERT OR IGNORE INTO productos (id, codigo, nombre, tipo_producto_id)
-       VALUES (?, ?, ?, ?)`,
-      [uuid(), p.codigo, p.nombre, tipoId]
-    );
+  for (const empresa of empresas) {
+    for (const p of productos) {
+      // Buscar tipo por linea exacta, fallback a AGROQUIMICOS
+      const tipoId = tipoByNombre[p.linea] ?? tipoByNombre['AGROQUIMICOS'] ?? 1;
+
+      await executeRun(
+        `INSERT OR IGNORE INTO productos (id, empresa_id, codigo, nombre, tipo_producto_id)
+         VALUES (?, ?, ?, ?, ?)`,
+        [uuid(), empresa.id, p.codigo, p.nombre, tipoId]
+      );
+    }
   }
 }
 
@@ -944,4 +968,78 @@ export async function seedProductosUnidades() {
       [p.id, unidadById[unidadAlt]]
     );
   }
+}
+/* =========================================================
+   PRODUCTOS DE PLANTACIÓN DE CAÑA
+   Códigos con prefijo CANA- para identificarlos fácilmente.
+   INSERT OR IGNORE → nunca duplica, y el código se puede
+   actualizar desde la vista de Productos cuando llegue el
+   código real del ERP.
+========================================================= */
+export async function seedProductosCana() {
+
+  // Asegurarse de que los tipos y unidades existen primero
+  const tiposProducto = await executeQuery('SELECT id, nombre FROM tipos_producto');
+  const tipoByNombre  = Object.fromEntries(tiposProducto.map(t => [t.nombre, t.id]));
+
+  const unidades    = await executeQuery('SELECT id, codigo FROM unidades_medida');
+  const unidadById  = Object.fromEntries(unidades.map(u => [u.codigo, u.id]));
+
+  const tipoAgro = tipoByNombre['AGROQUIMICOS'];
+  const tipoBio  = tipoByNombre['PRODUCTO BIOLOGICO'];
+  const tipoFert = tipoByNombre['FERTILIZANTES'];
+
+  if (!tipoAgro || !tipoBio || !tipoFert) {
+    console.warn('[SEED] ⚠️ seedProductosCana: tipos de producto no encontrados, ejecutar seedTiposProducto primero');
+    return;
+  }
+
+  // ── Agroquímicos de Caña ─────────────────────────────────────────────────
+  const agroquimicos = [
+    { codigo: 'CANA-FOSFATO-MONO',  nombre: 'Fosfato Monoamónico',              tipo: tipoFert, unidad: 'KG' },
+    { codigo: 'CANA-THIAMETOXAN',   nombre: 'Thiametoxan',                       tipo: tipoAgro, unidad: 'G'  },
+    { codigo: 'CANA-FIPRONIL',      nombre: 'Fipronil',                          tipo: tipoAgro, unidad: 'G'  },
+    { codigo: 'CANA-PYRACLOEPOX',   nombre: 'Pyraclostrobin + Epoxiconazole',    tipo: tipoAgro, unidad: 'L'  },
+    { codigo: 'CANA-NERTHUS',       nombre: 'Nerthus 11-56-00',                  tipo: tipoFert, unidad: 'L'  },
+    { codigo: 'CANA-KINEFOL',       nombre: 'Kinefol (Folcol)',                  tipo: tipoAgro, unidad: 'L'  },
+    { codigo: 'CANA-AGUA',          nombre: 'Agua',                              tipo: tipoAgro, unidad: 'L'  },
+  ];
+
+  // ── Biológicos de Caña ───────────────────────────────────────────────────
+  const biologicos = [
+    { codigo: 'CANA-BIO-BACT-CEREAL', nombre: 'Bacterias Cereales del Este',   tipo: tipoBio, unidad: 'L' },
+    { codigo: 'CANA-BIO-HONG-CEREAL', nombre: 'Hongos Cereales del Este',      tipo: tipoBio, unidad: 'L' },
+    { codigo: 'CANA-BIO-BAUVERIA',    nombre: 'Bauveria',                      tipo: tipoBio, unidad: 'L' },
+    { codigo: 'CANA-BIO-ISARIA',      nombre: 'Isaria spp',                    tipo: tipoBio, unidad: 'L' },
+    { codigo: 'CANA-BIO-METARH',      nombre: 'Metarhizium',                   tipo: tipoBio, unidad: 'L' },
+    { codigo: 'CANA-BIO-TRICHO',      nombre: 'Trichoderma',                   tipo: tipoBio, unidad: 'L' },
+  ];
+
+  const todos = [...agroquimicos, ...biologicos];
+
+  const empresas = await executeQuery('SELECT id FROM empresas');
+
+  for (const empresa of empresas) {
+    for (const p of todos) {
+      const id = p.codigo.toLowerCase(); // id legible, mismo que codigo por ahora
+
+      await executeRun(
+        `INSERT OR IGNORE INTO productos (id, empresa_id, codigo, nombre, tipo_producto_id, activo)
+         VALUES (?, ?, ?, ?, ?, 1)`,
+        [id + '_' + empresa.id, empresa.id, p.codigo, p.nombre, p.tipo]
+      );
+
+      // Unidad default
+      const unidadId = unidadById[p.unidad];
+      if (unidadId) {
+        await executeRun(
+          `INSERT OR IGNORE INTO productos_unidades (producto_id, unidad_medida_id, es_default)
+           VALUES (?, ?, 1)`,
+          [id + '_' + empresa.id, unidadId]
+        );
+      }
+    }
+  }
+
+  console.log('[SEED] ✅ seedProductosCana: productos de caña insertados/verificados');
 }

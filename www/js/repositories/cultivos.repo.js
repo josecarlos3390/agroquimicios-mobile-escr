@@ -1,6 +1,6 @@
 import { executeQuery, executeRun } from '../db/sqlite.js';
 
-/* EXISTENTE */
+/* Por empresa */
 export async function getCultivosByLotes(loteIds) {
   if (loteIds.length === 0) return [];
 
@@ -18,9 +18,11 @@ export async function getCultivosByLotes(loteIds) {
   );
 }
 
-/* 🔥 AGREGAR ESTO */
-export async function getCultivos() {
-  return await executeQuery('SELECT * FROM cultivos ORDER BY nombre');
+export async function getCultivos(empresaId) {
+  return await executeQuery(
+    'SELECT * FROM cultivos WHERE empresa_id = ? ORDER BY nombre',
+    [empresaId]
+  );
 }
 
 export async function saveCultivo(c) {
@@ -31,8 +33,8 @@ export async function saveCultivo(c) {
     );
   } else {
     await executeRun(
-      'INSERT INTO cultivos (nombre) VALUES (?)',
-      [c.nombre]
+      'INSERT INTO cultivos (empresa_id, nombre) VALUES (?, ?)',
+      [c.empresa_id, c.nombre]
     );
   }
 }

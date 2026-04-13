@@ -1,5 +1,5 @@
 // www/js/views/sectores.view.js
-import { listarEmpresas } from '../services/empresas.service.js';
+import { listarEmpresas, getEmpresaActiva } from '../services/empresas.service.js';
 import {
   listarSectores,
   guardarSector,
@@ -114,13 +114,16 @@ export async function cargarSectores() {
 
 async function cargarEmpresasSector() {
   const select = document.getElementById('sector-empresa-select');
+  const activa = getEmpresaActiva();
+  if (activa) {
+    select.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
+    select.value = activa.id;
+    select.dispatchEvent(new Event('change'));
+    return;
+  }
   const empresas = await listarEmpresas();
-
   select.innerHTML = '<option value="">Seleccione empresa</option>';
-
   empresas.forEach(e => {
-    select.innerHTML += `
-      <option value="${e.id}">${e.nombre}</option>
-    `;
+    select.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
   });
 }

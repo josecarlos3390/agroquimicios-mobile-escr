@@ -9,11 +9,20 @@ export async function obtenerVariedadesPorCultivo(cultivoId) {
   );
 }
 
+export async function obtenerVariedadesPorEmpresa(empresaId) {
+  return await executeQuery(
+    `SELECT * FROM variedades
+     WHERE empresa_id = ?
+     ORDER BY nombre`,
+    [empresaId]
+  );
+}
+
 export async function insertarVariedad(data) {
   return executeRun(
-    `INSERT INTO variedades (cultivo_id, nombre)
-     VALUES (?, ?)`,
-    [data.cultivo_id, data.nombre]
+    `INSERT INTO variedades (empresa_id, cultivo_id, nombre)
+     VALUES (?, ?, ?)`,
+    [data.empresa_id, data.cultivo_id, data.nombre]
   );
 }
 

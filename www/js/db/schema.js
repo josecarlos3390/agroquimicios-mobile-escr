@@ -19,18 +19,20 @@ export async function initSchema() {
 
     CREATE TABLE IF NOT EXISTS cultivos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id INTEGER NOT NULL,
       nombre TEXT NOT NULL,
       descripcion TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS variedades (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id INTEGER NOT NULL,
       cultivo_id INTEGER NOT NULL,
       nombre TEXT NOT NULL,
-      FOREIGN KEY (cultivo_id) REFERENCES cultivos(id),
-      UNIQUE (cultivo_id, nombre)
-      
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE,
+      FOREIGN KEY (cultivo_id) REFERENCES cultivos(id)
     );
 
     CREATE TABLE IF NOT EXISTS sectores (
@@ -44,7 +46,7 @@ export async function initSchema() {
 
     CREATE TABLE IF NOT EXISTS lotes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo INTEGER,                        -- 👈 código del ERP
+      codigo INTEGER,
       sector_id INTEGER NOT NULL,
       nombre TEXT NOT NULL,
       hectareas REAL,
@@ -76,22 +78,28 @@ export async function initSchema() {
 
     CREATE TABLE IF NOT EXISTS tecnicos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id INTEGER NOT NULL,
       nombre TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS tipos_aplicacion (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id INTEGER NOT NULL,
       nombre TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS caudales (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id INTEGER NOT NULL,
       nombre TEXT NOT NULL,
       valor REAL,
       unidad TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
 
     /* =========================
@@ -99,14 +107,13 @@ export async function initSchema() {
        ========================= */
 
     CREATE TABLE IF NOT EXISTS hojas_cab (
-      id TEXT PRIMARY KEY,                      -- UUID
+      id TEXT PRIMARY KEY,
       numero_secuencial INTEGER NOT NULL,
       numero_completo TEXT NOT NULL,
 
       dispositivo_id TEXT NOT NULL,
       campana TEXT NOT NULL,
 
-      -- RELACIONES
       empresa_id INTEGER,
       cultivo_id INTEGER,
       tecnico_id INTEGER,
@@ -115,7 +122,6 @@ export async function initSchema() {
       caudal_id INTEGER,
       caudal_descripcion TEXT,
 
-      -- DATOS DE LA APLICACIÓN
       mes TEXT NOT NULL,
       fecha_inicio DATE NOT NULL,
       fecha_fin DATE NOT NULL,
@@ -125,25 +131,21 @@ export async function initSchema() {
 
       observaciones TEXT,
 
-      -- ESTADOS
       estado TEXT DEFAULT 'BORRADOR',
       exportado INTEGER DEFAULT 0,
       exportado_formato TEXT,
       exportado_fecha TIMESTAMP,
 
-      -- SINCRONIZACIÓN
       sync_status TEXT DEFAULT 'pending',
       sync_error TEXT,
       sync_attempts INTEGER DEFAULT 0,
 
-      -- AUDITORÍA
       created_by TEXT,
       updated_by TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       synced_at TIMESTAMP,
 
-      -- FOREIGN KEYS
       FOREIGN KEY (cultivo_id) REFERENCES cultivos(id),
       FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id),
       FOREIGN KEY (sector_id) REFERENCES sectores(id),
@@ -154,7 +156,7 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS hojas_lotes (
       hoja_id              TEXT    NOT NULL,
       lote_id              INTEGER NOT NULL,
-      hectareas_aplicadas  REAL,            -- NULL = usa el 100% del lote
+      hectareas_aplicadas  REAL,
       PRIMARY KEY (hoja_id, lote_id),
       FOREIGN KEY (hoja_id)  REFERENCES hojas_cab(id),
       FOREIGN KEY (lote_id)  REFERENCES lotes(id)
@@ -184,19 +186,21 @@ export async function initSchema() {
 
     CREATE TABLE IF NOT EXISTS productos (
       id TEXT PRIMARY KEY,
-      codigo TEXT NOT NULL UNIQUE,
+      empresa_id INTEGER NOT NULL,
+      codigo TEXT NOT NULL,
       nombre TEXT NOT NULL,
       tipo_producto_id INTEGER NOT NULL,
       activo INTEGER DEFAULT 1,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE,
       FOREIGN KEY (tipo_producto_id) REFERENCES tipos_producto(id)
     );
 
     CREATE TABLE IF NOT EXISTS unidades_medida (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo TEXT NOT NULL UNIQUE,       -- L, KG, CC
-      nombre TEXT NOT NULL,              -- Litros, Kilogramos
-      factor REAL DEFAULT 1,              -- para conversiones
+      codigo TEXT NOT NULL UNIQUE,
+      nombre TEXT NOT NULL,
+      factor REAL DEFAULT 1,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -229,11 +233,92 @@ export async function initSchema() {
       ON hojas_cab (fecha_inicio, fecha_fin);
 
     /* =========================
+       MÓDULO PLANTACIÓN DE CAÑA
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS cana_cab (
+      id                  TEXT PRIMARY KEY,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
+      dispositivo_id      TEXT    NOT NULL,
+      campana             TEXT    NOT NULL,
+      empresa_id          INTEGER,
+      tecnico_id          INTEGER,
+      fecha_inicio        DATE    NOT NULL,
+      fecha_fin           DATE,
+      mes                 TEXT    NOT NULL,
+      observaciones       TEXT,
+      estado              TEXT    DEFAULT 'BORRADOR',
+      sync_status         TEXT    DEFAULT 'pending',
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+      FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS cana_plantacion (
+      id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+      cab_id                    TEXT    NOT NULL,
+      lote_id                   INTEGER NOT NULL,
+      variedad_id               INTEGER,
+      ha_manual                 REAL    DEFAULT 0,
+      ha_mecanizada             REAL    DEFAULT 0,
+      ha_total                  REAL    DEFAULT 0,
+      cantidad_sembradora_grupos INTEGER,
+      personas_por_grupo        INTEGER,
+      orden                     INTEGER DEFAULT 0,
+      FOREIGN KEY (cab_id)      REFERENCES cana_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (lote_id)     REFERENCES lotes(id),
+      FOREIGN KEY (variedad_id) REFERENCES variedades(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS cana_corte_semilla (
+      id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      plantacion_id           INTEGER NOT NULL,
+      lote_semilla_id         INTEGER,
+      variedad_id             INTEGER,
+      sup_corte_ha            REAL,
+      rendimiento_tn_ha       REAL,
+      tn_cortadas_manual      REAL    DEFAULT 0,
+      tn_cortadas_mecanizada  REAL    DEFAULT 0,
+      consumo_semilla_tn_ha   REAL,
+      orden                   INTEGER DEFAULT 0,
+      FOREIGN KEY (plantacion_id)   REFERENCES cana_plantacion(id) ON DELETE CASCADE,
+      FOREIGN KEY (lote_semilla_id) REFERENCES lotes(id),
+      FOREIGN KEY (variedad_id)     REFERENCES variedades(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS cana_insumos (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      cab_id          TEXT    NOT NULL,
+      tipo            TEXT    NOT NULL DEFAULT 'AGROQUIMICO',
+      producto_id     TEXT,
+      producto_nombre TEXT    NOT NULL,
+      cantidad        REAL,
+      unidad          TEXT,
+      orden           INTEGER DEFAULT 0,
+      FOREIGN KEY (cab_id)      REFERENCES cana_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (producto_id) REFERENCES productos(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_cana_cab_estado
+      ON cana_cab (estado);
+
+    CREATE INDEX IF NOT EXISTS idx_cana_plantacion_cab
+      ON cana_plantacion (cab_id);
+
+    CREATE INDEX IF NOT EXISTS idx_cana_corte_plantacion
+      ON cana_corte_semilla (plantacion_id);
+
+    CREATE INDEX IF NOT EXISTS idx_cana_insumos_cab
+      ON cana_insumos (cab_id);
+
+    /* =========================
        TABLA HOJAS DE TRABAJO (DETALLE)
        ========================= */  
 
     CREATE TABLE IF NOT EXISTS hojas_detalle (
-      id TEXT PRIMARY KEY,               -- UUID
+      id TEXT PRIMARY KEY,
       hoja_id TEXT NOT NULL,
       linea INTEGER NOT NULL,
 
@@ -274,6 +359,15 @@ export async function initSchema() {
   await addColumnIfNotExists('hojas_cab', 'caudal_descripcion', 'TEXT');
   await addColumnIfNotExists('hojas_lotes', 'hectareas_aplicadas', 'REAL');
 
+  // Migraciones módulo Caña — agregar columnas nuevas si la tabla ya existía
+  await addColumnIfNotExists('cana_plantacion', 'cantidad_sembradora_grupos', 'INTEGER');
+  await addColumnIfNotExists('cana_plantacion', 'personas_por_grupo', 'INTEGER');
+  await addColumnIfNotExists('cana_plantacion', 'orden', 'INTEGER DEFAULT 0');
+  await addColumnIfNotExists('cana_corte_semilla', 'tn_cortadas_mecanizada', 'REAL DEFAULT 0');
+  await addColumnIfNotExists('cana_corte_semilla', 'orden', 'INTEGER DEFAULT 0');
+  await addColumnIfNotExists('cana_insumos', 'tipo', "TEXT NOT NULL DEFAULT 'AGROQUIMICO'");
+  await addColumnIfNotExists('cana_insumos', 'orden', 'INTEGER DEFAULT 0');
+
   // Migración: backfill hojas_sectores desde sector_id legacy
   try {
     await executeRun(`
@@ -282,4 +376,15 @@ export async function initSchema() {
       WHERE sector_id IS NOT NULL
     `);
   } catch (_) { /* tabla ya migrada o sin datos */ }
+
+  // Migraciones multi-tenancy: agregar empresa_id a tablas de catálogo
+  await addColumnIfNotExists('cultivos', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
+  await addColumnIfNotExists('variedades', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
+  await addColumnIfNotExists('productos', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
+  await addColumnIfNotExists('tecnicos', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
+  await addColumnIfNotExists('tipos_aplicacion', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
+  await addColumnIfNotExists('caudales', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
+
+  // Crear Foreign Keys para las nuevas columnas empresa_id (si no existen)
+  // SQLite no soporta ALTER FOREIGN KEY, pero los datos ya están asignados a empresa_id=1
 }
