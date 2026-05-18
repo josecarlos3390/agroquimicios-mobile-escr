@@ -134,16 +134,29 @@ async function mostrarSelectorPropiedad(empresas) {
     const screen = document.getElementById('propiedad-screen');
     const cards  = document.getElementById('propiedad-cards');
 
-    cards.innerHTML = empresas.map(e => `
-      <div class="propiedad-card" data-id="${e.id}">
-        <div class="propiedad-card-icon">🏡</div>
-        <div class="propiedad-card-info">
-          <div class="propiedad-card-nombre">${e.nombre}</div>
-          <div class="propiedad-card-sub">Propiedad</div>
+    function obtenerLogoEmpresa(nombre) {
+      const n = nombre.toUpperCase();
+      if (n.includes('CURICHI')) return 'logos/CURICHI.png';
+      if (n.includes('NUEVA ERA') || n.includes('GRANORTE')) return 'logos/GRANORTE.png';
+      return null;
+    }
+
+    cards.innerHTML = empresas.map(e => {
+      const logo = obtenerLogoEmpresa(e.nombre);
+      const icono = logo
+        ? `<img src="${logo}" class="propiedad-card-logo" alt="${e.nombre}">`
+        : '🏡';
+      return `
+        <div class="propiedad-card" data-id="${e.id}">
+          <div class="propiedad-card-icon">${icono}</div>
+          <div class="propiedad-card-info">
+            <div class="propiedad-card-nombre">${e.nombre}</div>
+            <div class="propiedad-card-sub">Propiedad</div>
+          </div>
+          <div class="propiedad-card-arrow">›</div>
         </div>
-        <div class="propiedad-card-arrow">›</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     screen.classList.remove('hidden');
 

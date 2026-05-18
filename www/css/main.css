@@ -2961,10 +2961,10 @@ body.dark .lote-ha-input {
 }
 
 .propiedad-card-icon {
-  width: 46px;
-  height: 46px;
+  width: 64px;
+  height: 64px;
   background: rgba(106, 170, 42, 0.15);
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3573,4 +3573,16 @@ body.dark .lote-ha-input {
 ========================================================= */
 .guia-card {
   cursor: pointer;
+}
+
+
+/* =========================================================
+   LOGOS DE PROPIEDAD EN SELECTOR
+========================================================= */
+.propiedad-card-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  padding: 4px;
 }
