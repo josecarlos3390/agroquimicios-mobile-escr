@@ -1,4 +1,4 @@
-import { executeRun, executeQuery } from '../db/sqlite.js';
+import { executeRun, executeQuery, reservarNumeroSecuencial } from '../db/sqlite.js';
 
 export async function createHojaCab(hoja) {
   await executeRun(
@@ -63,6 +63,7 @@ export async function updateHojaCab(id, data) {
       fecha_inicio = ?,
       fecha_fin = ?,
       cantidad_hectareas = ?,
+      cantidad_hectareas_lotes = ?,
       observaciones = ?,
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
@@ -79,6 +80,7 @@ export async function updateHojaCab(id, data) {
       data.fecha_inicio,
       data.fecha_fin,
       data.cantidad_hectareas,
+      data.cantidad_hectareas_lotes ?? data.cantidad_hectareas,
       data.observaciones,
       id
     ]
@@ -97,11 +99,7 @@ export async function getHojaCabById(id) {
 
 
 export async function getNextNumeroSecuencial() {
-  const result = await executeQuery(
-    'SELECT COALESCE(MAX(numero_secuencial), 0) + 1 AS next FROM hojas_cab'
-  );
-
-  return result[0].next;
+  return await reservarNumeroSecuencial('hojas_cab');
 }
 
 export async function getHojas(estado = null) {
@@ -143,8 +141,17 @@ export async function updateEstadoHoja(id, nuevoEstado) {
   );
 }
 
+export async function getHectareasHoja(id) {
+  const result = await executeQuery(
+    'SELECT cantidad_hectareas FROM hojas_cab WHERE id = ?',
+    [id]
+  );
+  return result[0] ?? null;
+}
+
 export async function deleteHojaCab(id) {
     // Primero eliminar registros relacionados
+  await executeRun('DELETE FROM hojas_sectores WHERE hoja_id = ?', [id]);
   await executeRun('DELETE FROM hojas_lotes WHERE hoja_id = ?', [id]);
   await executeRun('DELETE FROM hojas_detalle WHERE hoja_id = ?', [id]);
   // Luego eliminar la cabecera

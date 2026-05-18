@@ -30,8 +30,8 @@ export async function actualizarVariedad(data) {
   return executeRun(
     `UPDATE variedades
      SET nombre = ?
-     WHERE id = ?`,
-    [data.nombre, data.id]
+     WHERE id = ? AND empresa_id = ?`,
+    [data.nombre, data.id, data.empresa_id]
   );
 }
 

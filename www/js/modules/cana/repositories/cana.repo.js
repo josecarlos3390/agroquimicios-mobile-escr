@@ -1,4 +1,4 @@
-import { executeRun, executeQuery } from '../../../db/sqlite.js';
+import { executeRun, executeQuery, reservarNumeroSecuencial } from '../../../db/sqlite.js';
 
 /* =========================================================
    CABECERA
@@ -8,31 +8,32 @@ export async function createCanaCab(data) {
     INSERT INTO cana_cab (
       id, numero_secuencial, numero_completo, dispositivo_id,
       campana, empresa_id, tecnico_id,
-      fecha_inicio, fecha_fin, mes, observaciones, estado
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BORRADOR')`,
+      fecha, fecha_inicio, fecha_fin, mes, observaciones, estado
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BORRADOR')`,
     [
       data.id, data.numero_secuencial, data.numero_completo, data.dispositivo_id,
       data.campana, data.empresa_id, data.tecnico_id,
-      data.fecha_inicio, data.fecha_fin, data.mes, data.observaciones ?? null,
+      data.fecha ?? data.fecha_inicio, data.fecha_inicio, data.fecha_fin,
+      data.mes, data.observaciones ?? null,
     ]
   );
   return data.id;
 }
 
 export async function getNextNumeroSecuencialCana() {
-  const r = await executeQuery(
-    'SELECT COALESCE(MAX(numero_secuencial), 0) + 1 AS next FROM cana_cab'
-  );
-  return r[0].next;
+  return await reservarNumeroSecuencial('cana_cab');
 }
 
-export async function getCanaCabs(estado = null) {
-  const where  = estado ? 'WHERE c.estado = ?' : '';
-  const params = estado ? [estado] : [];
+export async function getCanaCabs(estado = null, empresaId = null) {
+  const conditions = [];
+  const params = [];
+  if (estado)    { conditions.push('c.estado = ?');     params.push(estado); }
+  if (empresaId) { conditions.push('c.empresa_id = ?'); params.push(empresaId); }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   return await executeQuery(`
     SELECT
       c.id, c.numero_completo, c.campana, c.mes,
-      c.fecha_inicio, c.fecha_fin, c.estado,
+      c.fecha, c.fecha_inicio, c.fecha_fin, c.estado,
       e.nombre AS empresa_nombre,
       t.nombre AS tecnico_nombre,
       COUNT(DISTINCT cp.id) AS total_lotes
@@ -51,6 +52,49 @@ export async function deleteCanaCab(id) {
   await executeRun('DELETE FROM cana_cab WHERE id = ?', [id]);
 }
 
+export async function getCanaCabById(id) {
+  const r = await executeQuery(`
+    SELECT
+      c.*,
+      e.nombre AS empresa_nombre,
+      t.nombre AS tecnico_nombre
+    FROM cana_cab c
+    LEFT JOIN empresas e ON e.id = c.empresa_id
+    LEFT JOIN tecnicos t ON t.id = c.tecnico_id
+    WHERE c.id = ?`, [id]
+  );
+  return r[0] ?? null;
+}
+
+export async function updateCanaCab(id, data) {
+  await executeRun(`
+    UPDATE cana_cab SET
+      empresa_id    = ?,
+      tecnico_id    = ?,
+      campana       = ?,
+      fecha         = ?,
+      fecha_inicio  = ?,
+      fecha_fin     = ?,
+      mes           = ?,
+      observaciones = ?,
+      estado        = ?,
+      updated_at    = CURRENT_TIMESTAMP
+    WHERE id = ?`,
+    [
+      data.empresa_id ?? null,
+      data.tecnico_id ?? null,
+      data.campana ?? null,
+      data.fecha ?? null,
+      data.fecha_inicio ?? null,
+      data.fecha_fin ?? null,
+      data.mes ?? null,
+      data.observaciones ?? null,
+      data.estado ?? 'BORRADOR',
+      id,
+    ]
+  );
+}
+
 export async function updateEstadoCanaCab(id, estado) {
   await executeRun(
     'UPDATE cana_cab SET estado = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -65,16 +109,19 @@ export async function insertPlantacion(data) {
   const r = await executeRun(`
     INSERT INTO cana_plantacion
       (cab_id, lote_id, variedad_id, ha_manual, ha_mecanizada, ha_total,
-       cantidad_sembradora_grupos, personas_por_grupo, orden)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       cantidad_sembradora_grupos, personas_por_grupo, fecha_inicio, fecha_fin, orden)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       data.cab_id, data.lote_id, data.variedad_id ?? null,
       data.ha_manual ?? 0, data.ha_mecanizada ?? 0, data.ha_total ?? 0,
-      data.cantidad_sembradora_grupos ?? null, data.personas_por_grupo ?? null,
+      data.cantidad_sembradora_grupos ?? null,
+      data.personas_por_grupo ?? null,
+      data.fecha_inicio ?? null, data.fecha_fin ?? null,
       data.orden ?? 0,
     ]
   );
-  return r.insertId ?? r.lastInsertRowid;
+  // CapacitorSQLite devuelve { changes: N, lastId: N }
+  return r.lastId ?? r.insertId ?? r.lastInsertRowid;
 }
 
 export async function getPlantacionesByCab(cab_id) {
@@ -83,6 +130,7 @@ export async function getPlantacionesByCab(cab_id) {
       cp.id, cp.lote_id, cp.variedad_id,
       cp.ha_manual, cp.ha_mecanizada, cp.ha_total,
       cp.cantidad_sembradora_grupos, cp.personas_por_grupo, cp.orden,
+      cp.fecha_inicio, cp.fecha_fin,
       l.nombre  AS lote_nombre,
       v.nombre  AS variedad_nombre
     FROM cana_plantacion cp
@@ -106,13 +154,13 @@ export async function insertCorteSemilla(data) {
       (plantacion_id, lote_semilla_id, variedad_id,
        sup_corte_ha, rendimiento_tn_ha,
        tn_cortadas_manual, tn_cortadas_mecanizada,
-       consumo_semilla_tn_ha, orden)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       consumo_semilla_tn_ha, fecha, orden)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       data.plantacion_id, data.lote_semilla_id ?? null, data.variedad_id ?? null,
       data.sup_corte_ha ?? null, data.rendimiento_tn_ha ?? null,
       data.tn_cortadas_manual ?? 0, data.tn_cortadas_mecanizada ?? 0,
-      data.consumo_semilla_tn_ha ?? null, data.orden ?? 0,
+      data.consumo_semilla_tn_ha ?? null, data.fecha ?? null, data.orden ?? 0,
     ]
   );
 }
@@ -154,4 +202,28 @@ export async function getInsumosByCab(cab_id) {
 
 export async function deleteInsumosByCab(cab_id) {
   await executeRun('DELETE FROM cana_insumos WHERE cab_id = ?', [cab_id]);
+}
+
+/* =========================================================
+   EXPORTACIÓN A EXCEL
+======================================================== */
+export async function getLineasExportacionCana(cab_id) {
+  return await executeQuery(`
+    SELECT
+      cp.fecha_inicio,
+      cp.fecha_fin,
+      '' AS sector_codigo,
+      s1.nombre AS sector_nombre,
+      l1.nombre AS lote_nombre,
+      v1.nombre AS variedad_nombre,
+      cp.ha_manual,
+      cp.ha_mecanizada,
+      cp.ha_total
+    FROM cana_plantacion cp
+    JOIN lotes l1 ON l1.id = cp.lote_id
+    JOIN sectores s1 ON s1.id = l1.sector_id
+    LEFT JOIN variedades v1 ON v1.id = cp.variedad_id
+    WHERE cp.cab_id = ?
+    ORDER BY cp.orden
+  `, [cab_id]);
 }

@@ -1,4 +1,5 @@
 import { listarCultivos } from '../services/cultivos.service.js';
+import { listarEmpresas, getEmpresaActiva } from '../services/empresas.service.js';
 import {
   listarVariedades,
   guardarVariedad,
@@ -7,6 +8,7 @@ import {
 import { confirmar } from '../utils/confirm.js';
 
 let cultivoSeleccionado = null;
+let empresaSeleccionada = null;
 let variedadEditando = null;
 let inicializado = false;
 
@@ -28,8 +30,39 @@ export function initVariedadesView() {
 export async function cargarVistaVariedades() {
   cultivoSeleccionado = null;
   document.getElementById('btnNuevaVariedad').disabled = true;
-  await cargarCultivos();
   limpiarTabla();
+  await cargarEmpresas();
+}
+
+/* =========================
+   EMPRESAS
+========================= */
+
+async function cargarEmpresas() {
+  const select = document.getElementById('selectEmpresaVariedades');
+  const activa = getEmpresaActiva();
+
+  if (activa) {
+    empresaSeleccionada = Number(activa.id);
+    select.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
+    select.value = activa.id;
+    select.disabled = true;
+  } else {
+    const empresas = await listarEmpresas();
+    select.innerHTML = '<option value="">Seleccione empresa</option>';
+    empresas.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = e.nombre;
+      select.appendChild(opt);
+    });
+    if (!empresaSeleccionada && empresas.length > 0) {
+      empresaSeleccionada = Number(empresas[0].id);
+      select.value = empresaSeleccionada;
+    }
+  }
+
+  await cargarCultivos();
 }
 
 /* =========================
@@ -38,7 +71,16 @@ export async function cargarVistaVariedades() {
 
 async function cargarCultivos() {
   const select = document.getElementById('selectCultivoVariedades');
-  const cultivos = await listarCultivos();
+  cultivoSeleccionado = null;
+  document.getElementById('btnNuevaVariedad').disabled = true;
+  limpiarTabla();
+
+  if (!empresaSeleccionada) {
+    select.innerHTML = '<option value="">Seleccione cultivo</option>';
+    return;
+  }
+
+  const cultivos = await listarCultivos(empresaSeleccionada);
 
   select.innerHTML = '<option value="">Seleccione cultivo</option>';
 
@@ -48,6 +90,13 @@ async function cargarCultivos() {
     opt.textContent = c.nombre;
     select.appendChild(opt);
   });
+
+  if (cultivos.length > 0) {
+    cultivoSeleccionado = Number(cultivos[0].id);
+    select.value = cultivoSeleccionado;
+    document.getElementById('btnNuevaVariedad').disabled = false;
+    await cargarVariedades();
+  }
 }
 
 /* =========================
@@ -55,11 +104,20 @@ async function cargarCultivos() {
 ========================= */
 
 async function cargarVariedades() {
+  console.log('[VAR] cargarVariedades → cultivo_id:', cultivoSeleccionado, '| tipo:', typeof cultivoSeleccionado);
+
   const variedades = await listarVariedades(cultivoSeleccionado);
 
+  console.log('[VAR] Resultado:', variedades);
+
   if (!Array.isArray(variedades)) {
-    console.error('❌ Variedades no es array:', variedades);
+    console.error('[VAR] ❌ No es array:', variedades);
     return;
+  }
+
+  // Si viene vacío, log simple
+  if (variedades.length === 0) {
+    console.warn('[VAR] ⚠️ 0 resultados para cultivo_id=' + cultivoSeleccionado);
   }
 
   const tbody = document.getElementById('tablaVariedades');
@@ -74,14 +132,11 @@ async function cargarVariedades() {
         <button class="eliminar">🗑️</button>
       </td>
     `;
-
     tr.querySelector('.editar').onclick = () => editarVariedad(v);
     tr.querySelector('.eliminar').onclick = () => eliminar(v.id);
-
     tbody.appendChild(tr);
   });
 }
-
 
 function limpiarTabla() {
   document.getElementById('tablaVariedades').innerHTML = '';
@@ -92,11 +147,17 @@ function limpiarTabla() {
 ========================= */
 
 function registrarEventos() {
+  const selectEmpresa = document.getElementById('selectEmpresaVariedades');
   const selectCultivo = document.getElementById('selectCultivoVariedades');
   const btnNueva = document.getElementById('btnNuevaVariedad');
 
+  selectEmpresa.onchange = async e => {
+    empresaSeleccionada = e.target.value ? Number(e.target.value) : null;
+    await cargarCultivos();
+  };
+
   selectCultivo.onchange = e => {
-    cultivoSeleccionado = e.target.value || null;
+    cultivoSeleccionado = e.target.value ? Number(e.target.value) : null;
     btnNueva.disabled = !cultivoSeleccionado;
     limpiarTabla();
     if (cultivoSeleccionado) cargarVariedades();
@@ -137,6 +198,7 @@ async function guardarDesdeModal() {
 
   await guardarVariedad({
     id: variedadEditando?.id,
+    empresa_id: empresaSeleccionada,
     cultivo_id: cultivoSeleccionado,
     nombre
   });

@@ -2,7 +2,7 @@
    IMPORTS
 ================================ */
 import { borrarBaseDeDatos } from './db/sqlite.js';
-import { setEmpresaActiva, getEmpresaActiva, listarEmpresas } from './services/empresas.service.js';
+import { setEmpresaActiva, getEmpresaActiva, listarEmpresas, restaurarEmpresaActiva } from './services/empresas.service.js';
 
 import { initSidebar, renderMenuModulo } from './ui/sidebar.js';
 import { initSchema } from './db/schema.js';
@@ -15,7 +15,7 @@ import {
   seedCaudales,
   seedTiposProducto,
   seedUnidadesMedida,
-  seedProductosCana,
+  seedVariedades,
 } from './db/seed.js';
 
 // ── Módulo: Agroquímicos ──────────────────────────────────
@@ -39,7 +39,21 @@ import { initHojaEditarView, cargarHojaEditar } from './modules/agroquimicos/hoj
 
 // ── Módulo: Caña ──────────────────────────────────────────
 import { initRegistrosCanaView, cargarRegistrosCana } from './modules/cana/views/registros.view.js';
-import { initNuevaNotaCanaView, cargarNuevaNotaCana } from './modules/cana/views/nuevaNota.view.js';
+import { initNuevaNotaCanaView, cargarNuevaNotaCana, cargarEdicionNotaCana } from './modules/cana/views/nuevaNota.view.js';
+import { initCanaDetalleView, cargarCanaDetalle } from './modules/cana/views/canaDetalle.view.js';
+
+// ── Módulo: Combustible ───────────────────────────────────
+import { initRegistrosCombustibleView, cargarRegistrosCombustible } from './modules/combustible/views/registros.view.js';
+import { initNuevaAsignacionCombustibleView, cargarNuevaAsignacion, cargarEdicionAsignacion, cargarDetalleCombustible } from './modules/combustible/views/nuevaAsignacion.view.js';
+
+// ── Módulo: Corte de Semilla ──────────────────────────────
+import { initRegistrosCorteSemillaView, cargarRegistrosCorteSemilla } from './modules/corteSemilla/views/registros.view.js';
+import { initNuevoCorteSemillaView, cargarNuevoCorteSemilla, cargarEdicionCorteSemilla, cargarDetalleCorteSemilla } from './modules/corteSemilla/views/nuevoCorte.view.js';
+
+// ── Módulo: Guía de Transporte de Caña ────────────────────
+import { initRegistrosGuiaTransporteView, cargarRegistrosGuiaTransporte } from './modules/guiaTransporteCana/views/registros.view.js';
+import { initNuevaGuiaTransporteView, cargarNuevaGuiaTransporte, cargarEdicionGuiaTransporte } from './modules/guiaTransporteCana/views/nuevaGuia.view.js';
+import { initDetalleGuiaTransporteView, cargarDetalleGuiaTransporte } from './modules/guiaTransporteCana/views/detalleGuia.view.js';
 
 /* ===============================
    SPLASH
@@ -69,12 +83,48 @@ const TIPOS_USO = [
     sub: 'Registros de plantación',
     disponible: true,
   },
+  {
+    id: 'combustible',
+    nombre: 'Uso de Combustible',
+    icono: '\u26FD',
+    sub: 'Asignaciones de combustible',
+    disponible: true,
+  },
+  {
+    id: 'corte-semilla',
+    nombre: 'Corte de Semilla',
+    icono: '\u2702\uFE0F',
+    sub: 'Registros de corte',
+    disponible: true,
+  },
+  {
+    id: 'guia-transporte-cana',
+    nombre: 'Guía de Transporte',
+    icono: '\uD83D\uDCDC',
+    sub: 'Transporte de caña',
+    disponible: true,
+  },
 ];
 
 let tipoUsoActivo = null;
 
 function getTipoUsoActivo() { return tipoUsoActivo; }
 window.getTipoUsoActivo = getTipoUsoActivo;
+
+function guardarTipoUsoActivo(uso) {
+  tipoUsoActivo = uso;
+  if (uso) {
+    localStorage.setItem('tipoUsoActivo', uso.id);
+  } else {
+    localStorage.removeItem('tipoUsoActivo');
+  }
+}
+
+function obtenerTipoUsoActivo() {
+  const id = localStorage.getItem('tipoUsoActivo');
+  if (!id) return null;
+  return TIPOS_USO.find(t => t.id === id);
+}
 
 /* ===============================
    SELECCIÓN DE PROPIEDAD
@@ -126,14 +176,42 @@ async function initApp() {
 
     await seedEmpresas();
     await seedCultivos();
+    await seedVariedades();
     await seedTiposAplicacion();
     await seedCaudales();
     await seedTiposProducto();
     await seedUnidadesMedida();
     await seedTecnicos();
-    await seedProductosCana();
 
     initSidebar();
+
+    // ── Intentar restaurar sesión previa ──
+    const empresaRestaurada = await restaurarEmpresaActiva();
+    const usoRestaurado     = obtenerTipoUsoActivo();
+
+    if (empresaRestaurada && usoRestaurado) {
+      tipoUsoActivo = usoRestaurado;
+      actualizarHeaderPropiedad(empresaRestaurada.nombre);
+      actualizarHeaderUso(usoRestaurado);
+      renderMenuModulo(usoRestaurado.id);
+      document.body.classList.remove('app-inactiva');
+      ocultarSplash();
+
+      if (usoRestaurado.id === 'cana') {
+        window.showView('cana-registros');
+      } else if (usoRestaurado.id === 'combustible') {
+        window.showView('combustible-registros');
+      } else if (usoRestaurado.id === 'corte-semilla') {
+        window.showView('corte-semilla-registros');
+      } else if (usoRestaurado.id === 'guia-transporte-cana') {
+        window.showView('guia-transporte-registros');
+      } else {
+        window.showView('hojas');
+      }
+      return;
+    }
+
+    // ── Flujo normal (primera vez o sin sesión guardada) ──
     initHojasView();
     await cargarHojas();
 
@@ -212,6 +290,7 @@ async function mostrarSelectorUso(empresa) {
       card.addEventListener('click', () => {
         const uso = TIPOS_USO.find(t => t.id === card.dataset.id);
         tipoUsoActivo = uso;
+        guardarTipoUsoActivo(uso);
 
         screen.classList.add('propiedad-hide');
         screen.addEventListener('transitionend', () => {
@@ -226,6 +305,12 @@ async function mostrarSelectorUso(empresa) {
           // Navegar a la vista de inicio del módulo
           if (uso.id === 'cana') {
             window.showView('cana-registros');
+          } else if (uso.id === 'combustible') {
+            window.showView('combustible-registros');
+          } else if (uso.id === 'corte-semilla') {
+            window.showView('corte-semilla-registros');
+          } else if (uso.id === 'guia-transporte-cana') {
+            window.showView('guia-transporte-registros');
           } else {
             window.showView('hojas');
           }
@@ -292,7 +377,19 @@ async function cambiarPropiedad() {
 
   const empresa = await mostrarSelectorPropiedad(empresas);
   await mostrarSelectorUso(empresa);
-  window.showView('hojas');
+
+  // Navegar a la vista correspondiente al tipo de uso activo
+  if (tipoUsoActivo?.id === 'cana') {
+    window.showView('cana-registros');
+  } else if (tipoUsoActivo?.id === 'combustible') {
+    window.showView('combustible-registros');
+  } else if (tipoUsoActivo?.id === 'corte-semilla') {
+    window.showView('corte-semilla-registros');
+  } else if (tipoUsoActivo?.id === 'guia-transporte-cana') {
+    window.showView('guia-transporte-registros');
+  } else {
+    window.showView('hojas');
+  }
 }
 
 window.cambiarPropiedad = cambiarPropiedad;
@@ -338,8 +435,60 @@ function showView(view, param = null) {
     case 'editar-hoja':   initHojaEditarView(); if (param) cargarHojaEditar(param); break;
 
     // ── Módulo Caña ──
-    case 'cana-registros': initRegistrosCanaView(); cargarRegistrosCana(); break;
-    case 'cana-nuevo':     initNuevaNotaCanaView(); cargarNuevaNotaCana(); break;
+    case 'cana-registros':          initRegistrosCanaView(); cargarRegistrosCana(); break;
+    case 'cana-nuevo':              initNuevaNotaCanaView(); cargarNuevaNotaCana(); break;
+    case 'cana-detalle':            initCanaDetalleView(); if (param) cargarCanaDetalle(param); break;
+    case 'cana-editar': {
+      document.getElementById('view-cana-nuevo').classList.remove('hidden');
+      initNuevaNotaCanaView();
+      if (param) cargarEdicionNotaCana(param);
+      break;
+    }
+
+    // ── Módulo Combustible ──
+    case 'combustible-registros': initRegistrosCombustibleView(); cargarRegistrosCombustible(); break;
+    case 'combustible-nuevo':     initNuevaAsignacionCombustibleView(); cargarNuevaAsignacion(); break;
+    case 'combustible-editar': {
+      document.getElementById('view-combustible-nuevo').classList.remove('hidden');
+      initNuevaAsignacionCombustibleView();
+      if (param) cargarEdicionAsignacion(param);
+      break;
+    }
+    case 'combustible-detalle': {
+      initNuevaAsignacionCombustibleView();
+      if (param) cargarDetalleCombustible(param);
+      break;
+    }
+
+    // ── Módulo Corte de Semilla ──
+    case 'corte-semilla-registros': initRegistrosCorteSemillaView(); cargarRegistrosCorteSemilla(); break;
+    case 'corte-semilla-nuevo':     initNuevoCorteSemillaView(); cargarNuevoCorteSemilla(); break;
+    case 'corte-semilla-editar': {
+      document.getElementById('view-corte-semilla-nuevo').classList.remove('hidden');
+      initNuevoCorteSemillaView();
+      if (param) cargarEdicionCorteSemilla(param);
+      break;
+    }
+    case 'corte-semilla-detalle': {
+      initNuevoCorteSemillaView();
+      if (param) cargarDetalleCorteSemilla(param);
+      break;
+    }
+
+    // ── Módulo Guía de Transporte de Caña ──
+    case 'guia-transporte-registros': initRegistrosGuiaTransporteView(); cargarRegistrosGuiaTransporte(); break;
+    case 'guia-transporte-nuevo':     initNuevaGuiaTransporteView(); cargarNuevaGuiaTransporte(); break;
+    case 'guia-transporte-editar': {
+      document.getElementById('view-guia-transporte-nuevo').classList.remove('hidden');
+      initNuevaGuiaTransporteView();
+      if (param) cargarEdicionGuiaTransporte(param);
+      break;
+    }
+    case 'guia-transporte-detalle': {
+      initDetalleGuiaTransporteView();
+      if (param) cargarDetalleGuiaTransporte(param);
+      break;
+    }
   }
 }
 

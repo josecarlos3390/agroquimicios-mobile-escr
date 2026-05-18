@@ -1,9 +1,17 @@
-// www/js/services/cultivos.service.js
-import * as repo from '../repositories/cultivos.repo.js';
+import {
+  getCultivos,
+  saveCultivo,
+  deleteCultivo
+} from '../repositories/cultivos.repo.js';
 
 export async function listarCultivos(empresaId) {
-  return await repo.getCultivos(empresaId);
+  return await getCultivos(empresaId);
 }
 
-export const guardarCultivo = repo.saveCultivo;
-export const eliminarCultivo = repo.deleteCultivo;
+export async function guardarCultivo(c) {
+  return await saveCultivo(c);
+}
+
+export async function eliminarCultivo(id) {
+  return await deleteCultivo(id);
+}

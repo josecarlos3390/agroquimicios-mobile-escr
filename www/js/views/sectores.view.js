@@ -17,9 +17,6 @@ export function initSectoresView() {
 
   const idInput = document.getElementById('sector-id');
   const nombreInput = document.getElementById('sector-nombre');
-  const hectareasInput = document.getElementById('sector-hectareas');
-
-  cargarEmpresasSector();
 
   empresaSelect.onchange = async () => {
     empresaActual = empresaSelect.value;
@@ -52,8 +49,7 @@ export function initSectoresView() {
     await guardarSector({
       id: idInput.value || null,
       empresa_id: empresaActual,
-      nombre: nombreInput.value,
-      hectareas: hectareasInput.value
+      nombre: nombreInput.value
     });
 
     modal.classList.add('hidden');
@@ -72,7 +68,6 @@ export function initSectoresView() {
         const tr = e.target.closest('tr').children;
         idInput.value = e.target.dataset.edit;
         nombreInput.value = tr[0].innerText;
-        hectareasInput.value = tr[1].innerText;
         modal.classList.remove('hidden');
       }
 
@@ -88,6 +83,9 @@ export function initSectoresView() {
 
     eventosRegistrados = true;
   }
+
+  // ✅ Llamar DESPUÉS de registrar el onchange para que el dispatchEvent lo capture
+  cargarEmpresasSector();
 }
 
 export async function cargarSectores() {
@@ -99,10 +97,11 @@ export async function cargarSectores() {
   tbody.innerHTML = '';
 
   sectores.forEach(s => {
+    const ha = s.hectareas_total > 0 ? s.hectareas_total.toFixed(2) : '—';
     tbody.innerHTML += `
       <tr>
         <td>${s.nombre}</td>
-        <td>${s.hectareas || ''}</td>
+        <td>${ha}</td>
         <td>
           <button data-edit="${s.id}">✏️</button>
           <button data-delete="${s.id}">🗑️</button>

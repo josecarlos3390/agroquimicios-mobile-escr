@@ -119,7 +119,7 @@
   <!-- ======================
       HOJAS DE TRABAJO
   ====================== -->
-  <section id="view-hojas" class="view">
+  <section id="view-hojas" class="view hidden">
 
     <!-- Cabecera -->
     <div class="card">
@@ -292,7 +292,7 @@
     <label>Empresa <select id="sector-empresa-select"></select></label>
     <button id="btn-nuevo-sector" class="btn-primary">➕ Nuevo sector</button>
     <table>
-      <thead><tr><th>Nombre</th><th>Hectáreas</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Hectáreas (lotes)</th><th>Acciones</th></tr></thead>
       <tbody id="sectores-body"></tbody>
     </table>
   </div>
@@ -302,7 +302,6 @@
     <form id="sector-form">
       <input type="hidden" id="sector-id">
       <label>Nombre <input type="text" id="sector-nombre" required></label>
-      <label>Hectáreas <input type="number" id="sector-hectareas" step="0.01"></label>
       <div class="modal-actions">
         <button type="button" id="btn-cancelar-sector">Cancelar</button>
         <button type="submit" class="btn-primary">Guardar</button>
@@ -379,6 +378,7 @@
   <section id="view-variedades" class="view hidden">
   <div class="card">
     <h3>🌱 Variedades</h3>
+    <label>Empresa <select id="selectEmpresaVariedades"></select></label>
     <label>Cultivo <select id="selectCultivoVariedades"></select></label>
     <button id="btnNuevaVariedad" class="btn-primary" disabled>➕ Nueva variedad</button>
     <table>
@@ -468,7 +468,19 @@
   <section id="view-productos" class="view hidden">
   <div class="card">
     <h3>🧪 Productos</h3>
-    <button id="btn-nuevo-producto" class="btn-primary">➕ Nuevo</button>
+    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem">
+      <button id="btn-nuevo-producto" class="btn-primary" style="margin:0">➕ Nuevo</button>
+      <div style="position:relative;flex:1;min-width:200px">
+        <input type="text" id="productos-search"
+          placeholder="🔍 Buscar por nombre o código..."
+          style="width:100%;box-sizing:border-box;padding-right:2rem">
+        <button type="button" id="productos-search-clear"
+          style="position:absolute;right:0.4rem;top:50%;transform:translateY(-50%);
+                 background:none;border:none;box-shadow:none;cursor:pointer;
+                 font-size:1rem;color:var(--text-muted);display:none;padding:0;line-height:1">✕</button>
+      </div>
+      <span id="productos-count" style="font-size:0.83rem;color:var(--text-muted);white-space:nowrap"></span>
+    </div>
     <div id="productos-body"></div>   <!-- 👈 div en lugar de table -->
   </div>
   <div id="producto-modal" class="modal hidden">
@@ -840,11 +852,8 @@
           <label>Campaña
             <input type="text" id="cana-campana-input" class="input-upper" required>
           </label>
-          <label>Fecha inicio
-            <input type="date" id="cana-fecha-inicio" required>
-          </label>
-          <label>Fecha fin
-            <input type="date" id="cana-fecha-fin">
+          <label>Fecha
+            <input type="date" id="cana-fecha" required>
           </label>
         </div>
       </div>
@@ -860,11 +869,6 @@
       <!-- Plantaciones -->
       <div class="card">
         <div id="cana-plantaciones-container"></div>
-      </div>
-
-      <!-- Insumos -->
-      <div class="card">
-        <div id="cana-insumos-container"></div>
       </div>
 
       <!-- Maquinaria / Observaciones -->
@@ -884,6 +888,381 @@
       </div>
 
     </form>
+  </section>
+
+
+  <!-- ======================
+       DETALLE NOTA CAÑA
+  ====================== -->
+  <section id="view-cana-detalle" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <button type="button" id="btn-cana-detalle-volver" class="btn-volver">← Volver</button>
+        <h3>📋 Nota de plantación</h3>
+      </div>
+
+      <!-- Resumen cabecera -->
+      <div class="grid" style="margin-top:0.5rem">
+        <label>Número <span id="cd-numero" class="detalle-info">—</span></label>
+        <label>Empresa <span id="cd-empresa" class="detalle-info">—</span></label>
+        <label>Técnico <span id="cd-tecnico" class="detalle-info">—</span></label>
+        <label>Campaña <span id="cd-campana" class="detalle-info">—</span></label>
+        <label>Fecha <span id="cd-fecha" class="detalle-info">—</span></label>
+        <label>Mes <span id="cd-mes" class="detalle-info">—</span></label>
+        <label>Estado <span id="cd-estado" class="detalle-info">—</span></label>
+      </div>
+      <label style="margin-top:0.5rem">Observaciones <span id="cd-obs" class="detalle-info">—</span></label>
+    </div>
+
+    <!-- Plantaciones -->
+    <div class="card">
+      <h3>🌾 Plantaciones</h3>
+      <div id="cd-plantaciones"></div>
+    </div>
+
+    <!-- Acciones -->
+    <div style="display:flex;gap:0.65rem;padding:0 0 1rem">
+      <button id="btn-cana-detalle-editar" class="btn-primary" style="flex:1">✏️ Editar</button>
+      <button id="btn-cana-detalle-exportar" class="btn-secondary" style="flex:1">📤 Exportar</button>
+    </div>
+  </section>
+
+  <!-- ======================
+       MÓDULO CORTE DE SEMILLA
+  ====================== -->
+  <section id="view-corte-semilla-registros" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <h3>✂️ Cortes de semilla</h3>
+      </div>
+      <label style="margin-bottom:0.5rem">Estado
+        <select id="filtro-estado-cs" class="filtro-estado-select">
+          <option value="">Todos</option>
+          <option value="BORRADOR">BORRADOR</option>
+          <option value="EXPORTADO">EXPORTADO</option>
+        </select>
+      </label>
+      <button id="btn-nuevo-corte-semilla" class="btn-primary" style="width:100%">➕ Nuevo corte</button>
+    </div>
+    <div id="corte-semilla-lista"></div>
+  </section>
+
+  <section id="view-corte-semilla-nuevo" class="view hidden">
+    <form id="form-cs-nuevo">
+      <div class="card">
+        <div class="vista-header">
+          <button type="button" id="btn-cs-nuevo-volver" class="btn-volver">← Volver</button>
+          <h3>✂️ Nuevo corte de semilla</h3>
+        </div>
+        <div class="grid">
+          <label>Empresa <select id="cs-empresa-select" required></select></label>
+          <label>Encargado <select id="cs-tecnico-select"></select></label>
+          <label>Campaña <input type="text" id="cs-campana-input" class="input-upper" required></label>
+          <label>Fecha <input type="date" id="cs-fecha" required></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <strong>🗺️ Sectores</strong>
+        <div id="cs-sectores-container" style="margin-top:0.5rem">
+          <p style="color:var(--text-muted);font-size:0.9rem">Seleccioná una empresa para ver los sectores.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="cs-cortes-container"></div>
+      </div>
+
+      <div class="card">
+        <label>
+          <strong>🚜 Observaciones</strong>
+          <textarea id="cs-observaciones" class="input-upper" placeholder="Notas adicionales..." rows="3" style="margin-top:0.4rem"></textarea>
+        </label>
+      </div>
+
+      <div style="padding:0 0 1rem">
+        <button type="submit" class="btn-primary" style="width:100%">📌 Crear corte de semilla</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="view-corte-semilla-detalle" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <button type="button" id="btn-cs-detalle-volver" class="btn-volver">← Volver</button>
+        <h3>✂️ Detalle de corte</h3>
+      </div>
+    </div>
+    <div id="cs-detalle-contenido"></div>
+  </section>
+
+  <!-- ======================
+       MÓDULO USO DE COMBUSTIBLE
+  ====================== -->
+  <section id="view-combustible-registros" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <h3>⛽ Asignaciones de combustible</h3>
+      </div>
+      <button id="btn-nueva-asignacion" class="btn-primary" style="width:100%">➕ Nueva asignación</button>
+    </div>
+    <div id="combustible-lista"></div>
+  </section>
+
+  <section id="view-combustible-nuevo" class="view hidden">
+    <form id="form-combustible-asignacion">
+      <div class="card">
+        <div class="vista-header">
+          <button type="button" id="btn-combustible-volver" class="btn-volver">← Volver</button>
+          <h3>⛽ Nueva asignación de combustible</h3>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="grid">
+          <label>Propiedad
+            <select id="combustible-empresa-select"><option value="">Cargando...</option></select>
+          </label>
+          <label>Fecha
+            <input type="date" id="combustible-fecha" required>
+          </label>
+          <label>Placa / Código
+            <input type="text" id="combustible-placa" placeholder="Ej: ABC-123" required>
+          </label>
+          <label>Tipo de combustible
+            <select id="combustible-tipo" required>
+              <option value="DIESEL">DIESEL</option>
+              <option value="GASOLINA">GASOLINA</option>
+            </select>
+          </label>
+          <label>Cantidad (Litros)
+            <input type="number" id="combustible-cantidad" placeholder="0.00" step="0.01" min="0" required>
+          </label>
+          <label>Horómetro (Km)
+            <input type="number" id="combustible-horometro" placeholder="0.0" step="0.1" min="0">
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 style="margin:0 0 0.75rem">👥 Responsables</h4>
+        <div class="grid">
+          <label>Persona que recibe
+            <input type="text" id="combustible-recibe" placeholder="Nombre de quien recibe" required>
+          </label>
+          <label>Persona que entrega
+            <input type="text" id="combustible-entrega" placeholder="Nombre de quien entrega" required>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 style="margin:0 0 0.75rem">📸 Evidencia fotográfica</h4>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 0.5rem">La foto incluirá automáticamente una marca de agua con la fecha actual.</p>
+        <input type="file" id="input-foto-combustible" accept="image/*" capture="environment" style="display:none">
+        <button type="button" id="btn-tomar-foto" class="btn-secondary" style="width:100%;margin-bottom:0.5rem">📸 Tomar foto</button>
+        <div id="foto-preview"></div>
+      </div>
+
+      <div class="card">
+        <label>Observaciones
+          <textarea id="combustible-observaciones" rows="2" placeholder="Notas adicionales (opcional)"></textarea>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-primary">💾 Guardar asignación</button>
+    </form>
+  </section>
+
+  <section id="view-combustible-detalle" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <button type="button" id="btn-combustible-detalle-volver" class="btn-volver">← Volver</button>
+        <h3>⛽ Detalle de asignación</h3>
+      </div>
+    </div>
+    <div id="combustible-detalle-contenido"></div>
+  </section>
+
+  <!-- ======================
+       MÓDULO GUÍA DE TRANSPORTE DE CAÑA
+  ====================== -->
+
+  <section id="view-guia-transporte-registros" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <h3>📋 Guías de Transporte de Caña</h3>
+      </div>
+      <button id="btn-nueva-guia-transporte" class="btn-primary" style="width:100%">➕ Nueva guía</button>
+    </div>
+    <div class="card filtro-estado-card">
+      <div class="filtro-estado-row">
+        <span class="filtro-estado-label">📋 Ver:</span>
+        <select id="filtro-estado-guia-transporte" class="filtro-estado-select">
+          <option value="BORRADOR">📝 Borrador</option>
+          <option value="EXPORTADO">📤 Exportado</option>
+          <option value="">📚 Todas</option>
+        </select>
+      </div>
+    </div>
+    <div id="guia-transporte-lista"></div>
+  </section>
+
+  <section id="view-guia-transporte-nuevo" class="view hidden">
+    <form id="form-guia-transporte">
+      <div class="card">
+        <div class="vista-header">
+          <button type="button" id="btn-guia-transporte-nuevo-volver" class="btn-volver">← Volver</button>
+          <h3 id="gt-nuevo-titulo">📋 Nueva Guía de Transporte</h3>
+        </div>
+      </div>
+
+      <!-- ACORDEÓN: HEADER -->
+      <div class="acordeon-item">
+        <button type="button" class="acordeon-header abierto" data-target="gt-acc-header">
+          <span>📋 Información General</span>
+          <span class="acordeon-icono">▼</span>
+        </button>
+        <div class="acordeon-cuerpo abierto" id="gt-acc-header">
+          <div class="grid">
+            <label>Fecha <input type="date" id="gt-fecha" required></label>
+            <label>Hora Llegada <input type="time" id="gt-hora-llegada"></label>
+            <label>Hora Salida <input type="time" id="gt-hora-salida"></label>
+            <label>Hora Llegada Cola <input type="time" id="gt-hora-cola"></label>
+          </div>
+          <div class="grid" style="margin-top:0.5rem">
+            <label>Nombre Boletario <input type="text" id="gt-boletario" class="input-upper" placeholder="Nombre del notero" required></label>
+            <label>Turno <input type="text" id="gt-turno" class="input-upper" placeholder="Ej: MAÑANA, TARDE"></label>
+            <label>Frente <input type="text" id="gt-frente" class="input-upper" placeholder="Ej: FRENTE 1"></label>
+            <label>Propiedad <input type="text" id="gt-propiedad" class="input-upper" placeholder="Nombre de propiedad"></label>
+          </div>
+          <label style="margin-top:0.5rem">Observaciones <textarea id="gt-observaciones" class="input-upper" rows="2" placeholder="Notas adicionales..."></textarea></label>
+        </div>
+      </div>
+
+      <!-- ACORDEÓN: LIBERACIÓN -->
+      <div class="acordeon-item">
+        <button type="button" class="acordeon-header" data-target="gt-acc-liberacion">
+          <span>🔓 Liberación</span>
+          <span class="acordeon-icono">▼</span>
+        </button>
+        <div class="acordeon-cuerpo" id="gt-acc-liberacion">
+          <label>Cód. Liberación
+            <div class="input-scan-wrap" id="wrap-gt-cod-liberacion">
+              <input type="text" id="gt-cod-liberacion" class="input-upper" placeholder="Escaneá o escribí el código" autocomplete="off">
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- ACORDEÓN: CAMIÓN -->
+      <div class="acordeon-item">
+        <button type="button" class="acordeon-header" data-target="gt-acc-camion">
+          <span>🚛 Información del Camión</span>
+          <span class="acordeon-icono">▼</span>
+        </button>
+        <div class="acordeon-cuerpo" id="gt-acc-camion">
+          <div class="grid">
+            <label>Cód. Chofer
+              <div class="input-scan-wrap" id="wrap-gt-cod-chofer">
+                <input type="text" id="gt-cod-chofer" class="input-upper" placeholder="Escaneá o escribí" autocomplete="off">
+              </div>
+            </label>
+            <label>Nombre Chofer <input type="text" id="gt-nombre-chofer" class="input-upper" placeholder="Nombre completo"></label>
+            <label>Cód. Camión
+              <div class="input-scan-wrap" id="wrap-gt-cod-camion">
+                <input type="text" id="gt-cod-camion" class="input-upper" placeholder="Escaneá o escribí" autocomplete="off">
+              </div>
+            </label>
+            <label>Placa <input type="text" id="gt-placa" class="input-upper" placeholder="Ej: ABC-123"></label>
+            <label>Cód. Chata
+              <div class="input-scan-wrap" id="wrap-gt-cod-chata">
+                <input type="text" id="gt-cod-chata" class="input-upper" placeholder="Escaneá o escribí" autocomplete="off">
+              </div>
+            </label>
+            <label>Transportista <input type="text" id="gt-transportista" class="input-upper" placeholder="Nombre transportista"></label>
+          </div>
+          <div style="margin-top:0.75rem">
+            <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 0.5rem">📸 Foto del camión (con marca de agua)</p>
+            <input type="file" id="input-foto-camion" accept="image/*" capture="environment" style="display:none">
+            <button type="button" id="btn-foto-camion" class="combustible-foto-btn" style="width:100%;margin-bottom:0.5rem">📸 Tomar foto del camión</button>
+            <div id="foto-camion-preview"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACORDEÓN: SEMI-MECANIZADA -->
+      <div class="acordeon-item">
+        <button type="button" class="acordeon-header" data-target="gt-acc-semi">
+          <span>🚜 Cosecha Semi-Mecanizada</span>
+          <span class="acordeon-icono">▼</span>
+        </button>
+        <div class="acordeon-cuerpo" id="gt-acc-semi">
+          <div class="grid">
+            <label>Cargadora
+              <div class="input-scan-wrap" id="wrap-gt-cod-cargadora">
+                <input type="text" id="gt-cod-cargadora" class="input-upper" placeholder="Escaneá o escribí" autocomplete="off">
+              </div>
+            </label>
+            <label>Operadora
+              <div class="input-scan-wrap" id="wrap-gt-cod-operadora">
+                <input type="text" id="gt-cod-operadora" class="input-upper" placeholder="Escaneá o escribí" autocomplete="off">
+              </div>
+            </label>
+            <label>Tractor Chata
+              <div class="input-scan-wrap" id="wrap-gt-cod-tractor-chata">
+                <input type="text" id="gt-cod-tractor-chata" class="input-upper" placeholder="Escaneá o escribí" autocomplete="off">
+              </div>
+            </label>
+            <label>Tractorista
+              <div class="input-scan-wrap" id="wrap-gt-cod-tractorista">
+                <input type="text" id="gt-cod-tractorista" class="input-upper" placeholder="Escaneá o escribí" autocomplete="off">
+              </div>
+            </label>
+          </div>
+          <div style="margin-top:0.75rem">
+            <p style="font-size:0.85rem;color:var(--text-muted);margin:0 0 0.5rem">📸 Foto de cosecha semi-mecanizada</p>
+            <input type="file" id="input-foto-semi" accept="image/*" capture="environment" style="display:none">
+            <button type="button" id="btn-foto-semi" class="combustible-foto-btn" style="width:100%;margin-bottom:0.5rem">📸 Tomar foto</button>
+            <div id="foto-semi-preview"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACORDEÓN: MECANIZADA -->
+      <div class="acordeon-item">
+        <button type="button" class="acordeon-header" data-target="gt-acc-mecanizada">
+          <span>⚙️ Cosecha Mecanizada</span>
+          <span class="acordeon-icono">▼</span>
+        </button>
+        <div class="acordeon-cuerpo" id="gt-acc-mecanizada">
+          <div id="gt-cosechadoras-container"></div>
+          <button type="button" id="btn-agregar-cosechadora" class="btn-secondary" style="width:100%;margin-top:0.5rem">
+            ➕ Agregar cosechadora
+          </button>
+        </div>
+      </div>
+
+      <div style="padding:0 0 1rem">
+        <button type="submit" class="btn-primary" style="width:100%">
+          📌 Guardar guía
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section id="view-guia-transporte-detalle" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <button type="button" id="btn-guia-transporte-detalle-volver" class="btn-volver">← Volver</button>
+        <h3>📋 Detalle de Guía</h3>
+      </div>
+    </div>
+    <div id="guia-transporte-detalle-contenido"></div>
+    <div style="display:flex;gap:0.65rem;padding:0 0 1rem">
+      <button id="btn-guia-transporte-detalle-editar" class="btn-primary" style="flex:1">✏️ Editar</button>
+      <button id="btn-guia-transporte-detalle-eliminar" class="btn-secondary" style="flex:1">🗑️ Eliminar</button>
+    </div>
   </section>
 
 </main>

@@ -59,19 +59,6 @@ export async function initSchema() {
       FOREIGN KEY (variedad_id) REFERENCES variedades(id)
     );
 
-    CREATE TABLE IF NOT EXISTS aplicaciones (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      lote_id INTEGER NOT NULL,
-      producto TEXT NOT NULL,
-      dosis REAL,
-      unidad TEXT,
-      fecha_aplicacion DATE NOT NULL,
-      operador TEXT,
-      observaciones TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (lote_id) REFERENCES lotes(id) ON DELETE CASCADE
-    );
-
     /* =========================
        TABLAS NUEVAS REQUERIDAS
        ========================= */
@@ -220,6 +207,9 @@ export async function initSchema() {
        ÍNDICES HOJAS CABECERA
        ========================= */
 
+    CREATE INDEX IF NOT EXISTS idx_hojas_cab_empresa
+      ON hojas_cab (empresa_id);
+
     CREATE INDEX IF NOT EXISTS idx_hojas_cab_estado
       ON hojas_cab (estado);
 
@@ -314,6 +304,95 @@ export async function initSchema() {
       ON cana_insumos (cab_id);
 
     /* =========================
+       MÓDULO USO DE COMBUSTIBLE
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS combustible_asignaciones (
+      id                TEXT PRIMARY KEY,
+      numero_secuencial INTEGER NOT NULL,
+      numero_completo   TEXT    NOT NULL,
+      empresa_id        INTEGER,
+      fecha             DATE    NOT NULL,
+      placa_codigo      TEXT    NOT NULL,
+      persona_recibe    TEXT    NOT NULL,
+      persona_entrega   TEXT    NOT NULL,
+      cantidad          REAL    NOT NULL,
+      tipo_combustible  TEXT    NOT NULL CHECK(tipo_combustible IN ('DIESEL','GASOLINA')),
+      horometro         REAL,
+      foto_base64       TEXT,
+      observaciones     TEXT,
+      estado            TEXT    DEFAULT 'BORRADOR',
+      sync_status       TEXT    DEFAULT 'pending',
+      created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_combustible_fecha
+      ON combustible_asignaciones (fecha);
+
+    CREATE INDEX IF NOT EXISTS idx_combustible_empresa
+      ON combustible_asignaciones (empresa_id);
+
+    /* =========================
+       MÓDULO CORTE DE SEMILLA
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS corte_semilla_cab (
+      id                  TEXT PRIMARY KEY,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
+      dispositivo_id      TEXT    NOT NULL,
+      campana             TEXT    NOT NULL,
+      empresa_id          INTEGER,
+      tecnico_id          INTEGER,
+      fecha               DATE    NOT NULL,
+      mes                 TEXT    NOT NULL,
+      observaciones       TEXT,
+      estado              TEXT    DEFAULT 'BORRADOR',
+      sync_status         TEXT    DEFAULT 'pending',
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+      FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS corte_semilla_detalle (
+      id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      cab_id                  TEXT    NOT NULL,
+      lote_semilla_id         INTEGER,
+      variedad_id             INTEGER,
+      fecha_corte             DATE,
+      sup_corte_ha            REAL,
+      rendimiento_tn_ha       REAL,
+      tn_cortadas_manual      REAL    DEFAULT 0,
+      tn_cortadas_mecanizada  REAL    DEFAULT 0,
+      consumo_semilla_tn_ha   REAL,
+      lote_plantado_id        INTEGER,
+      total_general_ha        REAL,
+      sup_plantada_mec_ha     REAL,
+      orden                   INTEGER DEFAULT 0,
+      FOREIGN KEY (cab_id)            REFERENCES corte_semilla_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (lote_semilla_id)   REFERENCES lotes(id),
+      FOREIGN KEY (variedad_id)       REFERENCES variedades(id),
+      FOREIGN KEY (lote_plantado_id)  REFERENCES lotes(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_corte_semilla_cab_estado
+      ON corte_semilla_cab (estado);
+
+    CREATE INDEX IF NOT EXISTS idx_corte_semilla_detalle_cab
+      ON corte_semilla_detalle (cab_id);
+
+    /* =========================
+       TABLA DE SECUENCIAS (control atómico de números)
+       ========================= */
+    CREATE TABLE IF NOT EXISTS secuencias (
+      tabla TEXT PRIMARY KEY,
+      ultimo_numero INTEGER NOT NULL DEFAULT 0
+    );
+
+    /* =========================
        TABLA HOJAS DE TRABAJO (DETALLE)
        ========================= */  
 
@@ -338,6 +417,64 @@ export async function initSchema() {
 
       UNIQUE (hoja_id, linea)
     );
+
+    /* =========================
+       MÓDULO GUÍA DE TRANSPORTE DE CAÑA
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS guia_transporte_cab (
+      id                  TEXT PRIMARY KEY,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
+      dispositivo_id      TEXT    NOT NULL,
+      empresa_id          INTEGER,
+      fecha               DATE    NOT NULL,
+      hora_llegada        TEXT,
+      hora_salida         TEXT,
+      hora_llegada_cola   TEXT,
+      boletario           TEXT,
+      turno               TEXT,
+      frente              TEXT,
+      propiedad           TEXT,
+      observaciones       TEXT,
+      cod_liberacion      TEXT,
+      cod_chofer          TEXT,
+      nombre_chofer       TEXT,
+      cod_camion          TEXT,
+      placa               TEXT,
+      cod_chata           TEXT,
+      transportista       TEXT,
+      foto_camion_base64  TEXT,
+      cod_cargadora       TEXT,
+      cod_operadora       TEXT,
+      cod_tractor_chata   TEXT,
+      cod_tractorista     TEXT,
+      foto_semi_base64    TEXT,
+      estado              TEXT    DEFAULT 'BORRADOR',
+      sync_status         TEXT    DEFAULT 'pending',
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS guia_transporte_cosecha_mec (
+      id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      guia_id                 TEXT    NOT NULL,
+      numero_cosechadora      INTEGER NOT NULL DEFAULT 1,
+      grilla_seleccion        TEXT,
+      cod_cosechadora         TEXT,
+      cod_operador            TEXT,
+      cod_tractor_transbordo  TEXT,
+      cod_tractorista         TEXT,
+      FOREIGN KEY (guia_id) REFERENCES guia_transporte_cab(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_guia_transporte_estado
+      ON guia_transporte_cab (estado);
+    CREATE INDEX IF NOT EXISTS idx_guia_transporte_empresa
+      ON guia_transporte_cab (empresa_id);
+    CREATE INDEX IF NOT EXISTS idx_guia_cosecha_mec_guia
+      ON guia_transporte_cosecha_mec (guia_id);
   `;
 
   await executeSet(statements);
@@ -360,11 +497,15 @@ export async function initSchema() {
   await addColumnIfNotExists('hojas_lotes', 'hectareas_aplicadas', 'REAL');
 
   // Migraciones módulo Caña — agregar columnas nuevas si la tabla ya existía
+  await addColumnIfNotExists('cana_cab', 'fecha', 'DATE');
   await addColumnIfNotExists('cana_plantacion', 'cantidad_sembradora_grupos', 'INTEGER');
   await addColumnIfNotExists('cana_plantacion', 'personas_por_grupo', 'INTEGER');
   await addColumnIfNotExists('cana_plantacion', 'orden', 'INTEGER DEFAULT 0');
+  await addColumnIfNotExists('cana_plantacion', 'fecha_inicio', 'DATE');
+  await addColumnIfNotExists('cana_plantacion', 'fecha_fin', 'DATE');
   await addColumnIfNotExists('cana_corte_semilla', 'tn_cortadas_mecanizada', 'REAL DEFAULT 0');
   await addColumnIfNotExists('cana_corte_semilla', 'orden', 'INTEGER DEFAULT 0');
+  await addColumnIfNotExists('cana_corte_semilla', 'fecha', 'DATE');
   await addColumnIfNotExists('cana_insumos', 'tipo', "TEXT NOT NULL DEFAULT 'AGROQUIMICO'");
   await addColumnIfNotExists('cana_insumos', 'orden', 'INTEGER DEFAULT 0');
 
@@ -385,6 +526,54 @@ export async function initSchema() {
   await addColumnIfNotExists('tipos_aplicacion', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
   await addColumnIfNotExists('caudales', 'empresa_id', 'INTEGER NOT NULL DEFAULT 1');
 
+  // Migraciones módulo Combustible — agregar columnas nuevas si la tabla ya existía
+  await addColumnIfNotExists('combustible_asignaciones', 'numero_secuencial', 'INTEGER NOT NULL DEFAULT 0');
+  await addColumnIfNotExists('combustible_asignaciones', 'numero_completo', "TEXT NOT NULL DEFAULT 'COMB-000'");
+  await addColumnIfNotExists('combustible_asignaciones', 'horometro', 'REAL');
+
+  // Migraciones módulo Corte de Semilla
+  await addColumnIfNotExists('corte_semilla_detalle', 'lote_plantado_id', 'INTEGER');
+  await addColumnIfNotExists('corte_semilla_detalle', 'total_general_ha', 'REAL');
+  await addColumnIfNotExists('corte_semilla_detalle', 'sup_plantada_mec_ha', 'REAL');
+
+  // Backfill: asignar secuenciales únicos a registros existentes
+  try {
+    const existentes = await executeQuery('SELECT id FROM combustible_asignaciones ORDER BY created_at');
+    if (existentes.length > 0) {
+      for (let idx = 0; idx < existentes.length; idx++) {
+        const sec = idx + 1;
+        const corr = String(sec).padStart(3, '0');
+        const nro = `COMB-LEGCY-${corr}`;
+        await executeRun(
+          'UPDATE combustible_asignaciones SET numero_secuencial = ?, numero_completo = ? WHERE id = ?',
+          [sec, nro, existentes[idx].id]
+        );
+      }
+    }
+  } catch (_) { /* ignorar */ }
+
   // Crear Foreign Keys para las nuevas columnas empresa_id (si no existen)
   // SQLite no soporta ALTER FOREIGN KEY, pero los datos ya están asignados a empresa_id=1
+
+  // Backfill tabla de secuencias con los valores actuales de cada tabla
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'hojas_cab', COALESCE(MAX(numero_secuencial), 0) FROM hojas_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'cana_cab', COALESCE(MAX(numero_secuencial), 0) FROM cana_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'combustible_asignaciones', COALESCE(MAX(numero_secuencial), 0) FROM combustible_asignaciones
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'corte_semilla_cab', COALESCE(MAX(numero_secuencial), 0) FROM corte_semilla_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'guia_transporte_cab', COALESCE(MAX(numero_secuencial), 0) FROM guia_transporte_cab
+  `);
 }

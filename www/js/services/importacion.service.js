@@ -1,5 +1,33 @@
-import { executeQuery, executeRun } from '../db/sqlite.js';
 import { uuid } from '../utils/uuid.js';
+import {
+  getEmpresasMap,
+  getProductosMap,
+  getTiposProductoMap,
+  getUnidadesMap,
+  getSectoresMap,
+  getCultivosMap,
+  getVariedadesMap,
+  getLotesMap,
+  getUnidadPorCodigo,
+  crearUnidadMedidaImportacion,
+  crearTipoProductoImportacion,
+  getTipoProductoFallback,
+  crearProductoImportacion,
+  actualizarProductoImportacion,
+  asignarUnidadAProducto,
+  resetearUnidadesDefault,
+  setUnidadDefault,
+  getUnidadesMedidaList,
+  insertarUnidadAlternativa,
+  getSectorPorNombreYEmpresa,
+  crearSectorImportacion,
+  getCultivoPorNombreYEmpresa,
+  crearCultivoImportacion,
+  getVariedadPorNombreYCultivo,
+  crearVariedadImportacion,
+  crearLoteImportacion,
+  actualizarLoteImportacion
+} from '../repositories/importacion.repo.js';
 
 /* =========================================================
    DETECCIÓN AUTOMÁTICA DEL TIPO DE ARCHIVO
@@ -70,19 +98,19 @@ export async function previsualizarProductos(headers, filas) {
   };
 
   // Cargar empresas para mapear por nombre
-  const empresas = await executeQuery('SELECT id, nombre FROM empresas');
+  const empresas = await getEmpresasMap();
   const empresaByNombre = Object.fromEntries(empresas.map(e => [e.nombre.toUpperCase(), e.id]));
 
   // Cargar datos actuales de la BD para comparar (por empresa también)
-  const existentes = await executeQuery('SELECT id, codigo, nombre, empresa_id FROM productos');
+  const existentes = await getProductosMap();
   const codigoEmpresaToId = Object.fromEntries(
     existentes.map(p => [`${p.codigo.toUpperCase()}_${p.empresa_id}`, p.id])
   );
 
-  const tiposProducto = await executeQuery('SELECT id, nombre FROM tipos_producto');
+  const tiposProducto = await getTiposProductoMap();
   const tipoByNombre  = Object.fromEntries(tiposProducto.map(t => [t.nombre.toUpperCase(), t.id]));
 
-  const unidades      = await executeQuery('SELECT id, codigo FROM unidades_medida');
+  const unidades      = await getUnidadesMap();
   const unidadByCodigo = Object.fromEntries(unidades.map(u => [u.codigo.toUpperCase(), u.id]));
 
   const nuevos      = [];
@@ -145,14 +173,8 @@ export async function importarProductos(nuevos, actualizados) {
   const unidadesCreadas = {};
   for (const p of [...nuevos, ...actualizados]) {
     if (p.unidadNueva && p.unidadCodigo && !unidadesCreadas[p.unidadCodigo]) {
-      await executeRun(
-        `INSERT OR IGNORE INTO unidades_medida (codigo, nombre, factor) VALUES (?, ?, 1)`,
-        [p.unidadCodigo, p.unidadCodigo]
-      );
-      const [row] = await executeQuery(
-        'SELECT id FROM unidades_medida WHERE codigo = ? LIMIT 1', [p.unidadCodigo]
-      );
-      unidadesCreadas[p.unidadCodigo] = row?.id;
+      const uid = await crearUnidadMedidaImportacion(p.unidadCodigo);
+      unidadesCreadas[p.unidadCodigo] = uid;
     }
     if (!p.unidadId && unidadesCreadas[p.unidadCodigo]) {
       p.unidadId = unidadesCreadas[p.unidadCodigo];
@@ -163,61 +185,30 @@ export async function importarProductos(nuevos, actualizados) {
   const tiposCreados = {};
   for (const p of [...nuevos, ...actualizados]) {
     if (p.tipoNuevo && p.linea && !tiposCreados[p.linea]) {
-      await executeRun(
-        `INSERT OR IGNORE INTO tipos_producto (nombre, cuenta_contable) VALUES (?, '711020')`,
-        [p.linea]
-      );
-      const [row] = await executeQuery(
-        'SELECT id FROM tipos_producto WHERE nombre = ? LIMIT 1', [p.linea]
-      );
-      tiposCreados[p.linea] = row?.id;
+      const tid = await crearTipoProductoImportacion(p.linea);
+      tiposCreados[p.linea] = tid;
     }
     if (!p.tipoId && tiposCreados[p.linea]) {
       p.tipoId = tiposCreados[p.linea];
     }
     if (!p.tipoId) {
-      const [fallback] = await executeQuery(
-        `SELECT id FROM tipos_producto WHERE nombre = 'AGROQUIMICOS' LIMIT 1`
-      );
-      p.tipoId = fallback?.id ?? 1;
+      p.tipoId = await getTipoProductoFallback() ?? 1;
     }
   }
 
   for (const p of nuevos) {
     const id = uuid();
-    await executeRun(
-      `INSERT OR IGNORE INTO productos (id, empresa_id, codigo, nombre, tipo_producto_id, activo)
-       VALUES (?, ?, ?, ?, ?, 1)`,
-      [id, p.empresaId, p.codigo, p.nombre, p.tipoId]
-    );
-    await executeRun(
-      `INSERT OR IGNORE INTO productos_unidades (producto_id, unidad_medida_id, es_default)
-       VALUES (?, ?, 1)`,
-      [id, p.unidadId]
-    );
-    await _insertarUnidadAlternativa(id, p.unidadId);
+    await crearProductoImportacion(id, p.empresaId, p.codigo, p.nombre, p.tipoId);
+    await asignarUnidadAProducto(id, p.unidadId);
+    await insertarUnidadAlternativa(id, p.unidadId);
     insertados++;
   }
 
   for (const p of actualizados) {
-    await executeRun(
-      `UPDATE productos SET nombre = ?, tipo_producto_id = ? WHERE id = ?`,
-      [p.nombre, p.tipoId, p.id]
-    );
-    await executeRun(
-      `UPDATE productos_unidades SET es_default = 0 WHERE producto_id = ?`,
-      [p.id]
-    );
-    await executeRun(
-      `INSERT OR IGNORE INTO productos_unidades (producto_id, unidad_medida_id, es_default)
-       VALUES (?, ?, 1)`,
-      [p.id, p.unidadId]
-    );
-    await executeRun(
-      `UPDATE productos_unidades SET es_default = 1
-       WHERE producto_id = ? AND unidad_medida_id = ?`,
-      [p.id, p.unidadId]
-    );
+    await actualizarProductoImportacion(p.id, p.nombre, p.tipoId);
+    await resetearUnidadesDefault(p.id);
+    await asignarUnidadAProducto(p.id, p.unidadId);
+    await setUnidadDefault(p.id, p.unidadId);
     modificados++;
   }
 
@@ -239,11 +230,11 @@ export async function previsualizarLotes(headers, filas) {
   };
 
   // Cargar catálogos de la BD
-  const empresas   = await executeQuery('SELECT id, nombre FROM empresas');
-  const sectores   = await executeQuery('SELECT id, nombre, empresa_id FROM sectores');
-  const cultivos   = await executeQuery('SELECT id, nombre FROM cultivos');
-  const variedades = await executeQuery('SELECT id, nombre FROM variedades');
-  const lotesExist = await executeQuery('SELECT id, codigo, nombre, sector_id FROM lotes');
+  const empresas   = await getEmpresasMap();
+  const sectores   = await getSectoresMap();
+  const cultivos   = await getCultivosMap();
+  const variedades = await getVariedadesMap();
+  const lotesExist = await getLotesMap();
 
   const empresaByNombre  = Object.fromEntries(empresas.map(e => [e.nombre.toUpperCase(), e.id]));
 
@@ -341,15 +332,8 @@ export async function importarLotes(nuevos, actualizados) {
     // Sector — crear bajo la empresa correcta del Excel
     const sectorKey = `${l.sectorNombre}_${l.empresaId}`;
     if (!l.sectorId && l.sectorNombre && l.empresaId && !sectoresCreados[sectorKey]) {
-      await executeRun(
-        'INSERT OR IGNORE INTO sectores (empresa_id, nombre) VALUES (?, ?)',
-        [l.empresaId, l.sectorNombre]
-      );
-      const [row] = await executeQuery(
-        'SELECT id FROM sectores WHERE nombre = ? AND empresa_id = ? LIMIT 1',
-        [l.sectorNombre, l.empresaId]
-      );
-      sectoresCreados[sectorKey] = row?.id;
+      const sid = await crearSectorImportacion(l.empresaId, l.sectorNombre);
+      sectoresCreados[sectorKey] = sid;
     }
     if (!l.sectorId && sectoresCreados[sectorKey]) {
       l.sectorId = sectoresCreados[sectorKey];
@@ -357,14 +341,8 @@ export async function importarLotes(nuevos, actualizados) {
 
     // Cultivo
     if (!l.cultivoId && l.cultivoNombre && !cultivosCreados[l.cultivoNombre]) {
-      await executeRun(
-        'INSERT OR IGNORE INTO cultivos (nombre) VALUES (?)',
-        [l.cultivoNombre]
-      );
-      const [row] = await executeQuery(
-        'SELECT id FROM cultivos WHERE nombre = ? LIMIT 1', [l.cultivoNombre]
-      );
-      cultivosCreados[l.cultivoNombre] = row?.id;
+      const cid = await crearCultivoImportacion(l.empresaId, l.cultivoNombre);
+      cultivosCreados[l.cultivoNombre] = cid;
     }
     if (!l.cultivoId && cultivosCreados[l.cultivoNombre]) {
       l.cultivoId = cultivosCreados[l.cultivoNombre];
@@ -372,15 +350,8 @@ export async function importarLotes(nuevos, actualizados) {
 
     // Variedad
     if (!l.variedadId && l.variedadNombre && l.cultivoId && !variedadesCreadas[l.variedadNombre]) {
-      await executeRun(
-        'INSERT OR IGNORE INTO variedades (cultivo_id, nombre) VALUES (?, ?)',
-        [l.cultivoId, l.variedadNombre]
-      );
-      const [row] = await executeQuery(
-        'SELECT id FROM variedades WHERE nombre = ? AND cultivo_id = ? LIMIT 1',
-        [l.variedadNombre, l.cultivoId]
-      );
-      variedadesCreadas[l.variedadNombre] = row?.id;
+      const vid = await crearVariedadImportacion(l.empresaId, l.cultivoId, l.variedadNombre);
+      variedadesCreadas[l.variedadNombre] = vid;
     }
     if (!l.variedadId && variedadesCreadas[l.variedadNombre]) {
       l.variedadId = variedadesCreadas[l.variedadNombre];
@@ -389,38 +360,15 @@ export async function importarLotes(nuevos, actualizados) {
 
   for (const l of nuevos) {
     if (!l.sectorId) continue;
-    await executeRun(
-      `INSERT INTO lotes (sector_id, codigo, nombre, hectareas, cultivo_id, variedad_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [l.sectorId, l.codigo, l.nombre, l.hectareas, l.cultivoId, l.variedadId]
-    );
+    await crearLoteImportacion(l.sectorId, l.codigo, l.nombre, l.hectareas, l.cultivoId, l.variedadId);
     insertados++;
   }
 
   for (const l of actualizados) {
-    await executeRun(
-      `UPDATE lotes SET nombre = ?, hectareas = ?, cultivo_id = ?, variedad_id = ?, sector_id = ?
-       WHERE id = ?`,
-      [l.nombre, l.hectareas, l.cultivoId, l.variedadId, l.sectorId, l.id]
-    );
+    await actualizarLoteImportacion(l.id, l.nombre, l.hectareas, l.cultivoId, l.variedadId, l.sectorId);
     modificados++;
   }
 
   return { insertados, modificados };
 }
 
-/* =========================================================
-   HELPER INTERNO — unidad alternativa
-========================================================= */
-async function _insertarUnidadAlternativa(productoId, unidadDefaultId) {
-  const unidades = await executeQuery('SELECT id, codigo FROM unidades_medida');
-  const alt = unidades.find(u => u.id !== unidadDefaultId &&
-    (u.codigo === 'L' || u.codigo === 'KG'));
-  if (alt) {
-    await executeRun(
-      `INSERT OR IGNORE INTO productos_unidades (producto_id, unidad_medida_id, es_default)
-       VALUES (?, ?, 0)`,
-      [productoId, alt.id]
-    );
-  }
-}

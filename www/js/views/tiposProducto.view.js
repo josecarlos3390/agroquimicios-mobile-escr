@@ -1,10 +1,10 @@
 import {
   listarTiposProducto,
-  crearTipoProducto
+  crearTipoProducto,
+  actualizarTipoProducto,
+  eliminarTipoProducto
 } from '../services/tiposProducto.service.js';
 import { confirmar } from '../utils/confirm.js';
-
-import { executeRun } from '../db/sqlite.js';
 
 let inicializado = false;
 
@@ -33,10 +33,10 @@ export function initTiposProductoView() {
 
     if (idInput.value) {
       // Editar
-      await executeRun(
-        'UPDATE tipos_producto SET nombre = ?, cuenta_contable = ? WHERE id = ?',
-        [nombreInput.value.trim(), cuentaInput.value.trim(), idInput.value]
-      );
+      await actualizarTipoProducto(idInput.value, {
+        nombre: nombreInput.value.trim(),
+        cuenta_contable: cuentaInput.value.trim()
+      });
     } else {
       // Crear
       await crearTipoProducto({
@@ -61,7 +61,7 @@ export function initTiposProductoView() {
     if (e.target.dataset.delete) {
       const ok = await confirmar({ icon: '🗑️', titulo: '¿Eliminar tipo de producto?', msg: 'Esta acción no se puede deshacer.' });
       if (ok) {
-        await executeRun('DELETE FROM tipos_producto WHERE id = ?', [e.target.dataset.delete]);
+        await eliminarTipoProducto(e.target.dataset.delete);
         cargarTiposProducto();
       }
     }

@@ -1,19 +1,11 @@
 import { listarHojas, eliminarHoja, marcarComoExportado } from '../../services/hojas.service.js';
 import { exportarHojas, lineasAXLSX } from '../../services/exportacion.service.js';
 import { confirmar } from '../../utils/confirm.js';
+import { formatFecha } from '../../utils/fecha.js';
 
 let inicializado = false;
 let modoSeleccion = false;
 let filtroEstado = 'BORRADOR'; // Por defecto solo muestra borradores
-
-/* =========================
-   HELPER: formato dd/mm/yyyy
-========================= */
-function formatFecha(iso) {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
 
 export function initHojasView() {
   // FIX #4: resetear modoSeleccion cada vez que se entra a la vista

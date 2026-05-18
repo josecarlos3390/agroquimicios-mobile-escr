@@ -15,10 +15,7 @@ let _editarInicializado = false;
 // Mapa loteId -> hectareasAplicadas para edición parcial
 let hectareasParciales = {};
 
-const MESES = [
-  'ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
-  'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'
-];
+import { MESES } from '../../utils/fecha.js';
 
 export function initHojaEditarView() {
   if (_editarInicializado) return;
@@ -207,8 +204,8 @@ export async function cargarHojaEditar(hojaId) {
 
   const [empresas, tecnicos, tiposAplicacion] = await Promise.all([
     listarEmpresas(),
-    listarTecnicos(),
-    listarTiposAplicacion(),
+    listarTecnicos(hojaActual.empresa_id),
+    listarTiposAplicacion(hojaActual.empresa_id),
   ]);
 
   // Mostrar solo la empresa activa en el select

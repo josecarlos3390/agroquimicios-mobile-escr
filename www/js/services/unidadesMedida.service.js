@@ -1,10 +1,10 @@
 import {
   getUnidadesMedida,
-  getUnidadesByProducto,
   createUnidadMedida,
   updateUnidadMedida,
   deleteUnidadMedida
 } from '../repositories/unidadesMedida.repo.js';
+import { getUnidadesByProducto } from '../repositories/productosUnidades.repo.js';
 
 export async function listarUnidadesMedida() {
   return await getUnidadesMedida();

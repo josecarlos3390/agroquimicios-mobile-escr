@@ -23,3 +23,19 @@ export async function createTipoProducto(data) {
 
   return result.lastId;
 }
+
+export async function updateTipoProducto(id, data) {
+  await executeRun(
+    `UPDATE tipos_producto SET nombre = ?, cuenta_contable = ? WHERE id = ?`,
+    [data.nombre, data.cuenta_contable, id]
+  );
+  return true;
+}
+
+export async function deleteTipoProducto(id) {
+  await executeRun(
+    `DELETE FROM tipos_producto WHERE id = ?`,
+    [id]
+  );
+  return true;
+}

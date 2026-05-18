@@ -4,6 +4,7 @@ import {
   getProductoById,
   createProducto,
   desactivarProducto,
+  activarProducto,
   updateProducto
 } from '../repositories/productos.repo.js';
 
@@ -43,6 +44,10 @@ export async function crearProducto(data) {
 
 export async function eliminarProducto(id) {
   return await desactivarProducto(id);
+}
+
+export async function reactivarProducto(id) {
+  return await activarProducto(id);
 }
 
 export async function asignarUnidadesAProducto(productoId, unidades) {

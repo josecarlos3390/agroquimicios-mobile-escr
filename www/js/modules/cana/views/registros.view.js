@@ -1,14 +1,10 @@
-import { listarNotasCana, eliminarNotaCana } from '../services/cana.service.js';
+import { listarNotasCana, eliminarNotaCana, prepararExcelCana } from '../services/cana.service.js';
+import { updateEstadoCanaCab } from '../repositories/cana.repo.js';
 import { confirmar } from '../../../utils/confirm.js';
+import { formatFecha } from '../../../utils/fecha.js';
 
 let inicializado  = false;
 let filtroEstado  = 'BORRADOR';
-
-function formatFecha(iso) {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
 
 export function initRegistrosCanaView() {
   if (inicializado) return;
@@ -27,6 +23,43 @@ export function initRegistrosCanaView() {
   }
 
   document.getElementById('view-cana-registros').addEventListener('click', async e => {
+    if (e.target.dataset.verDetalle) {
+      window.showView('cana-detalle', e.target.dataset.verDetalle);
+      return;
+    }
+
+    if (e.target.dataset.editarNota) {
+      window.showView('cana-editar', e.target.dataset.editarNota);
+      return;
+    }
+
+    if (e.target.dataset.exportarNota) {
+      const id = e.target.dataset.exportarNota;
+      const btn = e.target;
+      btn.disabled = true; btn.textContent = '⏳';
+      try {
+        const { base64, nombre } = await prepararExcelCana(id);
+        const { Filesystem, Share } = window.Capacitor.Plugins;
+        const base64Limpio = base64.includes(',') ? base64.split(',')[1] : base64;
+        const dataUri = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Limpio}`;
+        const resultado = await Filesystem.writeFile({ path: nombre, data: dataUri, directory: 'CACHE', recursive: true });
+        await Share.share({
+          title: 'Plantación de Caña - AgroApp',
+          text: `Exportación de nota`,
+          files: [resultado.uri],
+          dialogTitle: '¿Dónde querés enviar el Excel?'
+        });
+        await updateEstadoCanaCab(id, 'EXPORTADO');
+        await cargarRegistrosCana();
+      } catch (err) {
+        if (err.message?.includes('cancel') || err.message?.includes('dismiss')) { /* usuario canceló */ }
+        else { alert('❌ No se pudo exportar:\n' + err.message); }
+      } finally {
+        btn.disabled = false; btn.textContent = '📤';
+      }
+      return;
+    }
+
     if (e.target.dataset.eliminarNota) {
       const id  = e.target.dataset.eliminarNota;
       const btn = e.target;
@@ -105,7 +138,7 @@ export async function cargarRegistrosCana() {
         </div>
         <div class="hoja-card-pills">
           <span class="hoja-pill hoja-pill--fecha">
-            📅 ${formatFecha(n.fecha_inicio)}${n.fecha_fin && n.fecha_fin !== n.fecha_inicio ? ' → ' + formatFecha(n.fecha_fin) : ''}
+            📅 ${formatFecha(n.fecha)}
           </span>
           <span class="hoja-pill hoja-pill--productos">
             🌿 ${n.total_lotes} lote${n.total_lotes !== 1 ? 's' : ''}
@@ -113,6 +146,9 @@ export async function cargarRegistrosCana() {
         </div>
       </div>
       <div class="hoja-card-actions">
+        <button data-ver-detalle="${n.id}">📋 Detalle</button>
+        <button data-editar-nota="${n.id}">✏️ Editar</button>
+        <button data-exportar-nota="${n.id}">📤 Exportar</button>
         <button data-eliminar-nota="${n.id}">🗑️</button>
       </div>
     </div>

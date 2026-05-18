@@ -6,12 +6,15 @@ import {
   asignarUnidadesAProducto
 } from '../services/productos.service.js';
 import { confirmar } from '../utils/confirm.js';
+import { getEmpresaActiva } from '../services/empresas.service.js';
+import { listarUnidadesMedida } from '../services/unidadesMedida.service.js';
+import { listarTiposProducto } from '../services/tiposProducto.service.js';
 
-import { executeQuery } from '../db/sqlite.js';
 import { getUnidadesByProducto, replaceUnidadesProducto } from '../repositories/productosUnidades.repo.js';
 
 let inicializado = false;
 let todasLasUnidades = []; // cache de unidades disponibles
+let _todosLosProductos = []; // cache para búsqueda
 
 export function initProductosView() {
   if (inicializado) return;
@@ -19,6 +22,22 @@ export function initProductosView() {
 
   const form  = document.getElementById('producto-form');
   const modal = document.getElementById('producto-modal');
+
+  // Buscador en tiempo real
+  const searchInput = document.getElementById('productos-search');
+  const searchClear = document.getElementById('productos-search-clear');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim();
+      searchClear.style.display = q ? 'block' : 'none';
+      renderProductosFiltrados(q);
+    });
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchClear.style.display = 'none';
+      renderProductosFiltrados('');
+    });
+  }
 
   // Nuevo
   document.getElementById('btn-nuevo-producto').onclick = async () => {
@@ -70,7 +89,8 @@ export function initProductosView() {
         await actualizarProducto(id, { codigo, nombre, tipo_producto_id: tipo });
         await replaceUnidadesProducto(id, unidades);
       } else {
-        const nuevoId = await crearProducto({ codigo, nombre, tipo_producto_id: tipo });
+        const empresa = getEmpresaActiva();
+        const nuevoId = await crearProducto({ codigo, nombre, tipo_producto_id: tipo, empresa_id: empresa?.id });
         await asignarUnidadesAProducto(nuevoId, unidades);
       }
 
@@ -87,7 +107,8 @@ export function initProductosView() {
 
     if (e.target.dataset.edit) {
       const id = e.target.dataset.edit;
-      const productos = await listarProductos();
+      const empresa = getEmpresaActiva();
+      const productos = await listarProductos(empresa?.id);
       const p = productos.find(x => String(x.id) === String(id));
       if (!p) return;
 
@@ -130,9 +151,7 @@ export function initProductosView() {
    UNIDADES - HELPERS
 ========================= */
 async function cargarUnidadesDisponibles() {
-  todasLasUnidades = await executeQuery(
-    'SELECT id, codigo, nombre FROM unidades_medida ORDER BY codigo'
-  );
+  todasLasUnidades = await listarUnidadesMedida();
 
   const select = document.getElementById('producto-unidad-default');
   select.innerHTML = '<option value="">Seleccione unidad</option>';
@@ -183,15 +202,43 @@ function agregarFilaUnidadExtra(valorSeleccionado = null) {
    RENDER PRODUCTOS
 ========================= */
 export async function cargarProductos() {
-  const tbody     = document.getElementById('productos-body');
-  const productos = await listarProductos();
+  const empresa   = getEmpresaActiva();
+  _todosLosProductos = await listarProductos(empresa?.id);
+
+  // Limpiar buscador al recargar
+  const searchInput = document.getElementById('productos-search');
+  const searchClear = document.getElementById('productos-search-clear');
+  if (searchInput) { searchInput.value = ''; }
+  if (searchClear) { searchClear.style.display = 'none'; }
+
+  renderProductosFiltrados('');
+}
+
+function renderProductosFiltrados(query) {
+  const tbody   = document.getElementById('productos-body');
+  const countEl = document.getElementById('productos-count');
+
+  const q = query.toLowerCase().trim();
+  const productos = q
+    ? _todosLosProductos.filter(p =>
+        p.nombre.toLowerCase().includes(q) ||
+        (p.codigo && p.codigo.toLowerCase().includes(q)) ||
+        (p.tipo_producto && p.tipo_producto.toLowerCase().includes(q))
+      )
+    : _todosLosProductos;
 
   tbody.innerHTML = '';
+
+  if (countEl) {
+    countEl.textContent = q
+      ? `${productos.length} de ${_todosLosProductos.length} producto${_todosLosProductos.length !== 1 ? 's' : ''}`
+      : `${_todosLosProductos.length} producto${_todosLosProductos.length !== 1 ? 's' : ''}`;
+  }
 
   if (productos.length === 0) {
     tbody.innerHTML = `
       <div style="text-align:center; padding:1.5rem; color:var(--text-muted)">
-        Sin productos
+        ${q ? 'Sin resultados para "<strong>' + query + '</strong>"' : 'Sin productos'}
       </div>
     `;
     return;
@@ -199,11 +246,13 @@ export async function cargarProductos() {
 
   productos.forEach(p => {
     const div = document.createElement('div');
+    const nombre = q ? resaltarTexto(p.nombre, q) : p.nombre;
+    const codigo = p.codigo ? (q ? resaltarTexto(p.codigo, q) : p.codigo) : null;
     div.innerHTML = `
       <div class="producto-card">
         <div class="producto-card-header">
-          ${p.codigo ? `<span class="producto-codigo">${p.codigo}</span>` : ''}
-          <span class="producto-nombre">${p.nombre}</span>
+          ${p.codigo ? '<span class="producto-codigo">' + (codigo||p.codigo) + '</span>' : ''}
+          <span class="producto-nombre">${nombre}</span>
           <div class="producto-acciones">
             <button data-edit="${p.id}">✏️</button>
             <button data-delete="${p.id}">🗑️</button>
@@ -219,12 +268,17 @@ export async function cargarProductos() {
   });
 }
 
+function resaltarTexto(texto, query) {
+  const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return texto.replace(re, '<mark style="background:var(--primary-faint,#e8f5e9);color:var(--primary,#2e7d32);border-radius:2px;padding:0 1px">$1</mark>');
+}
+
 /* =========================
    TIPOS PRODUCTO
 ========================= */
 async function cargarTiposProducto() {
   const select = document.getElementById('producto-tipo');
-  const tipos  = await executeQuery('SELECT id, nombre FROM tipos_producto ORDER BY nombre');
+  const tipos  = await listarTiposProducto();
 
   select.innerHTML = '<option value="">Seleccione tipo</option>';
   tipos.forEach(t => {

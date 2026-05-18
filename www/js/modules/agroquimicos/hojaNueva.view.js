@@ -6,10 +6,7 @@ import { listarVariedades } from '../../services/variedades.service.js';
 import { listarLotesPorSectores } from '../../services/lotes.service.js';
 import { crearHojaTrabajoCabecera } from '../../services/hojas.service.js';
 
-const MESES = [
-  'ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
-  'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'
-];
+import { MESES } from '../../utils/fecha.js';
 
 let todosLosSectores  = [];
 let lotesDisponibles  = [];

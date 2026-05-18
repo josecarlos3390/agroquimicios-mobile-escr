@@ -67,6 +67,14 @@ export async function desactivarProducto(id) {
   return true;
 }
 
+export async function activarProducto(id) {
+  await executeRun(
+    `UPDATE productos SET activo = 1 WHERE id = ?`,
+    [id]
+  );
+  return true;
+}
+
 export async function updateProducto(id, data) {
   await executeRun(
     `UPDATE productos SET

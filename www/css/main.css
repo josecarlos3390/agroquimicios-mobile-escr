@@ -3163,3 +3163,414 @@ body.dark .lote-ha-input {
   flex-shrink: 0;
 }
 .btn-icon-danger:hover { background: rgba(192,57,43,0.1); }
+/* ─── Plantilla de insumos ────────────────────────────────── */
+.plantilla-grupo {
+  margin-bottom: 1rem;
+}
+
+.plantilla-grupo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.plantilla-badge {
+  background: var(--primary-faint, #e8f5e9);
+  color: var(--primary, #2e7d32);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.plantilla-filas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+
+.plantilla-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.plantilla-empty {
+  color: var(--text-muted);
+  font-size: 0.83rem;
+  margin: 0;
+}
+
+/* =========================================================
+   DETALLE NOTA CAÑA
+========================================================= */
+.detalle-bloque {
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #ddd);
+  border-radius: var(--radius, 8px);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.detalle-bloque-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.detalle-bloque-body {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.35rem 0.75rem;
+}
+
+.detalle-insumo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border-light, #eee);
+  font-size: 0.88rem;
+}
+
+.detalle-insumo:last-child {
+  border-bottom: none;
+}
+
+/* =========================
+   MÓDULO COMBUSTIBLE
+   ========================= */
+
+.combustible-foto-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border: 2px dashed var(--border, #d4e2d4);
+  border-radius: var(--radius-md);
+  background: var(--primary-faint, #f4f9f4);
+  color: var(--primary, #1e3d1e);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.combustible-foto-btn:hover {
+  background: var(--primary-pale, #eaf2ea);
+  border-color: var(--primary-light, #4a7c4a);
+}
+
+.combustible-detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+}@media (max-width: 480px) {
+  .combustible-detalle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   ACORDEÓN
+========================================================= */
+.acordeon-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.acordeon-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background: var(--gray-100);
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.acordeon-header .acordeon-icono {
+  transition: transform 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.acordeon-header.abierto .acordeon-icono {
+  transform: rotate(180deg);
+}
+
+.acordeon-cuerpo {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+  padding: 0 1rem;
+}
+
+.acordeon-cuerpo.abierto {
+  max-height: 2500px;
+  padding: 1rem;
+}
+
+/* =========================================================
+   INPUT CON BOTÓN DE SCAN
+========================================================= */
+.input-scan-wrap {
+  display: flex;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.input-scan-wrap input {
+  flex: 1;
+  margin: 0;
+}
+
+.btn-scan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  padding: 0;
+  background: var(--gray-100);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-scan:active {
+  background: var(--primary-pale);
+}
+
+/* =========================================================
+   GRILLA SELECTOR 2×3 (COSECHA MECANIZADA)
+========================================================= */
+.grilla-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.grilla-celda {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text);
+}
+
+.grilla-celda.seleccionada {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.grilla-celda:active {
+  transform: scale(0.96);
+}
+
+/* =========================================================
+   TARJETA COSECHADORA MECANIZADA
+========================================================= */
+.cosechadora-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  margin-bottom: 0.6rem;
+  background: var(--card);
+}
+
+.cosechadora-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.cosechadora-card-numero {
+  background: var(--primary);
+  color: #fff;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  margin-right: 0.4rem;
+}
+
+/* =========================================================
+   GUÍA DE TRANSPORTE — DETALLE
+========================================================= */
+.guia-detalle-seccion {
+  margin-bottom: 0.6rem;
+}
+
+.guia-detalle-seccion-titulo {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.guia-detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.35rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+.guia-detalle-foto {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  margin-top: 0.4rem;
+  max-height: 220px;
+  object-fit: cover;
+}
+
+
+/* =========================================================
+   MODAL DE ESCANEO EN TIEMPO REAL
+========================================================= */
+#scan-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  align-items: center;
+  justify-content: center;
+}
+
+.scan-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+.scan-modal-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#scan-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.scan-frame {
+  position: relative;
+  width: 72%;
+  aspect-ratio: 1.6;
+  border: 2px solid rgba(255,255,255,0.35);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.scan-corner {
+  position: absolute;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-color: #4ade80;
+  border-style: solid;
+}
+
+.scan-corner-tl { top: -3px; left: -3px; border-width: 4px 0 0 4px; }
+.scan-corner-tr { top: -3px; right: -3px; border-width: 4px 4px 0 0; }
+.scan-corner-bl { bottom: -3px; left: -3px; border-width: 0 0 4px 4px; }
+.scan-corner-br { bottom: -3px; right: -3px; border-width: 0 4px 4px 0; }
+
+.scan-laser {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: #4ade80;
+  box-shadow: 0 0 10px #4ade80, 0 0 20px #4ade80;
+  animation: scan-laser-move 2.2s ease-in-out infinite;
+}
+
+@keyframes scan-laser-move {
+  0%, 100% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  50% { top: 100%; }
+}
+
+.scan-hint {
+  position: relative;
+  margin-top: 1.2rem;
+  color: #fff;
+  font-size: 0.95rem;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  z-index: 2;
+  text-align: center;
+}
+
+.scan-btn-cancel {
+  position: relative;
+  margin-top: 1rem;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.35);
+  border-radius: 2rem;
+  padding: 0.55rem 1.4rem;
+  font-size: 0.92rem;
+  cursor: pointer;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+
+.scan-btn-cancel:active {
+  background: rgba(255,255,255,0.25);
+}
+
+
+/* =========================================================
+   GUÍA CARD CURSOR
+========================================================= */
+.guia-card {
+  cursor: pointer;
+}

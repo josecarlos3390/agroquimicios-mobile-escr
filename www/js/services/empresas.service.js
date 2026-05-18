@@ -30,8 +30,26 @@ export async function eliminarEmpresa(id) {
 
 export function setEmpresaActiva(empresa) {
   empresaActiva = empresa;
+  if (empresa) {
+    localStorage.setItem('empresaActivaId', empresa.id);
+  } else {
+    localStorage.removeItem('empresaActivaId');
+  }
 }
 
 export function getEmpresaActiva() {
   return empresaActiva;
+}
+
+export async function restaurarEmpresaActiva() {
+  if (empresaActiva) return empresaActiva;
+  const id = localStorage.getItem('empresaActivaId');
+  if (!id) return null;
+  try {
+    empresaActiva = await getEmpresaById(id);
+    return empresaActiva;
+  } catch {
+    localStorage.removeItem('empresaActivaId');
+    return null;
+  }
 }

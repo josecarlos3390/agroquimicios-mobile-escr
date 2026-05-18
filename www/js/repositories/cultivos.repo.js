@@ -28,13 +28,13 @@ export async function getCultivos(empresaId) {
 export async function saveCultivo(c) {
   if (c.id) {
     await executeRun(
-      'UPDATE cultivos SET nombre = ? WHERE id = ?',
-      [c.nombre, c.id]
+      'UPDATE cultivos SET nombre = ?, descripcion = ? WHERE id = ?',
+      [c.nombre, c.descripcion ?? c.nombre, c.id]
     );
   } else {
     await executeRun(
-      'INSERT INTO cultivos (empresa_id, nombre) VALUES (?, ?)',
-      [c.empresa_id, c.nombre]
+      'INSERT INTO cultivos (empresa_id, nombre, descripcion) VALUES (?, ?, ?)',
+      [c.empresa_id, c.nombre, c.descripcion ?? c.nombre]
     );
   }
 }

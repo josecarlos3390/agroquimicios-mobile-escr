@@ -67,6 +67,26 @@ export async function deleteDetalleLinea(id) {
   );
 }
 
+export async function getDetalleByHojaId(hojaId) {
+  return await executeQuery(
+    `SELECT 
+       hd.id, hd.linea, hd.cantidad, hd.dosis,
+       hd.producto_id, hd.producto_codigo, hd.producto_nombre,
+       hd.unidad_medida_id
+     FROM hojas_detalle hd
+     WHERE hd.hoja_id = ?
+     ORDER BY hd.linea`,
+    [hojaId]
+  );
+}
+
+export async function updateDetalleCantidadDosis(id, cantidad, dosis) {
+  await executeRun(
+    `UPDATE hojas_detalle SET cantidad = ?, dosis = ? WHERE id = ?`,
+    [cantidad, dosis, id]
+  );
+}
+
 /* Recalcula dosis de todas las líneas de una hoja dado nuevas hectáreas totales */
 export async function recalcularDosisHoja(hojaId, nuevasHectareas) {
   if (!nuevasHectareas || nuevasHectareas <= 0) return;

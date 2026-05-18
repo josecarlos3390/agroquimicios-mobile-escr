@@ -5,6 +5,7 @@ import {
   eliminarTipoAplicacion
 } from '../services/tiposAplicacion.service.js';
 import { confirmar } from '../utils/confirm.js';
+import { getEmpresaActiva } from '../services/empresas.service.js';
 
 let inicializado = false;
 
@@ -33,7 +34,8 @@ export function initTiposAplicacionView() {
     if (idInput.value) {
       await actualizarTipoAplicacion(idInput.value, nombreInput.value.trim());
     } else {
-      await crearTipoAplicacion(nombreInput.value.trim());
+      const empresa = getEmpresaActiva();
+      await crearTipoAplicacion(nombreInput.value.trim(), empresa?.id);
     }
 
     modal.classList.add('hidden');
@@ -59,8 +61,9 @@ export function initTiposAplicacionView() {
 }
 
 export async function cargarTiposAplicacion() {
-  const tbody = document.getElementById('tipos-aplicacion-body');
-  const tipos = await listarTiposAplicacion();
+  const tbody   = document.getElementById('tipos-aplicacion-body');
+  const empresa = getEmpresaActiva();
+  const tipos   = await listarTiposAplicacion(empresa?.id);
 
   tbody.innerHTML = '';
   tipos.forEach(t => {

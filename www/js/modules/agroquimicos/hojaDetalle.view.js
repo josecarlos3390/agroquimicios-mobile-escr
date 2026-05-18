@@ -1,22 +1,14 @@
 import { agregarDetalleHoja } from '../../services/hojasDetalle.service.js';
 import { getHojaCabById } from '../../repositories/hojasCab.repo.js';
-import { executeQuery, executeRun } from '../../db/sqlite.js';
+import { deleteDetalleLinea, getDetalleByHojaId, updateDetalleCantidadDosis } from '../../repositories/hojasDetalle.repo.js';
 import { listarProductosActivos } from '../../services/productos.service.js';
 import { listarUnidadesByProducto } from '../../services/unidadesMedida.service.js';
 import { confirmar } from '../../utils/confirm.js';
+import { formatFecha } from '../../utils/fecha.js';
 
 let hojaActual        = null;
 let todosLosProductos = [];
 let lineasCache       = []; // caché local — evita re-consultar la BD en cada cambio
-
-/* =========================
-   HELPER: formato dd/mm/yyyy
-========================= */
-function formatFecha(iso) {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
 
 export function initHojaDetalleView() {
 
@@ -160,10 +152,7 @@ export function initHojaDetalleView() {
         okLabel: 'Sí, eliminar',
       });
       if (ok) {
-        await executeRun(
-          'DELETE FROM hojas_detalle WHERE id = ?',
-          [e.target.dataset.deleteLinea]
-        );
+        await deleteDetalleLinea(e.target.dataset.deleteLinea);
         await refrescarTablaDetalle();
       }
       return;
@@ -191,10 +180,7 @@ export function initHojaDetalleView() {
     const cantidad = parseFloat(document.getElementById('edit-linea-cantidad').value);
     const dosis    = cantidad / hojaActual.cantidad_hectareas;
 
-    await executeRun(
-      'UPDATE hojas_detalle SET cantidad = ?, dosis = ? WHERE id = ?',
-      [cantidad, dosis, id]
-    );
+    await updateDetalleCantidadDosis(id, cantidad, dosis);
 
     document.getElementById('modal-editar-linea').classList.add('hidden');
     await refrescarTablaDetalle();
@@ -250,16 +236,7 @@ async function refrescarTablaDetalle() {
   const tbody = document.getElementById('detalle-body');
 
   // Actualizar caché desde BD con campos explícitos (evita SELECT *)
-  lineasCache = await executeQuery(
-    `SELECT 
-       hd.id, hd.linea, hd.cantidad, hd.dosis,
-       hd.producto_id, hd.producto_codigo, hd.producto_nombre,
-       hd.unidad_medida_id
-     FROM hojas_detalle hd
-     WHERE hd.hoja_id = ?
-     ORDER BY hd.linea`,
-    [hojaActual.id]
-  );
+  lineasCache = await getDetalleByHojaId(hojaActual.id);
 
   renderTablaDetalle(lineasCache);
 }

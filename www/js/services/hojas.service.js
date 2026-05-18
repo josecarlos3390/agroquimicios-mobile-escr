@@ -1,9 +1,10 @@
-import { createHojaCab, getNextNumeroSecuencial, getHojas, deleteHojaCab, updateHojaCab, updateEstadoHoja } from '../repositories/hojasCab.repo.js';
+import { createHojaCab, getNextNumeroSecuencial, getHojas, deleteHojaCab, updateHojaCab, updateEstadoHoja, getHectareasHoja } from '../repositories/hojasCab.repo.js';
 import { addLotesToHoja, replaceLotesHoja } from '../repositories/hojasLotes.repo.js';
 import { addSectoresToHoja, replaceSectoresHoja } from '../repositories/hojasSectores.repo.js';
 import { recalcularDosisHoja } from '../repositories/hojasDetalle.repo.js';
-import { executeQuery } from '../db/sqlite.js';
+import { getEmpresaActiva } from './empresas.service.js';
 import { uuid } from '../utils/uuid.js';
+import { getModeloDispositivo } from '../utils/device.js';
 
 export async function crearHojaTrabajoCabecera(data) {
 
@@ -67,9 +68,7 @@ export async function actualizarHojaCabecera(id, data) {
   if (!data.sectores || data.sectores.length === 0) throw new Error('Debe seleccionar al menos un sector');
 
   // Obtener hectáreas anteriores para detectar si cambiaron
-  const [anterior] = await executeQuery(
-    'SELECT cantidad_hectareas FROM hojas_cab WHERE id = ?', [id]
-  );
+  const anterior = await getHectareasHoja(id);
 
   await updateHojaCab(id, data);
   await replaceSectoresHoja(id, data.sectores);
@@ -87,7 +86,8 @@ export async function actualizarHojaCabecera(id, data) {
 }
 
 export async function listarHojas(estado = null) {
-  return await getHojas(estado);
+  const activa = getEmpresaActiva();
+  return await getHojas(estado, activa?.id ?? null);
 }
 
 export async function marcarComoExportado(ids) {
@@ -100,34 +100,3 @@ export async function eliminarHoja(id) {
   return await deleteHojaCab(id);
 }
 
-// Función helper para obtener modelo del dispositivo
-async function getModeloDispositivo() {
-  try {
-    // Forma 1: API moderna de Capacitor
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
-      const info = await window.Capacitor.Plugins.Device.getInfo();
-      return info.model
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, '')
-        .substring(0, 10);
-    }
-
-    // Forma 2: fallback con userAgent
-    const ua = navigator.userAgent;
-    // Android: busca el modelo entre paréntesis
-    const match = ua.match(/\(.*?;\s*([^;)]+)\s*Build/);
-    if (match && match[1]) {
-      return match[1]
-        .trim()
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, '')
-        .substring(0, 10);
-    }
-
-    return 'LOCAL';
-
-  } catch (err) {
-    console.error('❌ getModeloDispositivo error:', err);
-    return 'LOCAL';
-  }
-}

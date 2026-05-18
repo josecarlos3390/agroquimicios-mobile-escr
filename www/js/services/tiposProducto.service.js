@@ -1,7 +1,9 @@
 import {
   getTiposProducto,
   getTipoProductoById,
-  createTipoProducto
+  createTipoProducto,
+  updateTipoProducto,
+  deleteTipoProducto
 } from '../repositories/tiposProducto.repo.js';
 
 export async function listarTiposProducto() {
@@ -18,4 +20,18 @@ export async function crearTipoProducto(data) {
   }
 
   return await createTipoProducto(data);
+}
+
+export async function actualizarTipoProducto(id, data) {
+  if (!id) throw new Error('ID requerido');
+  if (!data.nombre || !data.cuenta_contable) {
+    throw new Error('Nombre y cuenta contable son obligatorios');
+  }
+
+  return await updateTipoProducto(id, data);
+}
+
+export async function eliminarTipoProducto(id) {
+  if (!id) throw new Error('ID requerido');
+  return await deleteTipoProducto(id);
 }
