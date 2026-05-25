@@ -499,6 +499,44 @@ export async function initSchema() {
 
     CREATE INDEX IF NOT EXISTS idx_especies_nombre
       ON especies (nombre_comun);
+
+    /* =========================
+       MÓDULO CONTROL RODEO — CFO
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS cefo_cab (
+      id                  TEXT PRIMARY KEY,
+      empresa_id          INTEGER NOT NULL,
+      nro_cfo_recib       TEXT NOT NULL,
+      fecha_recep         DATE,
+      placa               TEXT,
+      chofer              TEXT,
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS cefo_detalle (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      cefo_id             TEXT    NOT NULL,
+      especie             TEXT    NOT NULL,
+      faja                INTEGER,
+      nro_arbol           TEXT,
+      seccion             TEXT,
+      diamayor            REAL,
+      diamenor            REAL,
+      largo               REAL,
+      volumen             REAL,
+      FOREIGN KEY (cefo_id) REFERENCES cefo_cab(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_cefo_cab_empresa
+      ON cefo_cab (empresa_id);
+
+    CREATE INDEX IF NOT EXISTS idx_cefo_cab_nro
+      ON cefo_cab (nro_cfo_recib);
+
+    CREATE INDEX IF NOT EXISTS idx_cefo_detalle_cefo
+      ON cefo_detalle (cefo_id);
   `;
 
   await executeSet(statements);

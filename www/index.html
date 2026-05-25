@@ -1152,9 +1152,15 @@
   ====================== -->
   <section id="view-control-rodeo-registros" class="view hidden">
     <div class="card">
-      <h3>🐄 Control Rodeo</h3>
-      <p style="color:var(--text-muted);font-size:0.9rem">Módulo en desarrollo.</p>
+      <h3>📋 Registros CFO</h3>
+      <input type="file" id="cefo-file-input" accept=".xlsx,.xls" style="display:none">
+      <button id="btn-importar-cefo" class="btn-primary" style="width:100%;margin:0">📥 Importar Excel</button>
     </div>
+    <div id="cefo-lista"></div>
+  </section>
+
+  <section id="view-control-rodeo-detalle" class="view hidden">
+    <div id="cefo-detalle-contenido"></div>
   </section>
 
   <!-- ======================

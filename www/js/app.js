@@ -57,6 +57,8 @@ import { initDetalleGuiaTransporteView, cargarDetalleGuiaTransporte } from './mo
 
 // ── Módulo: Control Rodeo ─────────────────────────────────
 import { initEspeciesView, cargarEspecies } from './views/especies.view.js';
+import { initRegistrosControlRodeoView, cargarRegistrosCefo } from './modules/controlRodeo/views/registros.view.js';
+import { initDetalleControlRodeoView, cargarDetalleCefo } from './modules/controlRodeo/views/detalle.view.js';
 
 /* ===============================
    SPLASH
@@ -588,7 +590,12 @@ function showView(view, param = null) {
     }
 
     // ── Módulo Control Rodeo ──
-    case 'control-rodeo-registros': initEspeciesView(); cargarEspecies(); break;
+    case 'control-rodeo-registros': initRegistrosControlRodeoView(); cargarRegistrosCefo(); break;
+    case 'control-rodeo-detalle': {
+      initDetalleControlRodeoView();
+      if (param) cargarDetalleCefo(param);
+      break;
+    }
   }
 }
 
