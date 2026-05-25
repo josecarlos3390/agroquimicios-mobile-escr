@@ -26,7 +26,10 @@ import {
   getVariedadPorNombreYCultivo,
   crearVariedadImportacion,
   crearLoteImportacion,
-  actualizarLoteImportacion
+  actualizarLoteImportacion,
+  getEspeciesMap,
+  crearEspecieImportacion,
+  actualizarEspecieImportacion,
 } from '../repositories/importacion.repo.js';
 
 /* =========================================================
@@ -45,8 +48,11 @@ export function detectarTipoExcel(headers) {
                       h.includes('SECTOR') && h.includes('CULTIVO') &&
                       h.includes('EMPRESA');
 
+  const esEspecies  = h.includes('ESPECIE') && h.includes('PROPIEDAD');
+
   if (esProductos) return 'productos';
   if (esLotes)     return 'lotes';
+  if (esEspecies)  return 'especies';
   return null;
 }
 
@@ -209,6 +215,91 @@ export async function importarProductos(nuevos, actualizados) {
     await resetearUnidadesDefault(p.id);
     await asignarUnidadAProducto(p.id, p.unidadId);
     await setUnidadDefault(p.id, p.unidadId);
+    modificados++;
+  }
+
+  return { insertados, modificados };
+}
+
+/* =========================================================
+   PREVISUALIZACIÓN — ESPECIES
+========================================================= */
+export async function previsualizarEspecies(headers, filas) {
+  const idx = {
+    especie:    headers.findIndex(h => h.toUpperCase() === 'ESPECIE'),
+    propiedad:  headers.findIndex(h => h.toUpperCase() === 'PROPIEDAD'),
+  };
+
+  const empresas = await getEmpresasMap();
+  const empresasPorNombre = {};
+  for (const e of empresas) {
+    empresasPorNombre[e.nombre.toUpperCase()] = e.id;
+  }
+
+  const nuevos = [];
+  const actualizados = [];
+  const errores = [];
+
+  for (let i = 0; i < filas.length; i++) {
+    const f = filas[i];
+    const nombreComun = String(f[idx.especie] ?? '').trim().toUpperCase();
+    const nombreEmpresa = String(f[idx.propiedad] ?? '').trim();
+
+    if (!nombreComun) {
+      errores.push({ fila: i + 2, msg: 'Fila sin especie' });
+      continue;
+    }
+
+    const empresaId = empresasPorNombre[nombreEmpresa.toUpperCase()];
+    if (!empresaId) {
+      errores.push({ fila: i + 2, msg: `Empresa no encontrada: "${nombreEmpresa}"` });
+      continue;
+    }
+
+    const existentes = await getEspeciesMap(empresaId);
+    const existente = existentes.find(e => e.nombre_comun === nombreComun);
+
+    if (existente) {
+      actualizados.push({ id: existente.id, nombreComun, empresaId });
+    } else {
+      nuevos.push({ nombreComun, empresaId });
+    }
+  }
+
+  return { nuevos, actualizados, errores };
+}
+
+/* =========================================================
+   IMPORTAR ESPECIES
+========================================================= */
+export async function importarEspecies(nuevos, actualizados) {
+  let insertados = 0;
+  let modificados = 0;
+
+  // Generar códigos correlativos por empresa
+  const codigosPorEmpresa = {};
+
+  for (const e of nuevos) {
+    if (!codigosPorEmpresa[e.empresaId]) {
+      const especies = await getEspeciesMap(e.empresaId);
+      const ultimos = especies
+        .map(e => e.codigo)
+        .filter(c => c && c.startsWith('ESP-'))
+        .map(c => parseInt(c.replace('ESP-', ''), 10))
+        .filter(n => !isNaN(n));
+      const max = ultimos.length > 0 ? Math.max(...ultimos) : 0;
+      codigosPorEmpresa[e.empresaId] = max;
+    }
+
+    codigosPorEmpresa[e.empresaId]++;
+    const codigo = `ESP-${String(codigosPorEmpresa[e.empresaId]).padStart(4, '0')}`;
+
+    await crearEspecieImportacion(e.empresaId, codigo, e.nombreComun, '');
+    insertados++;
+  }
+
+  for (const e of actualizados) {
+    await actualizarEspecieImportacion(e.id, e.nombreComun, '');
     modificados++;
   }
 

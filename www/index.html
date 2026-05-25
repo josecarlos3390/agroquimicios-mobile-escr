@@ -738,7 +738,7 @@
     <div class="card">
       <h3>📥 Actualizar datos</h3>
       <p class="import-subtitulo">
-        Importá productos o lotes desde un archivo Excel. El sistema detecta automáticamente el tipo de archivo y muestra una previsualización antes de aplicar cambios.
+        Importá productos, lotes o especies desde un archivo Excel. El sistema detecta automáticamente el tipo de archivo y muestra una previsualización antes de aplicar cambios.
       </p>
     </div>
 
@@ -762,6 +762,15 @@
           <div class="import-opcion-texto">
             <strong>Actualizar lotes</strong>
             <small>Lotes, sectores, cultivos y variedades</small>
+          </div>
+          <span class="import-opcion-arrow">›</span>
+        </button>
+
+        <button id="btn-import-especies" class="import-opcion-btn">
+          <span class="import-opcion-icon">🐄</span>
+          <div class="import-opcion-texto">
+            <strong>Actualizar especies</strong>
+            <small>Especies del módulo Control Rodeo</small>
           </div>
           <span class="import-opcion-arrow">›</span>
         </button>
@@ -796,6 +805,10 @@
           <div class="import-instr-col">
             <div class="import-instr-label">🌿 Lotes</div>
             <div class="import-instr-cols">LOTE · CODIGO · HECTAREAS · VARIEDAD · CULTIVO · SECTOR</div>
+          </div>
+          <div class="import-instr-col">
+            <div class="import-instr-label">🐄 Especies</div>
+            <div class="import-instr-cols">ESPECIE · PROPIEDAD</div>
           </div>
         </div>
         <div class="import-instr-tip">

@@ -5,6 +5,8 @@ import {
   importarProductos,
   previsualizarLotes,
   importarLotes,
+  previsualizarEspecies,
+  importarEspecies,
 } from '../services/importacion.service.js';
 import { confirmar } from '../utils/confirm.js';
 
@@ -31,6 +33,7 @@ export function initImportacionView() {
 
   document.getElementById('btn-import-productos').onclick = () => abrirSelector('productos');
   document.getElementById('btn-import-lotes').onclick     = () => abrirSelector('lotes');
+  document.getElementById('btn-import-especies').onclick  = () => abrirSelector('especies');
 
   document.getElementById('import-file-input').onchange = (e) => {
     const file = e.target.files[0];
@@ -111,7 +114,8 @@ async function procesarArchivo(file) {
         'Formato no reconocido',
         'El archivo no tiene las columnas esperadas.\n\n' +
         '🧪 Productos necesita: CODIGO · DESCRIPCION · UNIDAD · LINEA DE PRODUCTO · EMPRESA\n' +
-        '🌿 Lotes necesita: LOTE · CODIGO · HECTAREAS · VARIEDAD · CULTIVO · SECTOR · EMPRESA'
+        '🌿 Lotes necesita: LOTE · CODIGO · HECTAREAS · VARIEDAD · CULTIVO · SECTOR · EMPRESA\n' +
+        '🐄 Especies necesita: ESPECIE · PROPIEDAD'
       );
       return;
     }
@@ -132,6 +136,8 @@ async function procesarArchivo(file) {
     // Calcular preview (rápido, solo consultas a BD)
     if (estado.tipo === 'productos') {
       estado.preview = await previsualizarProductos(headers, filas);
+    } else if (estado.tipo === 'especies') {
+      estado.preview = await previsualizarEspecies(headers, filas);
     } else {
       estado.preview = await previsualizarLotes(headers, filas);
     }
@@ -184,6 +190,8 @@ async function ejecutarImportacion() {
 
     if (estado.tipo === 'productos') {
       resultado = await importarProductos(nuevos, actualizados);
+    } else if (estado.tipo === 'especies') {
+      resultado = await importarEspecies(nuevos, actualizados);
     } else {
       resultado = await importarLotes(nuevos, actualizados);
     }
@@ -208,8 +216,8 @@ function renderPreview() {
   const tipo = estado.tipo;
   const panel = document.getElementById('import-preview-panel');
   const nombreArchivo = estado.archivo?.name ?? 'archivo';
-  const iconTipo  = tipo === 'productos' ? '🧪' : '🌿';
-  const labelTipo = tipo === 'productos' ? 'productos' : 'lotes';
+  const iconTipo  = tipo === 'productos' ? '🧪' : tipo === 'especies' ? '🐄' : '🌿';
+  const labelTipo = tipo === 'productos' ? 'productos' : tipo === 'especies' ? 'especies' : 'lotes';
 
   let html = `
     <div class="import-preview-header">
@@ -299,8 +307,8 @@ function renderPreview() {
         ${nuevos.slice(0, 5).map(item => `
           <div class="import-lista-item">
             <span class="import-lista-badge import-lista-badge--new">NUEVO</span>
-            <span>${tipo === 'productos' ? item.codigo + ' — ' + item.nombre : item.nombre + ' · ' + (item.hectareas ?? '?') + ' ha'}</span>
-            <span class="import-lista-sub">${tipo === 'productos' ? item.linea : item.sectorNombre}</span>
+            <span>${tipo === 'productos' ? item.codigo + ' — ' + item.nombre : tipo === 'especies' ? item.nombreComun : item.nombre + ' · ' + (item.hectareas ?? '?') + ' ha'}</span>
+            <span class="import-lista-sub">${tipo === 'productos' ? item.linea : tipo === 'especies' ? '' : item.sectorNombre}</span>
           </div>
         `).join('')}
         ${nuevos.length > 5 ? `<div class="import-lista-item" style="color:var(--text-muted); font-style:italic">...y ${nuevos.length - 5} más</div>` : ''}
@@ -340,7 +348,7 @@ function renderPreview() {
    MOSTRAR RESULTADO FINAL
 ========================================================= */
 function mostrarResultado({ insertados, modificados }) {
-  const tipo = estado.tipo === 'productos' ? 'productos' : 'lotes';
+  const tipo = estado.tipo === 'productos' ? 'productos' : estado.tipo === 'especies' ? 'especies' : 'lotes';
   const total = insertados + modificados;
 
   document.getElementById('import-resultado-texto').innerHTML = `

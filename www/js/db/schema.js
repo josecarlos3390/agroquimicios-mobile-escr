@@ -482,11 +482,17 @@ export async function initSchema() {
 
     CREATE TABLE IF NOT EXISTS especies (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      codigo TEXT NOT NULL UNIQUE,
+      empresa_id INTEGER NOT NULL,
+      codigo TEXT NOT NULL,
       nombre_comun TEXT NOT NULL,
       nombre_cientifico TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE,
+      UNIQUE (empresa_id, codigo)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_especies_empresa
+      ON especies (empresa_id);
 
     CREATE INDEX IF NOT EXISTS idx_especies_codigo
       ON especies (codigo);

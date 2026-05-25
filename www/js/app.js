@@ -16,7 +16,6 @@ import {
   seedTiposProducto,
   seedUnidadesMedida,
   seedVariedades,
-  seedEspecies,
 } from './db/seed.js';
 
 // ── Módulo: Agroquímicos ──────────────────────────────────
@@ -209,7 +208,6 @@ async function initApp() {
     await seedTiposProducto();
     await seedUnidadesMedida();
     await seedTecnicos();
-    await seedEspecies();
 
     initSidebar();
 

@@ -1,34 +1,35 @@
 import { executeQuery, executeRun } from '../db/sqlite.js';
 
-export async function listarEspecies() {
+export async function listarEspecies(empresaId) {
   return executeQuery(
-    'SELECT id, codigo, nombre_comun, nombre_cientifico FROM especies ORDER BY nombre_comun'
+    'SELECT id, codigo, nombre_comun, nombre_cientifico FROM especies WHERE empresa_id = ? ORDER BY nombre_comun',
+    [empresaId]
   );
 }
 
 export async function obtenerEspeciePorId(id) {
   const result = await executeQuery(
-    'SELECT id, codigo, nombre_comun, nombre_cientifico FROM especies WHERE id = ?',
+    'SELECT id, empresa_id, codigo, nombre_comun, nombre_cientifico FROM especies WHERE id = ?',
     [id]
   );
   return result[0] || null;
 }
 
-export async function buscarEspeciesPorNombre(termino) {
+export async function buscarEspeciesPorNombre(empresaId, termino) {
   return executeQuery(
     `SELECT id, codigo, nombre_comun, nombre_cientifico
      FROM especies
-     WHERE nombre_comun LIKE ? OR nombre_cientifico LIKE ?
+     WHERE empresa_id = ? AND (nombre_comun LIKE ? OR nombre_cientifico LIKE ?)
      ORDER BY nombre_comun
      LIMIT 50`,
-    [`%${termino}%`, `%${termino}%`]
+    [empresaId, `%${termino}%`, `%${termino}%`]
   );
 }
 
-export async function insertarEspecie(codigo, nombreComun, nombreCientifico) {
+export async function insertarEspecie(empresaId, codigo, nombreComun, nombreCientifico) {
   const result = await executeRun(
-    'INSERT INTO especies (codigo, nombre_comun, nombre_cientifico) VALUES (?, ?, ?)',
-    [codigo, nombreComun, nombreCientifico]
+    'INSERT INTO especies (empresa_id, codigo, nombre_comun, nombre_cientifico) VALUES (?, ?, ?, ?)',
+    [empresaId, codigo, nombreComun, nombreCientifico]
   );
   return { lastId: result.lastId };
 }
@@ -47,9 +48,18 @@ export async function eliminarEspecie(id) {
   );
 }
 
-export async function obtenerUltimoCodigoEspecie() {
+export async function obtenerUltimoCodigoEspecie(empresaId) {
   const result = await executeQuery(
-    "SELECT codigo FROM especies WHERE codigo LIKE 'ESP-%' ORDER BY CAST(SUBSTR(codigo, 5) AS INTEGER) DESC LIMIT 1"
+    "SELECT codigo FROM especies WHERE empresa_id = ? AND codigo LIKE 'ESP-%' ORDER BY CAST(SUBSTR(codigo, 5) AS INTEGER) DESC LIMIT 1",
+    [empresaId]
   );
   return result[0]?.codigo || null;
+}
+
+export async function obtenerEspeciePorNombre(empresaId, nombreComun) {
+  const result = await executeQuery(
+    'SELECT id FROM especies WHERE empresa_id = ? AND nombre_comun = ?',
+    [empresaId, nombreComun]
+  );
+  return result[0] || null;
 }

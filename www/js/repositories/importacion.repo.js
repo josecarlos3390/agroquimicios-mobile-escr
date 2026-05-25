@@ -194,3 +194,29 @@ export async function actualizarLoteImportacion(id, nombre, hectareas, cultivoId
     [nombre, hectareas, cultivoId, variedadId, sectorId, id]
   );
 }
+
+/* =========================================================
+   ESPECIES
+========================================================= */
+
+export async function getEspeciesMap(empresaId) {
+  return await executeQuery(
+    'SELECT id, nombre_comun FROM especies WHERE empresa_id = ?',
+    [empresaId]
+  );
+}
+
+export async function crearEspecieImportacion(empresaId, codigo, nombreComun, nombreCientifico) {
+  const result = await executeRun(
+    'INSERT INTO especies (empresa_id, codigo, nombre_comun, nombre_cientifico) VALUES (?, ?, ?, ?)',
+    [empresaId, codigo, nombreComun, nombreCientifico]
+  );
+  return result.lastId;
+}
+
+export async function actualizarEspecieImportacion(id, nombreComun, nombreCientifico) {
+  await executeRun(
+    'UPDATE especies SET nombre_comun = ?, nombre_cientifico = ? WHERE id = ?',
+    [nombreComun, nombreCientifico, id]
+  );
+}
