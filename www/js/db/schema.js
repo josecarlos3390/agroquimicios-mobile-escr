@@ -644,6 +644,15 @@ export async function initSchema() {
   await addColumnIfNotExists('corte_semilla_detalle', 'total_general_ha', 'REAL');
   await addColumnIfNotExists('corte_semilla_detalle', 'sup_plantada_mec_ha', 'REAL');
 
+  // Migraciones módulo Control Rodeo
+  await addColumnIfNotExists('cefo_cab', 'numero_secuencial', 'INTEGER NOT NULL DEFAULT 0');
+  await addColumnIfNotExists('cefo_cab', 'numero_completo', "TEXT NOT NULL DEFAULT 'CEFO-000'");
+  await addColumnIfNotExists('cefo_cab', 'observaciones', 'TEXT');
+  await addColumnIfNotExists('cefo_detalle', 'despachado', 'INTEGER DEFAULT 0');
+  await addColumnIfNotExists('cefo_salida_cab', 'numero_secuencial', 'INTEGER NOT NULL DEFAULT 0');
+  await addColumnIfNotExists('cefo_salida_cab', 'numero_completo', "TEXT NOT NULL DEFAULT 'DESP-000'");
+  await addColumnIfNotExists('cefo_salida_cab', 'observaciones', 'TEXT');
+
   // Backfill: asignar secuenciales únicos a registros existentes
   try {
     const existentes = await executeQuery('SELECT id FROM combustible_asignaciones ORDER BY created_at');
