@@ -3077,6 +3077,28 @@ body.dark .lote-ha-input {
   pointer-events: none;
 }
 
+#extras-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: linear-gradient(145deg, #1a3a1a 0%, #1e3d1e 45%, #2d5a2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+#extras-screen.hidden {
+  display: none;
+}
+
+#extras-screen.propiedad-hide {
+  opacity: 0;
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
 /* Badge que muestra la propiedad elegida */
 .uso-propiedad-badge {
   background: rgba(106, 170, 42, 0.15);
