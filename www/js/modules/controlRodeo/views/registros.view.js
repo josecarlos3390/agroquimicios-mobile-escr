@@ -92,7 +92,8 @@ async function procesarArchivoCefo(file) {
 
   try {
     const filas = await leerExcelCefo(file);
-    const resultado = await importarCefoDesdeExcel(filas);
+    const observaciones = document.getElementById('cefo-observaciones-import')?.value?.trim() || '';
+    const resultado = await importarCefoDesdeExcel(filas, observaciones);
 
     mostrarToast(`✅ ${resultado.cefosCreados} CFO(s) · ${resultado.arbolesCreados} árbol(es) importados`);
     await cargarRegistrosCefo();
@@ -116,13 +117,13 @@ function leerExcelCefo(file) {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
-        if (rows.length < 3) {
+        if (rows.length < 2) {
           reject(new Error('El archivo no tiene suficientes filas'));
           return;
         }
 
-        // Fila 1 = título, Fila 2 = headers
-        const headers = rows[1].map(c => String(c ?? '').trim().toLowerCase());
+        // Fila 1 = headers (nuevo formato sin título)
+        const headers = rows[0].map(c => String(c ?? '').trim().toLowerCase());
         const idx = {
           especie: headers.indexOf('especie'),
           faja: headers.indexOf('faja'),
@@ -136,6 +137,7 @@ function leerExcelCefo(file) {
           placa: headers.indexOf('placa'),
           chofer: headers.indexOf('chofer'),
           nro_cfo_recib: headers.indexOf('nro_cfo_recib'),
+          propiedad: headers.indexOf('propiedad'),
         };
 
         if (idx.nro_cfo_recib === -1 || idx.especie === -1) {
@@ -143,7 +145,7 @@ function leerExcelCefo(file) {
           return;
         }
 
-        const filas = rows.slice(2)
+        const filas = rows.slice(1)
           .filter(r => r[idx.nro_cfo_recib] !== '')
           .map(r => ({
             especie: String(r[idx.especie] ?? '').trim(),
@@ -158,6 +160,7 @@ function leerExcelCefo(file) {
             placa: String(r[idx.placa] ?? '').trim(),
             chofer: String(r[idx.chofer] ?? '').trim(),
             nro_cfo_recib: String(r[idx.nro_cfo_recib] ?? '').trim(),
+            propiedad: idx.propiedad >= 0 ? String(r[idx.propiedad] ?? '').trim() : '',
           }));
 
         resolve(filas);

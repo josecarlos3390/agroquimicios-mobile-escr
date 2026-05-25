@@ -511,6 +511,7 @@ export async function initSchema() {
       fecha_recep         DATE,
       placa               TEXT,
       chofer              TEXT,
+      observaciones       TEXT,
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );

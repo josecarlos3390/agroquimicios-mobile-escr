@@ -1,10 +1,10 @@
 import { executeQuery, executeRun } from '../db/sqlite.js';
 
-export async function insertarCefoCab(id, empresaId, nroCfo, fechaRecep, placa, chofer) {
+export async function insertarCefoCab(id, empresaId, nroCfo, fechaRecep, placa, chofer, observaciones) {
   await executeRun(
-    `INSERT INTO cefo_cab (id, empresa_id, nro_cfo_recib, fecha_recep, placa, chofer)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, empresaId, nroCfo, fechaRecep, placa, chofer]
+    `INSERT INTO cefo_cab (id, empresa_id, nro_cfo_recib, fecha_recep, placa, chofer, observaciones)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, empresaId, nroCfo, fechaRecep, placa, chofer, observaciones]
   );
 }
 
@@ -18,7 +18,7 @@ export async function insertarCefoDetalle(cefoId, especie, faja, nroArbol, secci
 
 export async function listarCefos(empresaId) {
   return executeQuery(
-    `SELECT c.id, c.nro_cfo_recib, c.fecha_recep, c.placa, c.chofer,
+    `SELECT c.id, c.nro_cfo_recib, c.fecha_recep, c.placa, c.chofer, c.observaciones,
             COUNT(d.id) as cantidad_arboles
      FROM cefo_cab c
      LEFT JOIN cefo_detalle d ON d.cefo_id = c.id

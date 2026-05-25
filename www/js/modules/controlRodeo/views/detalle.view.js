@@ -43,6 +43,7 @@ export async function cargarDetalleCefo(id) {
           <label>Chofer <span class="detalle-info">${cab.chofer || '—'}</span></label>
           <label>Total árboles <span class="detalle-info">${det.length}</span></label>
         </div>
+        ${cab.observaciones ? `<label style="margin-top:0.5rem">Observaciones <span class="detalle-info">${cab.observaciones}</span></label>` : ''}
       </div>
 
       <div class="card">
