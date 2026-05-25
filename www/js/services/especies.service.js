@@ -31,7 +31,6 @@ export async function crearEspecie(datos) {
   if (!empresa) throw new Error('No hay empresa activa');
 
   const nombreComun = datos.nombreComun?.trim().toUpperCase();
-  const nombreCientifico = datos.nombreCientifico?.trim() || '';
 
   if (!nombreComun) {
     throw new Error('El nombre común es obligatorio');
@@ -40,19 +39,18 @@ export async function crearEspecie(datos) {
   const ultimo = await obtenerUltimoCodigoEspecie(empresa.id);
   const codigo = generarSiguienteCodigo(ultimo);
 
-  const result = await insertarEspecie(empresa.id, codigo, nombreComun, nombreCientifico);
+  const result = await insertarEspecie(empresa.id, codigo, nombreComun);
   return { id: result.lastId, codigo };
 }
 
 export async function editarEspecie(id, datos) {
   const nombreComun = datos.nombreComun?.trim().toUpperCase();
-  const nombreCientifico = datos.nombreCientifico?.trim() || '';
 
   if (!nombreComun) {
     throw new Error('El nombre común es obligatorio');
   }
 
-  await actualizarEspecie(id, nombreComun, nombreCientifico);
+  await actualizarEspecie(id, nombreComun);
   return true;
 }
 

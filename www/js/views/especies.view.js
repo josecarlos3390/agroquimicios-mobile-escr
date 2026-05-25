@@ -18,7 +18,6 @@ export function initEspeciesView() {
 
   const idInput = document.getElementById('especie-id');
   const nombreInput = document.getElementById('especie-nombre');
-  const cientificoInput = document.getElementById('especie-cientifico');
 
   document.getElementById('btn-nueva-especie')
     .addEventListener('click', () => {
@@ -44,12 +43,10 @@ export function initEspeciesView() {
       if (idInput.value) {
         await editarEspecie(idInput.value, {
           nombreComun: nombreInput.value,
-          nombreCientifico: cientificoInput.value,
         });
       } else {
         await crearEspecie({
           nombreComun: nombreInput.value,
-          nombreCientifico: cientificoInput.value,
         });
       }
       modal.classList.add('hidden');
@@ -79,7 +76,6 @@ export function initEspeciesView() {
       const tr = btnEdit.closest('tr').children;
       idInput.value = id;
       nombreInput.value = tr[1].innerText;
-      cientificoInput.value = tr[2].innerText === '—' ? '' : tr[2].innerText;
       modal.classList.remove('hidden');
       nombreInput.focus();
     }
@@ -108,7 +104,7 @@ export async function cargarEspecies() {
     todasLasEspecies = await getEspecies();
   } catch (err) {
     console.error('[ESPECIES] Error al cargar:', err);
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Error al cargar especies</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">Error al cargar especies</td></tr>';
     return;
   }
 
@@ -123,7 +119,7 @@ function renderEspecies(lista) {
   const tbody = document.getElementById('especies-body');
 
   if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Sin especies</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">Sin especies</td></tr>';
     return;
   }
 
@@ -131,7 +127,6 @@ function renderEspecies(lista) {
     <tr>
       <td>${e.codigo}</td>
       <td>${e.nombre_comun}</td>
-      <td>${e.nombre_cientifico || '—'}</td>
       <td>
         <button data-edit="${e.id}">✏️</button>
         <button data-delete="${e.id}">🗑️</button>
@@ -148,7 +143,6 @@ function filtrarEspecies(termino) {
   }
   const filtradas = todasLasEspecies.filter(e =>
     e.nombre_comun.toUpperCase().includes(t) ||
-    (e.nombre_cientifico || '').toUpperCase().includes(t) ||
     e.codigo.toUpperCase().includes(t)
   );
   renderEspecies(filtradas);

@@ -485,7 +485,6 @@ export async function initSchema() {
       empresa_id INTEGER NOT NULL,
       codigo TEXT NOT NULL,
       nombre_comun TEXT NOT NULL,
-      nombre_cientifico TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE,
       UNIQUE (empresa_id, codigo)
@@ -507,6 +506,8 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS cefo_cab (
       id                  TEXT PRIMARY KEY,
       empresa_id          INTEGER NOT NULL,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
       nro_cfo_recib       TEXT NOT NULL,
       fecha_recep         DATE,
       placa               TEXT,
@@ -550,10 +551,13 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS cefo_salida_cab (
       id                  TEXT PRIMARY KEY,
       empresa_id          INTEGER NOT NULL,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
       nro_cfo_despacho    TEXT NOT NULL,
       fecha_despacho      DATE,
       placa               TEXT,
       chofer              TEXT,
+      observaciones       TEXT,
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
@@ -679,5 +683,13 @@ export async function initSchema() {
   await executeRun(`
     INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
     SELECT 'guia_transporte_cab', COALESCE(MAX(numero_secuencial), 0) FROM guia_transporte_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'cefo_cab', COALESCE(MAX(numero_secuencial), 0) FROM cefo_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'cefo_salida_cab', COALESCE(MAX(numero_secuencial), 0) FROM cefo_salida_cab
   `);
 }

@@ -1,10 +1,10 @@
 import { executeQuery, executeRun } from '../db/sqlite.js';
 
-export async function insertarSalidaCab(id, empresaId, nroCfoDespacho, fechaDespacho, placa, chofer) {
+export async function insertarSalidaCab(id, empresaId, numeroSecuencial, numeroCompleto, nroCfoDespacho, fechaDespacho, placa, chofer, observaciones) {
   await executeRun(
-    `INSERT INTO cefo_salida_cab (id, empresa_id, nro_cfo_despacho, fecha_despacho, placa, chofer)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, empresaId, nroCfoDespacho, fechaDespacho, placa, chofer]
+    `INSERT INTO cefo_salida_cab (id, empresa_id, numero_secuencial, numero_completo, nro_cfo_despacho, fecha_despacho, placa, chofer, observaciones)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, empresaId, numeroSecuencial, numeroCompleto, nroCfoDespacho, fechaDespacho, placa, chofer, observaciones]
   );
 }
 
@@ -23,22 +23,29 @@ export async function marcarDetalleDespachado(cefoDetalleId) {
   );
 }
 
+export async function desmarcarDetalleDespachado(cefoDetalleId) {
+  await executeRun(
+    'UPDATE cefo_detalle SET despachado = 0 WHERE id = ?',
+    [cefoDetalleId]
+  );
+}
+
 export async function listarSalidas(empresaId) {
   return executeQuery(
-    `SELECT s.id, s.nro_cfo_despacho, s.fecha_despacho, s.placa, s.chofer,
+    `SELECT s.id, s.numero_completo, s.nro_cfo_despacho, s.fecha_despacho, s.placa, s.chofer,
             COUNT(d.id) as cantidad_arboles
      FROM cefo_salida_cab s
      LEFT JOIN cefo_salida_detalle d ON d.salida_id = s.id
      WHERE s.empresa_id = ?
      GROUP BY s.id
-     ORDER BY s.fecha_despacho DESC, s.nro_cfo_despacho`,
+     ORDER BY s.fecha_despacho DESC, s.numero_completo`,
     [empresaId]
   );
 }
 
 export async function obtenerSalidaPorId(id) {
   const cab = await executeQuery(
-    `SELECT id, nro_cfo_despacho, fecha_despacho, placa, chofer, created_at
+    `SELECT id, numero_completo, nro_cfo_despacho, fecha_despacho, placa, chofer, observaciones, created_at
      FROM cefo_salida_cab WHERE id = ?`,
     [id]
   );
@@ -54,16 +61,12 @@ export async function obtenerSalidaPorId(id) {
 }
 
 export async function eliminarSalida(id) {
-  // Primero desmarcar los detalles como despachados
   const detalles = await executeQuery(
     'SELECT cefo_detalle_id FROM cefo_salida_detalle WHERE salida_id = ?',
     [id]
   );
   for (const d of detalles) {
-    await executeRun(
-      'UPDATE cefo_detalle SET despachado = 0 WHERE id = ?',
-      [d.cefo_detalle_id]
-    );
+    await desmarcarDetalleDespachado(d.cefo_detalle_id);
   }
   return executeRun(
     'DELETE FROM cefo_salida_cab WHERE id = ?',

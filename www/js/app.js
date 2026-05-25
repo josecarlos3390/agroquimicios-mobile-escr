@@ -58,9 +58,10 @@ import { initDetalleGuiaTransporteView, cargarDetalleGuiaTransporte } from './mo
 // ── Módulo: Control Rodeo ─────────────────────────────────
 import { initEspeciesView, cargarEspecies } from './views/especies.view.js';
 import { initRegistrosControlRodeoView, cargarRegistrosCefo } from './modules/controlRodeo/views/registros.view.js';
+import { initNuevaCefoView } from './modules/controlRodeo/views/nueva.view.js';
 import { initDetalleControlRodeoView, cargarDetalleCefo } from './modules/controlRodeo/views/detalle.view.js';
 import { initRegistrosSalidaView, cargarRegistrosSalida } from './modules/controlRodeo/views/registrosSalida.view.js';
-import { initNuevaSalidaView, cargarNuevaSalida } from './modules/controlRodeo/views/nuevaSalida.view.js';
+import { initNuevaSalidaView } from './modules/controlRodeo/views/nuevaSalida.view.js';
 import { initDetalleSalidaView, cargarDetalleSalida } from './modules/controlRodeo/views/detalleSalida.view.js';
 
 /* ===============================
@@ -600,13 +601,14 @@ function showView(view, param = null) {
 
     // ── Módulo Control Rodeo ──
     case 'control-rodeo-registros': initRegistrosControlRodeoView(); cargarRegistrosCefo(); break;
+    case 'control-rodeo-nuevo': initNuevaCefoView(); break;
     case 'control-rodeo-detalle': {
       initDetalleControlRodeoView();
       if (param) cargarDetalleCefo(param);
       break;
     }
     case 'control-rodeo-salida-registros': initRegistrosSalidaView(); cargarRegistrosSalida(); break;
-    case 'control-rodeo-salida-nuevo': initNuevaSalidaView(); cargarNuevaSalida(); break;
+    case 'control-rodeo-salida-nuevo': initNuevaSalidaView(); break;
     case 'control-rodeo-salida-detalle': {
       initDetalleSalidaView();
       if (param) cargarDetalleSalida(param);

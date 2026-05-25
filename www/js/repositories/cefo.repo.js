@@ -1,10 +1,10 @@
 import { executeQuery, executeRun } from '../db/sqlite.js';
 
-export async function insertarCefoCab(id, empresaId, nroCfo, fechaRecep, placa, chofer, observaciones) {
+export async function insertarCefoCab(id, empresaId, numeroSecuencial, numeroCompleto, nroCfo, fechaRecep, placa, chofer, observaciones) {
   await executeRun(
-    `INSERT INTO cefo_cab (id, empresa_id, nro_cfo_recib, fecha_recep, placa, chofer, observaciones)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, empresaId, nroCfo, fechaRecep, placa, chofer, observaciones]
+    `INSERT INTO cefo_cab (id, empresa_id, numero_secuencial, numero_completo, nro_cfo_recib, fecha_recep, placa, chofer, observaciones)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, empresaId, numeroSecuencial, numeroCompleto, nroCfo, fechaRecep, placa, chofer, observaciones]
   );
 }
 
@@ -18,20 +18,20 @@ export async function insertarCefoDetalle(cefoId, especie, faja, nroArbol, secci
 
 export async function listarCefos(empresaId) {
   return executeQuery(
-    `SELECT c.id, c.nro_cfo_recib, c.fecha_recep, c.placa, c.chofer, c.observaciones,
+    `SELECT c.id, c.numero_completo, c.nro_cfo_recib, c.fecha_recep, c.placa, c.chofer,
             COUNT(d.id) as cantidad_arboles
      FROM cefo_cab c
      LEFT JOIN cefo_detalle d ON d.cefo_id = c.id
      WHERE c.empresa_id = ?
      GROUP BY c.id
-     ORDER BY c.fecha_recep DESC, c.nro_cfo_recib`,
+     ORDER BY c.fecha_recep DESC, c.numero_completo`,
     [empresaId]
   );
 }
 
 export async function obtenerCefoPorId(id) {
   const cab = await executeQuery(
-    `SELECT id, nro_cfo_recib, fecha_recep, placa, chofer, created_at
+    `SELECT id, numero_completo, nro_cfo_recib, fecha_recep, placa, chofer, observaciones, created_at
      FROM cefo_cab WHERE id = ?`,
     [id]
   );

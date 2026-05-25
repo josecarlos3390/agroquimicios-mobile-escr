@@ -53,11 +53,12 @@ export async function cargarRegistrosSalida() {
     lista.innerHTML = salidas.map(s => `
       <div class="card hoja-card" data-salida-id="${s.id}">
         <div class="hoja-card-header">
-          <div class="hoja-card-num">${s.nro_cfo_despacho}</div>
+          <div class="hoja-card-num">${s.numero_completo}</div>
           <div class="hoja-card-estado">${s.cantidad_arboles} árboles</div>
         </div>
         <div class="hoja-card-body">
           <div class="hoja-card-meta">
+            <span>📄 CFO: ${s.nro_cfo_despacho}</span>
             <span>📅 ${formatearFecha(s.fecha_despacho)}</span>
             <span>🚛 ${s.placa || '—'}</span>
             <span>👤 ${s.chofer || '—'}</span>

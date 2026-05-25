@@ -8,6 +8,7 @@ import {
   buscarArbolesDisponibles,
 } from '../repositories/cefoSalida.repo.js';
 import { getEmpresaActiva } from './empresas.service.js';
+import { reservarNumeroSecuencial } from '../db/sqlite.js';
 import { uuid } from '../utils/uuid.js';
 
 export async function getSalidas() {
@@ -30,28 +31,36 @@ export async function buscarArboles(termino) {
   return buscarArbolesDisponibles(empresa.id, termino);
 }
 
-export async function crearSalida(datos) {
+export async function crearSalidaCabecera(datos) {
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
 
   const nroCfoDespacho = datos.nroCfoDespacho?.trim().toUpperCase();
-  const fechaDespacho = datos.fechaDespacho || null;
+  if (!nroCfoDespacho) throw new Error('El número de CFO de despacho es obligatorio');
+
+  const secuencial = await reservarNumeroSecuencial('cefo_salida_cab');
+  const numeroCompleto = `DESP-${String(secuencial).padStart(4, '0')}`;
+  const id = uuid();
+
+  const fecha = datos.fechaDespacho || null;
   const placa = datos.placa?.trim().toUpperCase() || '';
   const chofer = datos.chofer?.trim().toUpperCase() || '';
+  const observaciones = datos.observaciones?.trim() || '';
 
-  if (!nroCfoDespacho) {
-    throw new Error('El número de CFO de despacho es obligatorio');
-  }
+  await insertarSalidaCab(id, empresa.id, secuencial, numeroCompleto, nroCfoDespacho, fecha, placa, chofer, observaciones);
+  return { id, numeroCompleto };
+}
 
-  if (!datos.lineas || datos.lineas.length === 0) {
+export async function agregarLineasSalida(salidaId, lineas) {
+  const empresa = getEmpresaActiva();
+  if (!empresa) throw new Error('No hay empresa activa');
+
+  if (!lineas || lineas.length === 0) {
     throw new Error('Debe agregar al menos una línea');
   }
 
-  const salidaId = uuid();
-
-  await insertarSalidaCab(salidaId, empresa.id, nroCfoDespacho, fechaDespacho, placa, chofer);
-
-  for (const linea of datos.lineas) {
+  let creados = 0;
+  for (const linea of lineas) {
     await insertarSalidaDetalle(
       salidaId,
       linea.cefoDetalleId,
@@ -65,7 +74,8 @@ export async function crearSalida(datos) {
       linea.volumen
     );
     await marcarDetalleDespachado(linea.cefoDetalleId);
+    creados++;
   }
 
-  return { id: salidaId };
+  return { creados };
 }

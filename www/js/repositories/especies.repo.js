@@ -2,14 +2,14 @@ import { executeQuery, executeRun } from '../db/sqlite.js';
 
 export async function listarEspecies(empresaId) {
   return executeQuery(
-    'SELECT id, codigo, nombre_comun, nombre_cientifico FROM especies WHERE empresa_id = ? ORDER BY nombre_comun',
+    'SELECT id, codigo, nombre_comun FROM especies WHERE empresa_id = ? ORDER BY nombre_comun',
     [empresaId]
   );
 }
 
 export async function obtenerEspeciePorId(id) {
   const result = await executeQuery(
-    'SELECT id, empresa_id, codigo, nombre_comun, nombre_cientifico FROM especies WHERE id = ?',
+    'SELECT id, empresa_id, codigo, nombre_comun FROM especies WHERE id = ?',
     [id]
   );
   return result[0] || null;
@@ -17,27 +17,27 @@ export async function obtenerEspeciePorId(id) {
 
 export async function buscarEspeciesPorNombre(empresaId, termino) {
   return executeQuery(
-    `SELECT id, codigo, nombre_comun, nombre_cientifico
+    `SELECT id, codigo, nombre_comun
      FROM especies
-     WHERE empresa_id = ? AND (nombre_comun LIKE ? OR nombre_cientifico LIKE ?)
+     WHERE empresa_id = ? AND nombre_comun LIKE ?
      ORDER BY nombre_comun
      LIMIT 50`,
-    [empresaId, `%${termino}%`, `%${termino}%`]
+    [empresaId, `%${termino}%`]
   );
 }
 
-export async function insertarEspecie(empresaId, codigo, nombreComun, nombreCientifico) {
+export async function insertarEspecie(empresaId, codigo, nombreComun) {
   const result = await executeRun(
-    'INSERT INTO especies (empresa_id, codigo, nombre_comun, nombre_cientifico) VALUES (?, ?, ?, ?)',
-    [empresaId, codigo, nombreComun, nombreCientifico]
+    'INSERT INTO especies (empresa_id, codigo, nombre_comun) VALUES (?, ?, ?)',
+    [empresaId, codigo, nombreComun]
   );
   return { lastId: result.lastId };
 }
 
-export async function actualizarEspecie(id, nombreComun, nombreCientifico) {
+export async function actualizarEspecie(id, nombreComun) {
   return executeRun(
-    'UPDATE especies SET nombre_comun = ?, nombre_cientifico = ? WHERE id = ?',
-    [nombreComun, nombreCientifico, id]
+    'UPDATE especies SET nombre_comun = ? WHERE id = ?',
+    [nombreComun, id]
   );
 }
 

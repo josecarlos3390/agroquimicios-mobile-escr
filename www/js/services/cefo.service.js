@@ -5,7 +5,8 @@ import {
   obtenerCefoPorId,
   eliminarCefo,
 } from '../repositories/cefo.repo.js';
-import { getEmpresaActiva, listarEmpresas } from './empresas.service.js';
+import { getEmpresaActiva } from './empresas.service.js';
+import { reservarNumeroSecuencial } from '../db/sqlite.js';
 import { uuid } from '../utils/uuid.js';
 
 export async function getCefos() {
@@ -22,77 +23,41 @@ export async function borrarCefo(id) {
   return eliminarCefo(id);
 }
 
-export async function importarCefoDesdeExcel(filas, observacionesGlobal) {
-  const empresaActiva = getEmpresaActiva();
-  if (!empresaActiva) throw new Error('No hay empresa activa');
+export async function crearCefoCabecera(datos) {
+  const empresa = getEmpresaActiva();
+  if (!empresa) throw new Error('No hay empresa activa');
 
-  // Cargar empresas para mapear por nombre
-  const empresas = await listarEmpresas();
-  const empresaPorNombre = {};
-  for (const e of empresas) {
-    empresaPorNombre[e.nombre.toUpperCase()] = e.id;
-  }
+  const nroCfo = datos.nroCfoRecib?.trim().toUpperCase();
+  if (!nroCfo) throw new Error('El número de CFO es obligatorio');
 
-  // Agrupar filas por nro_cfo_recib + propiedad
-  const grupos = {};
+  const secuencial = await reservarNumeroSecuencial('cefo_cab');
+  const numeroCompleto = `CEFO-${String(secuencial).padStart(4, '0')}`;
+  const id = uuid();
+
+  const fecha = datos.fechaRecep || null;
+  const placa = datos.placa?.trim().toUpperCase() || '';
+  const chofer = datos.chofer?.trim().toUpperCase() || '';
+  const observaciones = datos.observaciones?.trim() || '';
+
+  await insertarCefoCab(id, empresa.id, secuencial, numeroCompleto, nroCfo, fecha, placa, chofer, observaciones);
+  return { id, numeroCompleto };
+}
+
+export async function importarLineasCefo(cefoId, filas) {
+  let creados = 0;
   for (const f of filas) {
-    const cfo = String(f.nro_cfo_recib || '').trim();
-    const propiedad = String(f.propiedad || '').trim();
-    if (!cfo) continue;
-
-    const empresaId = empresaPorNombre[propiedad.toUpperCase()] || empresaActiva.id;
-    const grupoKey = `${cfo}_${empresaId}`;
-
-    if (!grupos[grupoKey]) {
-      grupos[grupoKey] = {
-        nro_cfo_recib: cfo,
-        empresa_id: empresaId,
-        fecha_recep: f.fecha_recep,
-        placa: f.placa,
-        chofer: f.chofer,
-        arboles: [],
-      };
-    }
-    grupos[grupoKey].arboles.push(f);
-  }
-
-  let cefosCreados = 0;
-  let arbolesCreados = 0;
-
-  for (const key in grupos) {
-    const g = grupos[key];
-    const id = uuid();
-
-    const fecha = g.fecha_recep instanceof Date
-      ? g.fecha_recep.toISOString().split('T')[0]
-      : (g.fecha_recep || null);
-
-    await insertarCefoCab(
-      id,
-      g.empresa_id,
-      g.nro_cfo_recib,
-      fecha,
-      g.placa || '',
-      g.chofer || '',
-      observacionesGlobal || ''
+    await insertarCefoDetalle(
+      cefoId,
+      f.especie || '',
+      f.faja || null,
+      f.nro_arbol || '',
+      f.seccion || '',
+      f.diamayor || null,
+      f.diamenor || null,
+      f.largo || null,
+      f.volumen || null
     );
-    cefosCreados++;
-
-    for (const a of g.arboles) {
-      await insertarCefoDetalle(
-        id,
-        a.especie || '',
-        a.faja || null,
-        a.nro_arbol || '',
-        a.seccion || '',
-        a.diamayor || null,
-        a.diamenor || null,
-        a.largo || null,
-        a.volumen || null
-      );
-      arbolesCreados++;
-    }
+    creados++;
   }
-
-  return { cefosCreados, arbolesCreados };
+  return { creados };
 }
