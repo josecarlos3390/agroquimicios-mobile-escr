@@ -294,6 +294,7 @@ function crearUsoScreen() {
           <div class="splash-tagline">Seleccioná el tipo de uso</div>
         </div>
         <div class="propiedad-cards" id="uso-cards"></div>
+        <button id="btn-uso-extras" class="btn-extras" style="margin-top:1rem; width:100%; justify-content:center; padding:0.5rem 1rem; font-size:0.85rem;">➕ Módulos adicionales</button>
       </div>
     `;
     document.body.prepend(screen);
@@ -354,6 +355,14 @@ async function mostrarSelectorUso(empresa) {
           resolve(uso);
         }, { once: true });
       });
+    });
+
+    document.getElementById('btn-uso-extras')?.addEventListener('click', () => {
+      screen.classList.add('propiedad-hide');
+      screen.addEventListener('transitionend', () => {
+        screen.classList.add('hidden');
+        mostrarSelectorExtras();
+      }, { once: true });
     });
   });
 }
