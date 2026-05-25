@@ -106,6 +106,16 @@ const TIPOS_USO = [
   },
 ];
 
+const TIPOS_USO_EXTRAS = [
+  {
+    id: 'control-rodeo',
+    nombre: 'Control Rodeo',
+    icono: '🐄',
+    sub: 'Registro de animales',
+    disponible: true,
+  },
+];
+
 let tipoUsoActivo = null;
 
 function getTipoUsoActivo() { return tipoUsoActivo; }
@@ -123,7 +133,7 @@ function guardarTipoUsoActivo(uso) {
 function obtenerTipoUsoActivo() {
   const id = localStorage.getItem('tipoUsoActivo');
   if (!id) return null;
-  return TIPOS_USO.find(t => t.id === id);
+  return TIPOS_USO.find(t => t.id === id) ?? TIPOS_USO_EXTRAS.find(t => t.id === id);
 }
 
 /* ===============================
@@ -197,6 +207,11 @@ async function initApp() {
     await seedTecnicos();
 
     initSidebar();
+
+    // ── Botón EXTRAS ──
+    document.getElementById('btn-extras')?.addEventListener('click', () => {
+      mostrarSelectorExtras();
+    });
 
     // ── Intentar restaurar sesión previa ──
     const empresaRestaurada = await restaurarEmpresaActiva();
@@ -350,6 +365,71 @@ async function cambiarUso() {
 
 window.cambiarUso = cambiarUso;
 
+/* ===============================
+   SELECCIÓN DE MÓDULOS EXTRAS
+================================ */
+function crearExtrasScreen() {
+  let screen = document.getElementById('extras-screen');
+  if (!screen) {
+    screen = document.createElement('div');
+    screen.id = 'extras-screen';
+    screen.innerHTML = `
+      <div class="splash-bg-ring splash-ring-1"></div>
+      <div class="splash-bg-ring splash-ring-2"></div>
+      <div class="splash-bg-ring splash-ring-3"></div>
+      <div class="propiedad-content">
+        <div class="splash-texts">
+          <div class="splash-name">Módulos adicionales</div>
+          <div class="splash-tagline">Seleccioná una opción</div>
+        </div>
+        <div class="propiedad-cards" id="extras-cards"></div>
+      </div>
+    `;
+    document.body.prepend(screen);
+  }
+  return screen;
+}
+
+async function mostrarSelectorExtras() {
+  return new Promise(resolve => {
+    const screen = crearExtrasScreen();
+    const cards = document.getElementById('extras-cards');
+
+    cards.innerHTML = TIPOS_USO_EXTRAS.map(t => `
+      <div class="propiedad-card ${!t.disponible ? 'propiedad-card--disabled' : ''}" data-id="${t.id}" ${!t.disponible ? 'aria-disabled="true"' : ''}>
+        <div class="propiedad-card-icon">${t.icono}</div>
+        <div class="propiedad-card-info">
+          <div class="propiedad-card-nombre">${t.nombre}</div>
+          <div class="propiedad-card-sub">${t.sub}</div>
+        </div>
+        <div class="propiedad-card-arrow">${t.disponible ? '›' : '🔒'}</div>
+      </div>
+    `).join('');
+
+    screen.classList.remove('hidden', 'propiedad-hide');
+
+    cards.querySelectorAll('.propiedad-card:not(.propiedad-card--disabled)').forEach(card => {
+      card.addEventListener('click', () => {
+        const uso = TIPOS_USO_EXTRAS.find(t => t.id === card.dataset.id);
+        tipoUsoActivo = uso;
+        guardarTipoUsoActivo(uso);
+
+        screen.classList.add('propiedad-hide');
+        screen.addEventListener('transitionend', () => {
+          screen.classList.add('hidden');
+          document.body.classList.remove('app-inactiva');
+          renderMenuModulo(uso.id);
+          actualizarHeaderUso(uso);
+          window.showView('control-rodeo-registros');
+          resolve(uso);
+        }, { once: true });
+      });
+    });
+  });
+}
+
+window.mostrarSelectorExtras = mostrarSelectorExtras;
+
 function actualizarHeaderUso(uso) {
   const header = document.querySelector('.header-title');
   const empresa = getEmpresaActiva();
@@ -502,6 +582,9 @@ function showView(view, param = null) {
       if (param) cargarDetalleGuiaTransporte(param);
       break;
     }
+
+    // ── Módulo Control Rodeo ──
+    case 'control-rodeo-registros': break;
   }
 }
 

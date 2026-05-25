@@ -136,6 +136,16 @@ const MENUS = {
     <p class="menu-title">\u2699\uFE0F Configuración</p>
     <a href="#" data-view="importacion">\uD83D\uDCE5 Actualizar datos</a>
   `,
+
+  'control-rodeo': `
+    <p class="menu-title">🐄 Operación</p>
+    <a href="#" data-view="control-rodeo-registros">📋 Registros</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">⚙️ Configuración</p>
+    <a href="#" data-view="importacion">📥 Actualizar datos</a>
+  `,
 };
 
 /* =========================================================
@@ -214,6 +224,7 @@ export function renderMenuModulo(moduloId) {
     combustible: 'Uso de Combustible',
     'corte-semilla': 'Corte de Semilla',
     'guia-transporte-cana': 'Guía de Transporte de Caña',
+    'control-rodeo': 'Control Rodeo',
   };
   const subtitle = document.querySelector('.sidebar-header-subtitle');
   if (subtitle) subtitle.textContent = subtitles[moduloId] ?? '';

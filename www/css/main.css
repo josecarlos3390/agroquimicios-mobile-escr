@@ -236,6 +236,27 @@ body.app-inactiva section.view {
 .menu-btn:hover { background: rgba(255,255,255,0.14); transform: none; box-shadow: none; }
 .menu-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.94); }
 
+/* Botón EXTRAS en header */
+.btn-extras {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-extras:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.35); }
+.btn-extras:active { background: rgba(255,255,255,0.30); transform: scale(0.95); }
+
 /* ================================
    CONTAINER
 ================================ */
