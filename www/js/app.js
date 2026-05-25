@@ -284,9 +284,12 @@ function crearUsoScreen() {
       <div class="splash-bg-ring splash-ring-3"></div>
       <div class="propiedad-content">
         <div class="uso-propiedad-badge" id="uso-propiedad-badge">🏡</div>
-        <div class="splash-texts">
-          <div class="splash-name">¿Qué vas a hacer?</div>
-          <div class="splash-tagline">Seleccioná el tipo de uso</div>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem">
+          <div class="splash-texts" style="margin-bottom:0">
+            <div class="splash-name">¿Qué vas a hacer?</div>
+            <div class="splash-tagline">Seleccioná el tipo de uso</div>
+          </div>
+          <button id="btn-uso-extras" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:1.3rem; cursor:pointer; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.18s;">+</button>
         </div>
         <div class="propiedad-cards" id="uso-cards"></div>
       </div>
@@ -313,16 +316,7 @@ async function mostrarSelectorUso(empresa) {
         </div>
         <div class="propiedad-card-arrow">${t.disponible ? '›' : '🔒'}</div>
       </div>
-    `).join('') + `
-      <div class="propiedad-card propiedad-card--extras" id="btn-uso-extras">
-        <div class="propiedad-card-icon" style="background:rgba(106,170,42,0.15); font-size:1.6rem">➕</div>
-        <div class="propiedad-card-info">
-          <div class="propiedad-card-nombre">Módulos adicionales</div>
-          <div class="propiedad-card-sub">Ver más opciones</div>
-        </div>
-        <div class="propiedad-card-arrow">›</div>
-      </div>
-    `;
+    `).join('');
 
     screen.classList.remove('hidden', 'propiedad-hide');
 

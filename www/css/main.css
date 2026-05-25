@@ -257,15 +257,7 @@ body.app-inactiva section.view {
 .btn-extras:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.35); }
 .btn-extras:active { background: rgba(255,255,255,0.30); transform: scale(0.95); }
 
-/* Tarjeta EXTRAS en selector de uso */
-.propiedad-card--extras {
-  background: rgba(255,255,255,0.04);
-  border: 1.5px dashed rgba(106, 170, 42, 0.4);
-}
-.propiedad-card--extras:hover {
-  background: rgba(106, 170, 42, 0.10);
-  border-color: rgba(106, 170, 42, 0.7);
-}
+
 
 /* ================================
    CONTAINER
