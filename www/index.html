@@ -620,6 +620,42 @@
   </section>
 
   <!-- ======================
+       ESPECIES
+  ====================== -->
+  <section id="view-especies" class="view hidden">
+  <div class="card">
+    <h3>🌿 Especies</h3>
+    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.5rem">
+      <button id="btn-nueva-especie" class="btn-primary" style="margin:0">➕ Nueva</button>
+      <div style="position:relative;flex:1;min-width:200px">
+        <input type="text" id="especies-search"
+          placeholder="🔍 Buscar por nombre o código..."
+          style="width:100%;box-sizing:border-box;padding-right:2rem">
+      </div>
+      <span id="especies-count" style="font-size:0.83rem;color:var(--text-muted);white-space:nowrap"></span>
+    </div>
+    <table>
+      <thead><tr><th>Código</th><th>Nombre común</th><th>Nombre científico</th><th>Acciones</th></tr></thead>
+      <tbody id="especies-body"></tbody>
+    </table>
+  </div>
+  <div id="especie-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>🌿 Especie</h3>
+    <form id="especie-form">
+      <input type="hidden" id="especie-id">
+      <label>Nombre común <input type="text" id="especie-nombre" required></label>
+      <label>Nombre científico <input type="text" id="especie-cientifico" placeholder="Ej: Bos taurus"></label>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancelar-especie">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+  </div>
+  </section>
+
+  <!-- ======================
       HOJA DETALLE
   ====================== -->
   <section id="view-hoja-detalle" class="view hidden">

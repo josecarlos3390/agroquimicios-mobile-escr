@@ -1,6 +1,7 @@
 import { lotesSeed } from './seed-data-lotes.js';
 import { productosSeed } from './seed-data-productos.js';
-import { executeQuery, executeRun } from './sqlite.js';
+import { ESPECIES_INICIALES } from './seedEspecies.js';
+import { executeQuery, executeRun, executeSet } from './sqlite.js';
 import { uuid } from '../utils/uuid.js';
 
 
@@ -510,4 +511,24 @@ export async function seedProductosCana() {
   }
 
   console.log('[SEED] ✅ seedProductosCana: productos de caña insertados/verificados');
+}
+
+/* =========================================================
+   ESPECIES — módulo Control Rodeo
+========================================================= */
+export async function seedEspecies() {
+  const count = await executeQuery('SELECT COUNT(*) as count FROM especies');
+  if (count[0]?.count > 0) {
+    return;
+  }
+
+  const inserts = ESPECIES_INICIALES.map((e, idx) => {
+    const codigo = `ESP-${String(idx + 1).padStart(4, '0')}`;
+    const nc = e.nombre_comun.replace(/'/g, "''");
+    const nci = (e.nombre_cientifico || '').replace(/'/g, "''");
+    return `INSERT INTO especies (codigo, nombre_comun, nombre_cientifico) VALUES ('${codigo}', '${nc}', '${nci}');`;
+  }).join('\n');
+
+  await executeSet(inserts);
+  console.log(`[SEED] ✅ seedEspecies: ${ESPECIES_INICIALES.length} especies insertadas`);
 }

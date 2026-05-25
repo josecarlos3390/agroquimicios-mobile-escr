@@ -475,6 +475,24 @@ export async function initSchema() {
       ON guia_transporte_cab (empresa_id);
     CREATE INDEX IF NOT EXISTS idx_guia_cosecha_mec_guia
       ON guia_transporte_cosecha_mec (guia_id);
+
+    /* =========================
+       MÓDULO CONTROL RODEO
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS especies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      codigo TEXT NOT NULL UNIQUE,
+      nombre_comun TEXT NOT NULL,
+      nombre_cientifico TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_especies_codigo
+      ON especies (codigo);
+
+    CREATE INDEX IF NOT EXISTS idx_especies_nombre
+      ON especies (nombre_comun);
   `;
 
   await executeSet(statements);

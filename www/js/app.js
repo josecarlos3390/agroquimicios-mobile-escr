@@ -16,6 +16,7 @@ import {
   seedTiposProducto,
   seedUnidadesMedida,
   seedVariedades,
+  seedEspecies,
 } from './db/seed.js';
 
 // ── Módulo: Agroquímicos ──────────────────────────────────
@@ -54,6 +55,9 @@ import { initNuevoCorteSemillaView, cargarNuevoCorteSemilla, cargarEdicionCorteS
 import { initRegistrosGuiaTransporteView, cargarRegistrosGuiaTransporte } from './modules/guiaTransporteCana/views/registros.view.js';
 import { initNuevaGuiaTransporteView, cargarNuevaGuiaTransporte, cargarEdicionGuiaTransporte } from './modules/guiaTransporteCana/views/nuevaGuia.view.js';
 import { initDetalleGuiaTransporteView, cargarDetalleGuiaTransporte } from './modules/guiaTransporteCana/views/detalleGuia.view.js';
+
+// ── Módulo: Control Rodeo ─────────────────────────────────
+import { initEspeciesView, cargarEspecies } from './views/especies.view.js';
 
 /* ===============================
    SPLASH
@@ -205,6 +209,7 @@ async function initApp() {
     await seedTiposProducto();
     await seedUnidadesMedida();
     await seedTecnicos();
+    await seedEspecies();
 
     initSidebar();
 
@@ -519,6 +524,7 @@ function showView(view, param = null) {
     case 'tipos-producto':    initTiposProductoView(); cargarTiposProducto(); break;
     case 'tipos-aplicacion':  initTiposAplicacionView(); cargarTiposAplicacion(); break;
     case 'unidades':          initUnidadesMedidaView(); cargarUnidadesMedida(); break;
+    case 'especies':          initEspeciesView(); cargarEspecies(); break;
     case 'importacion':       initImportacionView(); cargarImportacion(); break;
 
     // ── Módulo Agroquímicos ──
@@ -584,7 +590,7 @@ function showView(view, param = null) {
     }
 
     // ── Módulo Control Rodeo ──
-    case 'control-rodeo-registros': break;
+    case 'control-rodeo-registros': initEspeciesView(); cargarEspecies(); break;
   }
 }
 

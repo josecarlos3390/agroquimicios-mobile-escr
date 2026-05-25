@@ -143,6 +143,11 @@ const MENUS = {
 
     <div class="menu-divider"></div>
 
+    <p class="menu-title">🌿 Maestros</p>
+    <a href="#" data-view="especies">🌿 Especies</a>
+
+    <div class="menu-divider"></div>
+
     <p class="menu-title">⚙️ Configuración</p>
     <a href="#" data-view="importacion">📥 Actualizar datos</a>
   `,
