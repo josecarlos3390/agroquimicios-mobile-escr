@@ -284,12 +284,12 @@ function crearUsoScreen() {
       <div class="splash-bg-ring splash-ring-3"></div>
       <div class="propiedad-content">
         <div class="uso-propiedad-badge" id="uso-propiedad-badge">🏡</div>
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem">
-          <div class="splash-texts" style="margin-bottom:0">
-            <div class="splash-name">¿Qué vas a hacer?</div>
-            <div class="splash-tagline">Seleccioná el tipo de uso</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; width:100%; box-sizing:border-box; padding:0 0.25rem; margin-bottom:0.25rem">
+          <div class="splash-texts" style="margin-bottom:0; align-items:flex-start; flex:1; min-width:0">
+            <div class="splash-name" style="font-size:1.5rem; text-align:left; white-space:normal; line-height:1.2">¿Qué vas a hacer?</div>
+            <div class="splash-tagline" style="text-align:left">Seleccioná el tipo de uso</div>
           </div>
-          <button id="btn-uso-extras" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:1.3rem; cursor:pointer; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.18s;">+</button>
+          <button id="btn-uso-extras" style="background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.3); color:#fff; font-size:1.4rem; font-weight:700; cursor:pointer; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.18s, transform 0.12s; box-shadow:0 2px 8px rgba(0,0,0,0.2);">+</button>
         </div>
         <div class="propiedad-cards" id="uso-cards"></div>
       </div>
