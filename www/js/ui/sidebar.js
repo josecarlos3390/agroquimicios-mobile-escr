@@ -138,8 +138,13 @@ const MENUS = {
   `,
 
   'control-rodeo': `
-    <p class="menu-title">🐄 Operación</p>
-    <a href="#" data-view="control-rodeo-registros">📋 Registros</a>
+    <p class="menu-title">🐄 Entradas</p>
+    <a href="#" data-view="control-rodeo-registros">📋 Registros CFO</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">📦 Salidas</p>
+    <a href="#" data-view="control-rodeo-salida-registros">📦 Despachos</a>
 
     <div class="menu-divider"></div>
 

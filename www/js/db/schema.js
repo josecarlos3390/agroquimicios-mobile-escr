@@ -526,6 +526,7 @@ export async function initSchema() {
       diamenor            REAL,
       largo               REAL,
       volumen             REAL,
+      despachado          INTEGER DEFAULT 0,
       FOREIGN KEY (cefo_id) REFERENCES cefo_cab(id) ON DELETE CASCADE
     );
 
@@ -537,6 +538,46 @@ export async function initSchema() {
 
     CREATE INDEX IF NOT EXISTS idx_cefo_detalle_cefo
       ON cefo_detalle (cefo_id);
+
+    CREATE INDEX IF NOT EXISTS idx_cefo_detalle_despachado
+      ON cefo_detalle (despachado);
+
+    /* =========================
+       CONTROL RODEO — SALIDAS / DESPACHOS
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS cefo_salida_cab (
+      id                  TEXT PRIMARY KEY,
+      empresa_id          INTEGER NOT NULL,
+      nro_cfo_despacho    TEXT NOT NULL,
+      fecha_despacho      DATE,
+      placa               TEXT,
+      chofer              TEXT,
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS cefo_salida_detalle (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      salida_id           TEXT    NOT NULL,
+      cefo_detalle_id     INTEGER NOT NULL,
+      especie             TEXT    NOT NULL,
+      faja                INTEGER,
+      nro_arbol           TEXT,
+      seccion             TEXT,
+      diamayor            REAL,
+      diamenor            REAL,
+      largo               REAL,
+      volumen             REAL,
+      FOREIGN KEY (salida_id) REFERENCES cefo_salida_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (cefo_detalle_id) REFERENCES cefo_detalle(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_cefo_salida_cab_empresa
+      ON cefo_salida_cab (empresa_id);
+
+    CREATE INDEX IF NOT EXISTS idx_cefo_salida_detalle_salida
+      ON cefo_salida_detalle (salida_id);
   `;
 
   await executeSet(statements);

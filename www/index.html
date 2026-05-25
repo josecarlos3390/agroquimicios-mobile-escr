@@ -1164,6 +1164,56 @@
   </section>
 
   <!-- ======================
+       CONTROL RODEO — SALIDAS / DESPACHOS
+  ====================== -->
+  <section id="view-control-rodeo-salida-registros" class="view hidden">
+    <div class="card">
+      <h3>📦 Despachos de CFO</h3>
+      <button id="btn-nueva-salida" class="btn-primary" style="width:100%;margin:0">➕ Nuevo despacho</button>
+    </div>
+    <div id="salida-lista"></div>
+  </section>
+
+  <section id="view-control-rodeo-salida-nuevo" class="view hidden">
+    <form id="form-salida" onsubmit="return false">
+      <div class="card">
+        <div class="vista-header">
+          <button type="button" id="btn-salida-volver" class="btn-volver">← Volver</button>
+          <h3>📦 Nuevo despacho</h3>
+        </div>
+        <div class="grid">
+          <label>Nro CFO Despacho <input type="text" id="salida-nro-cfo" class="input-upper" required></label>
+          <label>Fecha despacho <input type="date" id="salida-fecha" required></label>
+          <label>Placa <input type="text" id="salida-placa" class="input-upper"></label>
+          <label>Chofer <input type="text" id="salida-chofer" class="input-upper"></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>➕ Agregar árboles</h3>
+        <label>Buscar árbol disponible
+          <input type="text" id="salida-buscar-arbol" placeholder="Escribí especie, nro árbol o CFO..." autocomplete="off">
+        </label>
+        <div id="salida-resultados-arbol" style="display:none; margin-top:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); max-height:200px; overflow-y:auto;"></div>
+        <button type="button" id="btn-salida-agregar-linea" class="btn-secondary" style="margin-top:0.75rem">🔍 Buscar árbol</button>
+      </div>
+
+      <div class="card">
+        <h3>🌲 Árboles agregados</h3>
+        <div id="salida-lineas-container">
+          <p style="color:var(--text-muted);font-size:0.9rem">Sin líneas agregadas</p>
+        </div>
+      </div>
+
+      <button type="button" id="btn-salida-guardar" class="btn-primary" style="width:100%">💾 Guardar despacho</button>
+    </form>
+  </section>
+
+  <section id="view-control-rodeo-salida-detalle" class="view hidden">
+    <div id="salida-detalle-contenido"></div>
+  </section>
+
+  <!-- ======================
        MÓDULO GUÍA DE TRANSPORTE DE CAÑA
   ====================== -->
 
