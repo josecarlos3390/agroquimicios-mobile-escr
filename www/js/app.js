@@ -289,12 +289,14 @@ function crearUsoScreen() {
       <div class="splash-bg-ring splash-ring-3"></div>
       <div class="propiedad-content">
         <div class="uso-propiedad-badge" id="uso-propiedad-badge">🏡</div>
-        <div class="splash-texts">
-          <div class="splash-name">¿Qué vas a hacer?</div>
-          <div class="splash-tagline">Seleccioná el tipo de uso</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem">
+          <div class="splash-texts" style="margin-bottom:0">
+            <div class="splash-name">¿Qué vas a hacer?</div>
+            <div class="splash-tagline">Seleccioná el tipo de uso</div>
+          </div>
+          <button id="btn-uso-extras" class="btn-extras" style="flex-shrink:0; padding:0.4rem 0.9rem; font-size:0.8rem;">➕ Extras</button>
         </div>
         <div class="propiedad-cards" id="uso-cards"></div>
-        <button id="btn-uso-extras" class="btn-extras" style="margin-top:1rem; width:100%; justify-content:center; padding:0.5rem 1rem; font-size:0.85rem;">➕ Módulos adicionales</button>
       </div>
     `;
     document.body.prepend(screen);
