@@ -3,6 +3,7 @@ import {
   insertarCefoDetalle,
   listarCefos,
   obtenerCefoPorId,
+  actualizarCefoCab,
   eliminarCefo,
 } from '../repositories/cefo.repo.js';
 import { getEmpresaActiva } from './empresas.service.js';
@@ -41,6 +42,18 @@ export async function crearCefoCabecera(datos) {
 
   await insertarCefoCab(id, empresa.id, secuencial, numeroCompleto, nroCfo, fecha, placa, chofer, observaciones);
   return { id, numeroCompleto };
+}
+
+export async function actualizarCefoCabecera(id, datos) {
+  const nroCfo = datos.nroCfoRecib?.trim().toUpperCase();
+  if (!nroCfo) throw new Error('El número de CFO es obligatorio');
+
+  const fecha = datos.fechaRecep || null;
+  const placa = datos.placa?.trim().toUpperCase() || '';
+  const chofer = datos.chofer?.trim().toUpperCase() || '';
+  const observaciones = datos.observaciones?.trim() || '';
+
+  await actualizarCefoCab(id, nroCfo, fecha, placa, chofer, observaciones);
 }
 
 export async function importarLineasCefo(cefoId, filas) {

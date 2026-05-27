@@ -525,8 +525,7 @@ export async function seedEspecies() {
   const inserts = ESPECIES_INICIALES.map((e, idx) => {
     const codigo = `ESP-${String(idx + 1).padStart(4, '0')}`;
     const nc = e.nombre_comun.replace(/'/g, "''");
-    const nci = (e.nombre_cientifico || '').replace(/'/g, "''");
-    return `INSERT INTO especies (codigo, nombre_comun, nombre_cientifico) VALUES ('${codigo}', '${nc}', '${nci}');`;
+    return `INSERT INTO especies (codigo, nombre_comun) VALUES ('${codigo}', '${nc}');`;
   }).join('\n');
 
   await executeSet(inserts);

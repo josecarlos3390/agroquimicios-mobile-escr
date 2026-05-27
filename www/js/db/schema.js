@@ -450,6 +450,10 @@ export async function initSchema() {
       cod_tractor_chata   TEXT,
       cod_tractorista     TEXT,
       foto_semi_base64    TEXT,
+      lote                TEXT,
+      variedad            TEXT,
+      cultivo             TEXT,
+      hectareas           REAL,
       estado              TEXT    DEFAULT 'BORRADOR',
       sync_status         TEXT    DEFAULT 'pending',
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -652,6 +656,12 @@ export async function initSchema() {
   await addColumnIfNotExists('cefo_salida_cab', 'numero_secuencial', 'INTEGER NOT NULL DEFAULT 0');
   await addColumnIfNotExists('cefo_salida_cab', 'numero_completo', "TEXT NOT NULL DEFAULT 'DESP-000'");
   await addColumnIfNotExists('cefo_salida_cab', 'observaciones', 'TEXT');
+
+  // Migraciones módulo Guía de Transporte de Caña
+  await addColumnIfNotExists('guia_transporte_cab', 'lote', 'TEXT');
+  await addColumnIfNotExists('guia_transporte_cab', 'variedad', 'TEXT');
+  await addColumnIfNotExists('guia_transporte_cab', 'cultivo', 'TEXT');
+  await addColumnIfNotExists('guia_transporte_cab', 'hectareas', 'REAL');
 
   // Backfill: asignar secuenciales únicos a registros existentes
   try {

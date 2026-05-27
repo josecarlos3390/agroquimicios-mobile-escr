@@ -206,17 +206,17 @@ export async function getEspeciesMap(empresaId) {
   );
 }
 
-export async function crearEspecieImportacion(empresaId, codigo, nombreComun, nombreCientifico) {
+export async function crearEspecieImportacion(empresaId, codigo, nombreComun) {
   const result = await executeRun(
-    'INSERT INTO especies (empresa_id, codigo, nombre_comun, nombre_cientifico) VALUES (?, ?, ?, ?)',
-    [empresaId, codigo, nombreComun, nombreCientifico]
+    'INSERT INTO especies (empresa_id, codigo, nombre_comun) VALUES (?, ?, ?)',
+    [empresaId, codigo, nombreComun]
   );
   return result.lastId;
 }
 
-export async function actualizarEspecieImportacion(id, nombreComun, nombreCientifico) {
+export async function actualizarEspecieImportacion(id, nombreComun) {
   await executeRun(
-    'UPDATE especies SET nombre_comun = ?, nombre_cientifico = ? WHERE id = ?',
-    [nombreComun, nombreCientifico, id]
+    'UPDATE especies SET nombre_comun = ? WHERE id = ?',
+    [nombreComun, id]
   );
 }

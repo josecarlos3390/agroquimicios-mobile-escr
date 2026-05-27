@@ -5,12 +5,16 @@ import {
   aplicarMarcaAgua,
 } from '../services/guiaTransporteCana.service.js';
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
+import { listarTecnicos } from '../../../services/tecnicos.service.js';
+import { listarSectores } from '../../../services/sectores.service.js';
+import { listarLotesPorSector } from '../../../services/lotes.service.js';
 import { crearBotonEscanear } from '../../../utils/barcode.js';
 import { formatFecha } from '../../../utils/fecha.js';
 
 let inicializado = false;
 let _modoEdicion = false;
 let _idEdicion = null;
+let _lotesCache = {}; // loteId -> { nombre, variedad_nombre, cultivo_nombre }
 
 /* =========================================================
    INIT
@@ -28,6 +32,19 @@ export function initNuevaGuiaTransporteView() {
   initCosechadorasDinamicas(section);
   initFotos(section);
   initFormulario(section);
+  initDependencias(section);
+  initModalSS();
+
+  initSearchableSelect('ss-boletario', []);
+  initSearchableSelect('ss-turno', []);
+  initSearchableSelect('ss-frente', []);
+  initSearchableSelect('ss-propiedad', []);
+  initSearchableSelect('ss-lote', []);
+
+  const loteHidden = document.querySelector('#ss-lote .ssd-value');
+  if (loteHidden) {
+    loteHidden.addEventListener('change', () => mostrarVariedadCultivo(loteHidden.value));
+  }
 
   document.getElementById('btn-guia-transporte-nuevo-volver')?.addEventListener('click', () => {
     window.showView('guia-transporte-registros');
@@ -273,7 +290,7 @@ function initFormulario(section) {
       const fecha = section.querySelector('#gt-fecha')?.value;
       if (!fecha) throw new Error('La fecha es obligatoria');
 
-      const boletario = section.querySelector('#gt-boletario')?.value?.trim();
+      const boletario = getSearchableSelectValue('ss-boletario');
       if (!boletario) throw new Error('El nombre del boletario es obligatorio');
 
       const data = {
@@ -283,9 +300,13 @@ function initFormulario(section) {
         hora_salida: section.querySelector('#gt-hora-salida')?.value || null,
         hora_llegada_cola: section.querySelector('#gt-hora-cola')?.value || null,
         boletario,
-        turno: section.querySelector('#gt-turno')?.value?.trim().toUpperCase() || null,
-        frente: section.querySelector('#gt-frente')?.value?.trim().toUpperCase() || null,
-        propiedad: section.querySelector('#gt-propiedad')?.value?.trim().toUpperCase() || null,
+        turno: getSearchableSelectValue('ss-turno'),
+        frente: getSearchableSelectValue('ss-frente'),
+        propiedad: getSearchableSelectValue('ss-propiedad'),
+        lote: getSearchableSelectValue('ss-lote'),
+        variedad: section.querySelector('#gt-variedad')?.value?.trim().toUpperCase() || null,
+        cultivo: section.querySelector('#gt-cultivo')?.value?.trim().toUpperCase() || null,
+        hectareas: section.querySelector('#gt-hectareas')?.value ? parseFloat(section.querySelector('#gt-hectareas').value) : null,
         observaciones: section.querySelector('#gt-observaciones')?.value?.trim().toUpperCase() || null,
 
         cod_liberacion: section.querySelector('#gt-cod-liberacion')?.value?.trim().toUpperCase() || null,
@@ -369,12 +390,221 @@ function limpiarFormulario(section) {
   section.querySelectorAll('.acordeon-cuerpo').forEach((b, i) => {
     b.classList.toggle('abierto', i === 0);
   });
+}
 
-  _modoEdicion = false;
-  _idEdicion = null;
+/* =========================================================
+   SEARCHABLE SELECT (modal con búsqueda)
+========================================================= */
+let _ssModalInicializado = false;
+let _ssModalTargetId = null;
+let _abrirModalSS = null;
+let _cerrarModalSS = null;
 
-  const titulo = section.querySelector('#gt-nuevo-titulo');
-  if (titulo) titulo.textContent = '📋 Nueva Guía de Transporte';
+function initModalSS() {
+  if (_ssModalInicializado) return;
+  _ssModalInicializado = true;
+
+  const modal = document.getElementById('modal-ss');
+  const titulo = document.getElementById('modal-ss-titulo');
+  const buscar = document.getElementById('modal-ss-buscar');
+  const lista = document.getElementById('modal-ss-lista');
+  const btnCerrar = document.getElementById('modal-ss-cerrar');
+  if (!modal || !buscar || !lista) return;
+
+  function renderModalSS(opciones) {
+    lista.innerHTML = '';
+    if (opciones.length === 0) {
+      lista.innerHTML = '<div class="ssd-empty">Sin resultados</div>';
+      return;
+    }
+    opciones.forEach(opt => {
+      const div = document.createElement('div');
+      div.className = 'ssd-option';
+      div.dataset.value = String(opt.value ?? '');
+      div.textContent = opt.label || '';
+
+      div.addEventListener('click', () => seleccionarModalSS(opt));
+
+      lista.appendChild(div);
+    });
+  }
+
+  function seleccionarModalSS(opt) {
+    if (!_ssModalTargetId) return;
+    const container = document.getElementById(_ssModalTargetId);
+    if (!container) return;
+    const hidden = container.querySelector('.ssd-value');
+    const display = container.querySelector('.ssd-display');
+    if (hidden) hidden.value = String(opt.value ?? '');
+    if (display) display.textContent = opt.label || display.dataset.placeholder || '';
+    _cerrarModalSS();
+    if (hidden) hidden.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  _cerrarModalSS = function () {
+    modal.classList.add('hidden');
+    buscar.value = '';
+    _ssModalTargetId = null;
+    if (document.activeElement === buscar) buscar.blur();
+  };
+
+  _abrirModalSS = function (containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    _ssModalTargetId = containerId;
+    titulo.textContent = container.dataset.titulo || 'Seleccionar';
+    renderModalSS(container._opciones || []);
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => buscar.focus());
+  };
+
+  btnCerrar?.addEventListener('click', _cerrarModalSS);
+  modal.addEventListener('click', e => {
+    if (e.target === modal) _cerrarModalSS();
+  });
+
+  buscar.addEventListener('input', () => {
+    const container = document.getElementById(_ssModalTargetId);
+    if (!container) return;
+    const term = buscar.value.trim().toLowerCase();
+    const filtrados = (container._opciones || []).filter(o => o.label.toLowerCase().includes(term));
+    renderModalSS(filtrados);
+  });
+}
+
+function initSearchableSelect(containerId, opciones) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const display = container.querySelector('.ssd-display');
+  if (!display) return;
+
+  container._opciones = opciones;
+
+  display.addEventListener('click', () => {
+    if (_abrirModalSS) _abrirModalSS(containerId);
+  });
+}
+
+function updateSearchableSelectOptions(containerId, opciones) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container._opciones = opciones;
+  clearSearchableSelect(containerId);
+}
+
+function setSearchableSelectValue(containerId, value) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const hidden = container.querySelector('.ssd-value');
+  const display = container.querySelector('.ssd-display');
+  const opcion = container._opciones?.find(o => String(o.value) === String(value));
+  if (hidden) hidden.value = value || '';
+  if (display) display.textContent = opcion ? opcion.label : (display.dataset.placeholder || '');
+}
+
+function getSearchableSelectValue(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return null;
+  const hidden = container.querySelector('.ssd-value');
+  return hidden ? hidden.value.trim() || null : null;
+}
+
+function clearSearchableSelect(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const hidden = container.querySelector('.ssd-value');
+  const display = container.querySelector('.ssd-display');
+  if (hidden) hidden.value = '';
+  if (display) display.textContent = display.dataset.placeholder || '';
+}
+
+/* =========================================================
+   DEPENDENCIAS: Técnicos, Sectores, Lotes
+========================================================= */
+function limpiarVariedadCultivo() {
+  const v = document.getElementById('gt-variedad');
+  const c = document.getElementById('gt-cultivo');
+  const h = document.getElementById('gt-hectareas');
+  if (v) v.value = '';
+  if (c) c.value = '';
+  if (h) h.value = '';
+}
+
+function mostrarVariedadCultivo(loteId) {
+  const info = _lotesCache[loteId];
+  const v = document.getElementById('gt-variedad');
+  const c = document.getElementById('gt-cultivo');
+  const h = document.getElementById('gt-hectareas');
+  if (v) v.value = info?.variedad_nombre || '';
+  if (c) c.value = info?.cultivo_nombre || '';
+  if (h) h.value = info?.hectareas != null ? String(info.hectareas) : '';
+}
+
+function cacheLotes(lotes) {
+  _lotesCache = {};
+  lotes.forEach(l => {
+    _lotesCache[l.id] = {
+      nombre: l.nombre,
+      variedad_nombre: l.variedad_nombre,
+      cultivo_nombre: l.cultivo_nombre,
+      hectareas: l.hectareas,
+    };
+  });
+}
+
+function initDependencias() {
+  const container = document.getElementById('ss-propiedad');
+  if (!container) return;
+  const hidden = container.querySelector('.ssd-value');
+  if (!hidden) return;
+
+  hidden.addEventListener('change', async () => {
+    const sectorId = hidden.value;
+    limpiarVariedadCultivo();
+    if (!sectorId) {
+      updateSearchableSelectOptions('ss-lote', []);
+      _lotesCache = {};
+      return;
+    }
+    try {
+      const lotes = await listarLotesPorSector(sectorId);
+      cacheLotes(lotes);
+      updateSearchableSelectOptions('ss-lote', lotes.map(l => ({ value: l.id, label: l.nombre })));
+    } catch (err) {
+      console.error('[GUIA-TRANSPORTE] Error cargando lotes:', err);
+    }
+  });
+}
+
+async function cargarTecnicosSearchable() {
+  try {
+    const empresa = getEmpresaActiva();
+    const tecnicos = await listarTecnicos(empresa?.id || null);
+    updateSearchableSelectOptions('ss-boletario', tecnicos.map(t => ({ value: t.nombre, label: t.nombre })));
+  } catch (err) {
+    console.error('[GUIA-TRANSPORTE] Error cargando técnicos:', err);
+  }
+}
+
+async function cargarSectoresSearchable() {
+  try {
+    const empresa = getEmpresaActiva();
+    const sectores = await listarSectores(empresa?.id || null);
+    updateSearchableSelectOptions('ss-propiedad', sectores.map(s => ({ value: s.id, label: s.nombre })));
+  } catch (err) {
+    console.error('[GUIA-TRANSPORTE] Error cargando sectores:', err);
+  }
+}
+
+function setHoraActual(...ids) {
+  const ahora = new Date();
+  const hh = String(ahora.getHours()).padStart(2, '0');
+  const mm = String(ahora.getMinutes()).padStart(2, '0');
+  const hora = `${hh}:${mm}`;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = hora;
+  });
 }
 
 /* =========================================================
@@ -390,12 +620,31 @@ export async function cargarNuevaGuiaTransporte() {
   const titulo = section.querySelector('#gt-nuevo-titulo');
   if (titulo) titulo.textContent = '📋 Nueva Guía de Transporte';
 
+  const btnSubmit = section.querySelector('#btn-gt-submit');
+  if (btnSubmit) btnSubmit.textContent = '📌 Guardar guía';
+
   limpiarFormulario(section);
 
   const fechaInput = section.querySelector('#gt-fecha');
   if (fechaInput && !fechaInput.value) {
     fechaInput.value = new Date().toISOString().split('T')[0];
   }
+
+  setHoraActual('gt-hora-llegada', 'gt-hora-salida', 'gt-hora-cola');
+
+  await cargarTecnicosSearchable();
+  await cargarSectoresSearchable();
+  updateSearchableSelectOptions('ss-lote', []);
+
+  // Opciones fijas
+  updateSearchableSelectOptions('ss-turno', [
+    { value: 'MAÑANA', label: 'MAÑANA' },
+    { value: 'TARDE', label: 'TARDE' },
+  ]);
+  updateSearchableSelectOptions('ss-frente', [
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+  ]);
 
   const contenedor = document.getElementById('gt-cosechadoras-container');
   if (contenedor && contenedor.children.length === 0) {
@@ -413,20 +662,49 @@ export async function cargarEdicionGuiaTransporte(id) {
   const titulo = section.querySelector('#gt-nuevo-titulo');
   if (titulo) titulo.textContent = '✏️ Editar Guía de Transporte';
 
+  const btnSubmit = section.querySelector('#btn-gt-submit');
+  if (btnSubmit) btnSubmit.textContent = '🔄 Actualizar guía';
+
   limpiarFormulario(section);
 
   try {
     const g = await obtenerGuia(id);
     if (!g) { alert('Guía no encontrada'); return; }
 
+    await cargarTecnicosSearchable();
+    await cargarSectoresSearchable();
+
+    updateSearchableSelectOptions('ss-turno', [
+      { value: 'MAÑANA', label: 'MAÑANA' },
+      { value: 'TARDE', label: 'TARDE' },
+    ]);
+    updateSearchableSelectOptions('ss-frente', [
+      { value: '1', label: '1' },
+      { value: '2', label: '2' },
+    ]);
+
     section.querySelector('#gt-fecha').value = g.fecha || '';
     section.querySelector('#gt-hora-llegada').value = g.hora_llegada || '';
     section.querySelector('#gt-hora-salida').value = g.hora_salida || '';
     section.querySelector('#gt-hora-cola').value = g.hora_llegada_cola || '';
-    section.querySelector('#gt-boletario').value = g.boletario || '';
-    section.querySelector('#gt-turno').value = g.turno || '';
-    section.querySelector('#gt-frente').value = g.frente || '';
-    section.querySelector('#gt-propiedad').value = g.propiedad || '';
+    setSearchableSelectValue('ss-boletario', g.boletario);
+    setSearchableSelectValue('ss-turno', g.turno);
+    setSearchableSelectValue('ss-frente', g.frente);
+    setSearchableSelectValue('ss-propiedad', g.propiedad);
+
+    // Cargar lotes del sector seleccionado y setear el lote guardado
+    if (g.propiedad) {
+      try {
+        const lotes = await listarLotesPorSector(g.propiedad);
+        cacheLotes(lotes);
+        updateSearchableSelectOptions('ss-lote', lotes.map(l => ({ value: l.id, label: l.nombre })));
+        setSearchableSelectValue('ss-lote', g.lote);
+        mostrarVariedadCultivo(g.lote);
+      } catch (err) {
+        console.error('[GUIA-TRANSPORTE] Error cargando lotes en edición:', err);
+      }
+    }
+
     section.querySelector('#gt-observaciones').value = g.observaciones || '';
 
     section.querySelector('#gt-cod-liberacion').value = g.cod_liberacion || '';

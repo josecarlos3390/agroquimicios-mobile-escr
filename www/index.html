@@ -1153,6 +1153,9 @@
       <h3>📋 Registros CFO</h3>
       <button id="btn-nuevo-cefo" class="btn-primary" style="width:100%;margin:0">➕ Crear Registro</button>
     </div>
+    <div class="card" style="padding:0.6rem 0.9rem">
+      <input type="text" id="cefo-buscador" placeholder="🔍 Buscar por CFO, placa o chofer..." style="width:100%; margin:0">
+    </div>
     <div id="cefo-lista"></div>
   </section>
 
@@ -1186,6 +1189,9 @@
     <div class="card">
       <h3>📦 Despachos de CFO</h3>
       <button id="btn-nueva-salida" class="btn-primary" style="width:100%;margin:0">➕ Crear Despacho</button>
+    </div>
+    <div class="card" style="padding:0.6rem 0.9rem">
+      <input type="text" id="salida-buscador" placeholder="🔍 Buscar por CFO, placa o chofer..." style="width:100%; margin:0">
     </div>
     <div id="salida-lista"></div>
   </section>
@@ -1239,10 +1245,10 @@
 
   <section id="view-guia-transporte-nuevo" class="view hidden">
     <form id="form-guia-transporte">
-      <div class="card">
-        <div class="vista-header">
+      <div class="card" style="padding:0.6rem 0.9rem">
+        <div class="vista-header" style="padding:0.3rem 0">
           <button type="button" id="btn-guia-transporte-nuevo-volver" class="btn-volver">← Volver</button>
-          <h3 id="gt-nuevo-titulo">📋 Nueva Guía de Transporte</h3>
+          <h3 id="gt-nuevo-titulo" style="font-size:1rem">📋 Nueva Guía de Transporte</h3>
         </div>
       </div>
 
@@ -1260,10 +1266,49 @@
             <label>Hora Llegada Cola <input type="time" id="gt-hora-cola"></label>
           </div>
           <div class="grid" style="margin-top:0.5rem">
-            <label>Nombre Boletario <input type="text" id="gt-boletario" class="input-upper" placeholder="Nombre del notero" required></label>
-            <label>Turno <input type="text" id="gt-turno" class="input-upper" placeholder="Ej: MAÑANA, TARDE"></label>
-            <label>Frente <input type="text" id="gt-frente" class="input-upper" placeholder="Ej: FRENTE 1"></label>
-            <label>Propiedad <input type="text" id="gt-propiedad" class="input-upper" placeholder="Nombre de propiedad"></label>
+            <label>Nombre Boletario
+              <div class="searchable-select" id="ss-boletario" data-titulo="Seleccionar Boletario" data-required="true">
+                <button type="button" class="ssd-display" data-placeholder="Seleccioná técnico...">Seleccioná técnico...</button>
+                <input type="hidden" class="ssd-value" id="gt-boletario">
+              </div>
+            </label>
+            <label>Turno
+              <div class="searchable-select" id="ss-turno" data-titulo="Seleccionar Turno">
+                <button type="button" class="ssd-display" data-placeholder="Seleccioná turno...">Seleccioná turno...</button>
+                <input type="hidden" class="ssd-value" id="gt-turno">
+              </div>
+            </label>
+            <label>Frente
+              <div class="searchable-select" id="ss-frente" data-titulo="Seleccionar Frente">
+                <button type="button" class="ssd-display" data-placeholder="Seleccioná frente...">Seleccioná frente...</button>
+                <input type="hidden" class="ssd-value" id="gt-frente">
+              </div>
+            </label>
+            <label>Propiedad (Sector)
+              <div class="searchable-select" id="ss-propiedad" data-titulo="Seleccionar Sector">
+                <button type="button" class="ssd-display" data-placeholder="Seleccioná sector...">Seleccioná sector...</button>
+                <input type="hidden" class="ssd-value" id="gt-propiedad">
+              </div>
+            </label>
+          </div>
+          <div class="grid" style="margin-top:0.5rem">
+            <label>Lote
+              <div class="searchable-select" id="ss-lote" data-titulo="Seleccionar Lote">
+                <button type="button" class="ssd-display" data-placeholder="Seleccioná lote...">Seleccioná lote...</button>
+                <input type="hidden" class="ssd-value" id="gt-lote">
+              </div>
+            </label>
+          </div>
+          <div class="grid" style="margin-top:0.5rem">
+            <label>Variedad
+              <input type="text" id="gt-variedad" class="input-upper" readonly placeholder="—">
+            </label>
+            <label>Cultivo
+              <input type="text" id="gt-cultivo" class="input-upper" readonly placeholder="—">
+            </label>
+            <label>Hectáreas
+              <input type="text" id="gt-hectareas" class="input-upper" readonly placeholder="—">
+            </label>
           </div>
           <label style="margin-top:0.5rem">Observaciones <textarea id="gt-observaciones" class="input-upper" rows="2" placeholder="Notas adicionales..."></textarea></label>
         </div>
@@ -1373,7 +1418,7 @@
       </div>
 
       <div style="padding:0 0 1rem">
-        <button type="submit" class="btn-primary" style="width:100%">
+        <button type="submit" id="btn-gt-submit" class="btn-primary" style="width:100%">
           📌 Guardar guía
         </button>
       </div>
@@ -1388,10 +1433,7 @@
       </div>
     </div>
     <div id="guia-transporte-detalle-contenido"></div>
-    <div style="display:flex;gap:0.65rem;padding:0 0 1rem">
-      <button id="btn-guia-transporte-detalle-editar" class="btn-primary" style="flex:1">✏️ Editar</button>
-      <button id="btn-guia-transporte-detalle-eliminar" class="btn-secondary" style="flex:1">🗑️ Eliminar</button>
-    </div>
+
   </section>
 
 </main>
@@ -1507,5 +1549,19 @@
   actualizarFab();
 })();
 </script>
+
+<!-- Modal genérico para searchable selects -->
+<div id="modal-ss" class="modal hidden">
+  <div class="modal-content" style="max-width:100%;width:100%;height:85vh;padding:0;overflow:hidden;gap:0;border-radius:var(--radius-lg);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.2rem;border-bottom:1.5px solid var(--border);flex-shrink:0;">
+      <h3 id="modal-ss-titulo" style="margin:0;padding:0;border:none;font-size:1rem;color:var(--primary);">Buscar</h3>
+      <button id="modal-ss-cerrar" type="button" style="background:none;border:none;font-size:1.4rem;color:var(--text-soft);cursor:pointer;line-height:1;padding:0.2rem;">✕</button>
+    </div>
+    <div style="padding:0.75rem 1.2rem;border-bottom:1.5px solid var(--border);flex-shrink:0;">
+      <input type="text" id="modal-ss-buscar" placeholder="🔍 Escribí para filtrar..." style="width:100%;padding:0.55rem 0.7rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.95rem;background:var(--input-bg);color:var(--text);outline:none;">
+    </div>
+    <div id="modal-ss-lista" style="flex:1;overflow-y:auto;padding:0.5rem 0;"></div>
+  </div>
+</div>
 </body>
 </html>

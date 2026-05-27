@@ -84,26 +84,30 @@ export async function executeSet(statements) {
 
 // Reservar número secuencial atómicamente para una tabla
 export async function reservarNumeroSecuencial(tabla) {
-  await executeRun('BEGIN TRANSACTION');
-  try {
-    await executeRun(
-      'INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero) VALUES (?, 0)',
-      [tabla]
-    );
-    await executeRun(
-      'UPDATE secuencias SET ultimo_numero = ultimo_numero + 1 WHERE tabla = ?',
-      [tabla]
-    );
-    const result = await executeQuery(
-      'SELECT ultimo_numero FROM secuencias WHERE tabla = ?',
-      [tabla]
-    );
-    await executeRun('COMMIT');
-    return result[0].ultimo_numero;
-  } catch (err) {
-    try { await executeRun('ROLLBACK'); } catch (_) {}
-    throw err;
-  }
+  const sqlite = await getSQLite();
+
+  // executeSet ejecuta ambos statements en una sola transacción nativa
+  await sqlite.executeSet({
+    database: dbName,
+    set: [
+      {
+        statement: 'INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero) VALUES (?, 0)',
+        values: [tabla]
+      },
+      {
+        statement: 'UPDATE secuencias SET ultimo_numero = ultimo_numero + 1 WHERE tabla = ?',
+        values: [tabla]
+      }
+    ],
+    transaction: true
+  });
+
+  const result = await executeQuery(
+    'SELECT ultimo_numero FROM secuencias WHERE tabla = ?',
+    [tabla]
+  );
+
+  return result[0].ultimo_numero;
 }
 
 // Cerrar conexión

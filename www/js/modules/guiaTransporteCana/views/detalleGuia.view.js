@@ -12,23 +12,7 @@ export function initDetalleGuiaTransporteView() {
     window.showView('guia-transporte-registros');
   });
 
-  document.getElementById('btn-guia-transporte-detalle-editar')?.addEventListener('click', () => {
-    const id = document.getElementById('guia-transporte-detalle-contenido')?.dataset?.id;
-    if (id) window.showView('guia-transporte-editar', id);
-  });
-
-  document.getElementById('btn-guia-transporte-detalle-eliminar')?.addEventListener('click', async () => {
-    const id = document.getElementById('guia-transporte-detalle-contenido')?.dataset?.id;
-    if (!id) return;
-    const ok = await confirmar({ titulo: 'Eliminar guía', msg: '¿Eliminar esta guía de transporte?' });
-    if (!ok) return;
-    try {
-      await eliminarGuia(id);
-      window.showView('guia-transporte-registros');
-    } catch (err) {
-      alert('❌ ' + err.message);
-    }
-  });
+  /* Botones de acción removidos del detalle: Editar y Eliminar ahora están en la lista */
 }
 
 export async function cargarDetalleGuiaTransporte(id) {
@@ -58,6 +42,10 @@ export async function cargarDetalleGuiaTransporte(id) {
             <div><strong>Turno:</strong> ${g.turno || '—'}</div>
             <div><strong>Frente:</strong> ${g.frente || '—'}</div>
             <div><strong>Propiedad:</strong> ${g.propiedad || '—'}</div>
+            <div><strong>Lote:</strong> ${g.lote || '—'}</div>
+            <div><strong>Variedad:</strong> ${g.variedad || '—'}</div>
+            <div><strong>Cultivo:</strong> ${g.cultivo || '—'}</div>
+            <div><strong>Hectáreas:</strong> ${g.hectareas != null ? g.hectareas : '—'}</div>
           </div>
         </div>
       </div>

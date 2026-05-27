@@ -1,4 +1,4 @@
-import { listarGuias, eliminarGuia } from '../services/guiaTransporteCana.service.js';
+import { listarGuias, eliminarGuia, prepararExcelGuiaTransporte, actualizarEstadoGuia } from '../services/guiaTransporteCana.service.js';
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
 import { confirmar } from '../../../utils/confirm.js';
 import { formatFecha } from '../../../utils/fecha.js';
@@ -32,6 +32,38 @@ export function initRegistrosGuiaTransporteView() {
     if (!card) return;
     const id = card.dataset.id;
     if (!id) return;
+
+    if (e.target.closest('.btn-editar-guia')) {
+      window.showView('guia-transporte-editar', id);
+      return;
+    }
+
+    if (e.target.closest('.btn-enviar-guia')) {
+      const btn = e.target.closest('.btn-enviar-guia');
+      const textoOriginal = btn.textContent;
+      btn.disabled = true; btn.textContent = '⏳';
+      try {
+        const { base64, nombre } = await prepararExcelGuiaTransporte(id);
+        const { Filesystem, Share } = window.Capacitor.Plugins;
+        const base64Limpio = base64.includes(',') ? base64.split(',')[1] : base64;
+        const dataUri = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Limpio}`;
+        const resultado = await Filesystem.writeFile({ path: nombre, data: dataUri, directory: 'CACHE', recursive: true });
+        await Share.share({
+          title: 'Guía de Transporte de Caña - AgroApp',
+          text: `Exportación: ${nombre}`,
+          files: [resultado.uri],
+          dialogTitle: '¿Dónde querés enviar el Excel?'
+        });
+        await actualizarEstadoGuia(id, 'EXPORTADO');
+        await cargarRegistrosGuiaTransporte();
+      } catch (err) {
+        if (err.message?.includes('cancel') || err.message?.includes('dismiss')) { /* usuario canceló */ }
+        else { alert('❌ No se pudo exportar:\n' + err.message); }
+      } finally {
+        btn.disabled = false; btn.textContent = textoOriginal;
+      }
+      return;
+    }
 
     if (e.target.closest('.btn-eliminar-guia')) {
       const ok = await confirmar({ titulo: 'Eliminar guía', msg: '¿Eliminar esta guía de transporte?' });
@@ -92,6 +124,12 @@ export async function cargarRegistrosGuiaTransporte() {
           <div>🔓 Liberación: ${g.cod_liberacion || '—'}</div>
         </div>
         <div class="hoja-card-actions">
+          <button type="button" class="btn-editar-guia" style="color:var(--primary);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
+            ✏️ Editar
+          </button>
+          <button type="button" class="btn-enviar-guia" style="color:var(--success);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
+            📤 Enviar
+          </button>
           <button type="button" class="btn-eliminar-guia" style="color:var(--danger);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
             🗑️ Eliminar
           </button>

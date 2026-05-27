@@ -52,7 +52,7 @@ export async function obtenerSalidaPorId(id) {
   if (!cab[0]) return null;
 
   const det = await executeQuery(
-    `SELECT id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen
+    `SELECT id, cefo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen
      FROM cefo_salida_detalle WHERE salida_id = ? ORDER BY id`,
     [id]
   );
@@ -72,6 +72,23 @@ export async function eliminarSalida(id) {
     'DELETE FROM cefo_salida_cab WHERE id = ?',
     [id]
   );
+}
+
+export async function actualizarSalidaCab(id, nroCfoDespacho, fechaDespacho, placa, chofer, observaciones) {
+  await executeRun(
+    `UPDATE cefo_salida_cab
+     SET nro_cfo_despacho = ?, fecha_despacho = ?, placa = ?, chofer = ?, observaciones = ?
+     WHERE id = ?`,
+    [nroCfoDespacho, fechaDespacho, placa, chofer, observaciones, id]
+  );
+}
+
+export async function eliminarSalidaDetalle(salidaDetalleId, cefoDetalleId) {
+  await executeRun(
+    'DELETE FROM cefo_salida_detalle WHERE id = ?',
+    [salidaDetalleId]
+  );
+  await desmarcarDetalleDespachado(cefoDetalleId);
 }
 
 export async function buscarArbolesDisponibles(empresaId, termino) {

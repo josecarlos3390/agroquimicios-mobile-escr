@@ -19,7 +19,8 @@ export async function insertarCefoDetalle(cefoId, especie, faja, nroArbol, secci
 export async function listarCefos(empresaId) {
   return executeQuery(
     `SELECT c.id, c.numero_completo, c.nro_cfo_recib, c.fecha_recep, c.placa, c.chofer,
-            COUNT(d.id) as cantidad_arboles
+            COUNT(d.id) as cantidad_arboles,
+            SUM(CASE WHEN d.despachado = 0 THEN 1 ELSE 0 END) as arboles_disponibles
      FROM cefo_cab c
      LEFT JOIN cefo_detalle d ON d.cefo_id = c.id
      WHERE c.empresa_id = ?
@@ -38,12 +39,21 @@ export async function obtenerCefoPorId(id) {
   if (!cab[0]) return null;
 
   const det = await executeQuery(
-    `SELECT id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen
+    `SELECT id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen, despachado
      FROM cefo_detalle WHERE cefo_id = ? ORDER BY id`,
     [id]
   );
 
   return { cabecera: cab[0], detalle: det };
+}
+
+export async function actualizarCefoCab(id, nroCfo, fechaRecep, placa, chofer, observaciones) {
+  await executeRun(
+    `UPDATE cefo_cab
+     SET nro_cfo_recib = ?, fecha_recep = ?, placa = ?, chofer = ?, observaciones = ?
+     WHERE id = ?`,
+    [nroCfo, fechaRecep, placa, chofer, observaciones, id]
+  );
 }
 
 export async function eliminarCefo(id) {

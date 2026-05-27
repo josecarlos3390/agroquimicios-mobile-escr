@@ -294,12 +294,12 @@ export async function importarEspecies(nuevos, actualizados) {
     codigosPorEmpresa[e.empresaId]++;
     const codigo = `ESP-${String(codigosPorEmpresa[e.empresaId]).padStart(4, '0')}`;
 
-    await crearEspecieImportacion(e.empresaId, codigo, e.nombreComun, '');
+    await crearEspecieImportacion(e.empresaId, codigo, e.nombreComun);
     insertados++;
   }
 
   for (const e of actualizados) {
-    await actualizarEspecieImportacion(e.id, e.nombreComun, '');
+    await actualizarEspecieImportacion(e.id, e.nombreComun);
     modificados++;
   }
 

@@ -1,4 +1,4 @@
-import { getSalida, buscarArboles, agregarLineasSalida } from '../../../services/cefoSalida.service.js';
+import { getSalida, actualizarSalidaCabecera, buscarArboles, agregarLineasSalida, quitarLineaSalida } from '../../../services/cefoSalida.service.js';
 
 let inicializado = false;
 let lineasPendientes = [];
@@ -30,6 +30,21 @@ export function initDetalleSalidaView() {
       await guardarLineas();
       return;
     }
+
+    if (e.target.closest('#btn-salida-editar-cabecera')) {
+      mostrarFormularioEdicion();
+      return;
+    }
+
+    if (e.target.closest('#btn-salida-cancelar-edicion')) {
+      if (salidaIdActual) cargarDetalleSalida(salidaIdActual);
+      return;
+    }
+
+    if (e.target.closest('#btn-salida-guardar-cabecera')) {
+      await guardarEdicionCabecera();
+      return;
+    }
   });
 
   cont?.addEventListener('input', async (e) => {
@@ -49,7 +64,7 @@ export function initDetalleSalidaView() {
     }
   });
 
-  cont?.addEventListener('click', (e) => {
+  cont?.addEventListener('click', async (e) => {
     const item = e.target.closest('[data-arbol-id]');
     if (item) {
       const id = parseInt(item.dataset.arbolId);
@@ -82,6 +97,17 @@ export function initDetalleSalidaView() {
       const idx = parseInt(btnRemove.dataset.remove);
       lineasPendientes.splice(idx, 1);
       renderLineasPendientes();
+      return;
+    }
+
+    const btnQuitar = e.target.closest('[data-quitar-linea]');
+    if (btnQuitar) {
+      const ok = confirm('¿Quitar este árbol del despacho? Se liberará para usar en otro despacho.');
+      if (!ok) return;
+      await quitarLineaGuardada(
+        parseInt(btnQuitar.dataset.quitarLinea),
+        parseInt(btnQuitar.dataset.cefoDetalleId)
+      );
     }
   });
 }
@@ -107,7 +133,7 @@ export async function cargarDetalleSalida(id) {
       : '—';
 
     let html = `
-      <div class="card">
+      <div class="card" id="salida-cabecera-card">
         <div class="vista-header">
           <button type="button" id="btn-salida-detalle-volver" class="btn-volver">← Volver</button>
           <h3>📦 ${cab.numero_completo}</h3>
@@ -120,6 +146,9 @@ export async function cargarDetalleSalida(id) {
           <label>Total árboles <span class="detalle-info">${det.length}</span></label>
         </div>
         ${cab.observaciones ? `<label style="margin-top:0.5rem">Observaciones <span class="detalle-info">${cab.observaciones}</span></label>` : ''}
+        <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
+          <button type="button" id="btn-salida-editar-cabecera" class="btn-secondary" style="flex:1; margin:0">✏️ Editar cabecera</button>
+        </div>
       </div>
     `;
 
@@ -140,6 +169,7 @@ export async function cargarDetalleSalida(id) {
                   <th>Diam Menor</th>
                   <th>Largo</th>
                   <th>Volumen</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -154,6 +184,7 @@ export async function cargarDetalleSalida(id) {
                     <td>${a.diamenor?.toFixed(2) ?? '—'}</td>
                     <td>${a.largo?.toFixed(2) ?? '—'}</td>
                     <td>${a.volumen?.toFixed(3) ?? '—'}</td>
+                    <td><button class="btn-icon" data-quitar-linea="${a.id}" data-cefo-detalle-id="${a.cefo_detalle_id}" title="Quitar">✖</button></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -175,7 +206,7 @@ export async function cargarDetalleSalida(id) {
 
       <div class="card">
         <h3>🌲 Árboles agregados</h3>
-        <div id="salida-lineas-pendientes">
+        <div id="salida-lineas-pendientes" style="overflow-x:auto">
           <p style="color:var(--text-muted);font-size:0.9rem">Sin líneas agregadas</p>
         </div>
         <button type="button" id="btn-salida-guardar-lineas" class="btn-primary" style="width:100%; margin-top:0.75rem" disabled>💾 Guardar líneas</button>
@@ -188,6 +219,89 @@ export async function cargarDetalleSalida(id) {
   } catch (err) {
     console.error('[SALIDA] Error al cargar detalle:', err);
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted)">Error al cargar detalle</p>';
+  }
+}
+
+function mostrarFormularioEdicion() {
+  const card = document.getElementById('salida-cabecera-card');
+  if (!card || !salidaIdActual) return;
+
+  const labels = card.querySelectorAll('label');
+  let nroCfo = '';
+  let fecha = '';
+  let placa = '';
+  let chofer = '';
+  let observaciones = '';
+
+  labels.forEach(lbl => {
+    const txt = lbl.textContent;
+    const val = lbl.querySelector('.detalle-info')?.textContent?.trim() || '';
+    if (txt.includes('Nro CFO Despacho')) nroCfo = val;
+    if (txt.includes('Fecha despacho')) {
+      const parts = val.split('/');
+      if (parts.length === 3) fecha = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    if (txt.includes('Placa') && !txt.includes('Nro CFO')) placa = val === '—' ? '' : val;
+    if (txt.includes('Chofer')) chofer = val === '—' ? '' : val;
+    if (txt.includes('Observaciones')) observaciones = val;
+  });
+
+  card.innerHTML = `
+    <div class="vista-header">
+      <button type="button" id="btn-salida-detalle-volver" class="btn-volver">← Volver</button>
+      <h3>✏️ Editar Cabecera</h3>
+    </div>
+    <div class="grid" style="margin-top:0.5rem">
+      <label>Nro CFO Despacho <input type="text" id="edit-salida-nro-cfo" class="input-upper" value="${nroCfo}" required></label>
+      <label>Fecha despacho <input type="date" id="edit-salida-fecha" value="${fecha}"></label>
+      <label>Placa <input type="text" id="edit-salida-placa" class="input-upper" value="${placa}"></label>
+      <label>Chofer <input type="text" id="edit-salida-chofer" class="input-upper" value="${chofer}"></label>
+    </div>
+    <label style="margin-top:0.5rem">Observaciones <textarea id="edit-salida-observaciones" rows="2">${observaciones}</textarea></label>
+    <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
+      <button type="button" id="btn-salida-guardar-cabecera" class="btn-primary" style="flex:1; margin:0">💾 Guardar</button>
+      <button type="button" id="btn-salida-cancelar-edicion" class="btn-secondary" style="flex:1; margin:0">❌ Cancelar</button>
+    </div>
+  `;
+}
+
+async function guardarEdicionCabecera() {
+  const btn = document.getElementById('btn-salida-guardar-cabecera');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Guardando...';
+  }
+
+  try {
+    const nroCfo = document.getElementById('edit-salida-nro-cfo')?.value?.trim();
+    const fecha = document.getElementById('edit-salida-fecha')?.value || null;
+    const placa = document.getElementById('edit-salida-placa')?.value?.trim();
+    const chofer = document.getElementById('edit-salida-chofer')?.value?.trim();
+    const observaciones = document.getElementById('edit-salida-observaciones')?.value?.trim();
+
+    if (!nroCfo) {
+      alert('❌ El número de CFO de despacho es obligatorio');
+      return;
+    }
+
+    await actualizarSalidaCabecera(salidaIdActual, {
+      nroCfoDespacho: nroCfo,
+      fechaDespacho: fecha,
+      placa: placa,
+      chofer: chofer,
+      observaciones: observaciones,
+    });
+
+    mostrarToast('✅ Cabecera actualizada');
+    await cargarDetalleSalida(salidaIdActual);
+  } catch (err) {
+    console.error('[SALIDA] Error al actualizar cabecera:', err);
+    alert('❌ ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '💾 Guardar';
+    }
   }
 }
 
@@ -264,21 +378,34 @@ async function guardarLineas() {
     await agregarLineasSalida(salidaIdActual, lineasPendientes);
     lineasPendientes = [];
     await cargarDetalleSalida(salidaIdActual);
-
-    const toast = document.createElement('div');
-    toast.textContent = '✅ Líneas guardadas';
-    toast.style.cssText = `
-      position:fixed; bottom:5rem; left:50%; transform:translateX(-50%);
-      background:rgba(30,61,30,0.92); color:#fff; padding:0.6rem 1.2rem;
-      border-radius:2rem; font-size:0.85rem; z-index:9999;
-      box-shadow:0 4px 16px rgba(0,0,0,0.3);
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-
+    mostrarToast('✅ Líneas guardadas');
   } catch (err) {
     alert('❌ ' + err.message);
     btn.disabled = false;
     btn.textContent = '💾 Guardar líneas';
   }
+}
+
+async function quitarLineaGuardada(salidaDetalleId, cefoDetalleId) {
+  try {
+    await quitarLineaSalida(salidaDetalleId, cefoDetalleId);
+    mostrarToast('✅ Árbol quitado del despacho');
+    await cargarDetalleSalida(salidaIdActual);
+  } catch (err) {
+    console.error('[SALIDA] Error al quitar línea:', err);
+    alert('❌ ' + err.message);
+  }
+}
+
+function mostrarToast(mensaje) {
+  const toast = document.createElement('div');
+  toast.textContent = mensaje;
+  toast.style.cssText = `
+    position:fixed; bottom:5rem; left:50%; transform:translateX(-50%);
+    background:rgba(30,61,30,0.92); color:#fff; padding:0.6rem 1.2rem;
+    border-radius:2rem; font-size:0.85rem; z-index:9999;
+    box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }

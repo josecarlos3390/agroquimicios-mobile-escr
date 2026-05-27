@@ -9,16 +9,17 @@ export async function createGuia(data) {
     INSERT INTO guia_transporte_cab (
       id, numero_secuencial, numero_completo, dispositivo_id,
       empresa_id, fecha, hora_llegada, hora_salida, hora_llegada_cola,
-      boletario, turno, frente, propiedad, observaciones,
+      boletario, turno, frente, propiedad, lote, variedad, cultivo, hectareas, observaciones,
       cod_liberacion,
       cod_chofer, nombre_chofer, cod_camion, placa, cod_chata, transportista, foto_camion_base64,
       cod_cargadora, cod_operadora, cod_tractor_chata, cod_tractorista, foto_semi_base64,
       estado
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BORRADOR')`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BORRADOR')`,
     [
       data.id, data.numero_secuencial, data.numero_completo, data.dispositivo_id,
       data.empresa_id, data.fecha, data.hora_llegada ?? null, data.hora_salida ?? null, data.hora_llegada_cola ?? null,
-      data.boletario ?? null, data.turno ?? null, data.frente ?? null, data.propiedad ?? null, data.observaciones ?? null,
+      data.boletario ?? null, data.turno ?? null, data.frente ?? null, data.propiedad ?? null,
+      data.lote ?? null, data.variedad ?? null, data.cultivo ?? null, data.hectareas ?? null, data.observaciones ?? null,
       data.cod_liberacion ?? null,
       data.cod_chofer ?? null, data.nombre_chofer ?? null, data.cod_camion ?? null, data.placa ?? null,
       data.cod_chata ?? null, data.transportista ?? null, data.foto_camion_base64 ?? null,
@@ -97,6 +98,10 @@ export async function updateGuia(id, data) {
       turno                = ?,
       frente               = ?,
       propiedad            = ?,
+      lote                 = ?,
+      variedad             = ?,
+      cultivo              = ?,
+      hectareas            = ?,
       observaciones        = ?,
       cod_liberacion       = ?,
       cod_chofer           = ?,
@@ -123,6 +128,10 @@ export async function updateGuia(id, data) {
       data.turno ?? null,
       data.frente ?? null,
       data.propiedad ?? null,
+      data.lote ?? null,
+      data.variedad ?? null,
+      data.cultivo ?? null,
+      data.hectareas ?? null,
       data.observaciones ?? null,
       data.cod_liberacion ?? null,
       data.cod_chofer ?? null,
@@ -140,6 +149,10 @@ export async function updateGuia(id, data) {
       id,
     ]
   );
+}
+
+export async function updateEstadoGuia(id, estado) {
+  await executeRun(`UPDATE guia_transporte_cab SET estado = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [estado, id]);
 }
 
 export async function deleteCosechaMecanizadaByGuiaId(guiaId) {

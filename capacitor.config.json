@@ -1,5 +1,10 @@
 {
   "appId": "com.gir.agroquimicos",
   "appName": "agroquimicos.mobile",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "CapacitorSQLite": {
+      "androidIsEncryption": false
+    }
+  }
 }

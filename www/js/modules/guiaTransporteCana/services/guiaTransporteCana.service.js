@@ -8,6 +8,7 @@ import {
   getCosechaMecanizadaByGuiaId,
   deleteGuia,
   updateGuia,
+  updateEstadoGuia,
   deleteCosechaMecanizadaByGuiaId,
   getNextNumeroSecuencial,
 } from '../repositories/guiaTransporteCana.repo.js';
@@ -49,6 +50,10 @@ export async function eliminarGuia(id) {
   await deleteGuia(id);
 }
 
+export async function actualizarEstadoGuia(id, estado) {
+  await updateEstadoGuia(id, estado);
+}
+
 export async function actualizarGuiaTransporte(id, data) {
   if (!data.fecha) throw new Error('La fecha es obligatoria');
   if (!data.boletario?.trim()) throw new Error('El nombre del boletario es obligatorio');
@@ -61,6 +66,63 @@ export async function actualizarGuiaTransporte(id, data) {
       await createCosechaMecanizada(id, data.cosechas_mecanizadas);
     }
   }
+}
+
+export async function prepararExcelGuiaTransporte(guiaId) {
+  const g = await obtenerGuia(guiaId);
+  if (!g) throw new Error('Guía no encontrada');
+
+  const XLSX = window.XLSX;
+  if (!XLSX) throw new Error('SheetJS no está disponible');
+
+  const headers = [
+    'NUMERO', 'FECHA', 'HORA_LLEGADA', 'HORA_SALIDA', 'HORA_COLA',
+    'BOLETARIO', 'TURNO', 'FRENTE', 'PROPIEDAD', 'LOTE',
+    'VARIEDAD', 'CULTIVO', 'HECTAREAS', 'OBSERVACIONES',
+    'COD_LIBERACION', 'COD_CHOFER', 'NOMBRE_CHOFER', 'COD_CAMION',
+    'PLACA', 'COD_CHATA', 'TRANSPORTISTA', 'COD_CARGADORA',
+    'COD_OPERADORA', 'COD_TRACTOR_CHATA', 'COD_TRACTORISTA',
+  ];
+
+  const fila = {
+    NUMERO: g.numero_completo ?? '',
+    FECHA: g.fecha ?? '',
+    HORA_LLEGADA: g.hora_llegada ?? '',
+    HORA_SALIDA: g.hora_salida ?? '',
+    HORA_COLA: g.hora_llegada_cola ?? '',
+    BOLETARIO: g.boletario ?? '',
+    TURNO: g.turno ?? '',
+    FRENTE: g.frente ?? '',
+    PROPIEDAD: g.propiedad ?? '',
+    LOTE: g.lote ?? '',
+    VARIEDAD: g.variedad ?? '',
+    CULTIVO: g.cultivo ?? '',
+    HECTAREAS: g.hectareas ?? '',
+    OBSERVACIONES: g.observaciones ?? '',
+    COD_LIBERACION: g.cod_liberacion ?? '',
+    COD_CHOFER: g.cod_chofer ?? '',
+    NOMBRE_CHOFER: g.nombre_chofer ?? '',
+    COD_CAMION: g.cod_camion ?? '',
+    PLACA: g.placa ?? '',
+    COD_CHATA: g.cod_chata ?? '',
+    TRANSPORTISTA: g.transportista ?? '',
+    COD_CARGADORA: g.cod_cargadora ?? '',
+    COD_OPERADORA: g.cod_operadora ?? '',
+    COD_TRACTOR_CHATA: g.cod_tractor_chata ?? '',
+    COD_TRACTORISTA: g.cod_tractorista ?? '',
+  };
+
+  const ws = XLSX.utils.json_to_sheet([fila], { header: headers });
+
+  const colWidths = headers.map(h => ({ wch: Math.max(h.length, 12) }));
+  ws['!cols'] = colWidths;
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Guia Transporte');
+
+  const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+  const nombre = `${g.numero_completo}.xlsx`;
+  return { base64, nombre };
 }
 
 export function aplicarMarcaAgua(imagenBase64, textoMarca) {

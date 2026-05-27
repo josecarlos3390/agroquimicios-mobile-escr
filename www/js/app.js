@@ -237,6 +237,8 @@ async function initApp() {
         window.showView('corte-semilla-registros');
       } else if (usoRestaurado.id === 'guia-transporte-cana') {
         window.showView('guia-transporte-registros');
+      } else if (usoRestaurado.id === 'control-rodeo') {
+        window.showView('control-rodeo-registros');
       } else {
         window.showView('hojas');
       }
@@ -345,6 +347,8 @@ async function mostrarSelectorUso(empresa) {
             window.showView('corte-semilla-registros');
           } else if (uso.id === 'guia-transporte-cana') {
             window.showView('guia-transporte-registros');
+          } else if (uso.id === 'control-rodeo') {
+            window.showView('control-rodeo-registros');
           } else {
             window.showView('hojas');
           }
@@ -495,6 +499,8 @@ async function cambiarPropiedad() {
     window.showView('corte-semilla-registros');
   } else if (tipoUsoActivo?.id === 'guia-transporte-cana') {
     window.showView('guia-transporte-registros');
+  } else if (tipoUsoActivo?.id === 'control-rodeo') {
+    window.showView('control-rodeo-registros');
   } else {
     window.showView('hojas');
   }

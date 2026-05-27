@@ -4,7 +4,9 @@ import {
   marcarDetalleDespachado,
   listarSalidas,
   obtenerSalidaPorId,
+  actualizarSalidaCab,
   eliminarSalida,
+  eliminarSalidaDetalle,
   buscarArbolesDisponibles,
 } from '../repositories/cefoSalida.repo.js';
 import { getEmpresaActiva } from './empresas.service.js';
@@ -49,6 +51,25 @@ export async function crearSalidaCabecera(datos) {
 
   await insertarSalidaCab(id, empresa.id, secuencial, numeroCompleto, nroCfoDespacho, fecha, placa, chofer, observaciones);
   return { id, numeroCompleto };
+}
+
+export async function actualizarSalidaCabecera(id, datos) {
+  const nroCfoDespacho = datos.nroCfoDespacho?.trim().toUpperCase();
+  if (!nroCfoDespacho) throw new Error('El número de CFO de despacho es obligatorio');
+
+  const fecha = datos.fechaDespacho || null;
+  const placa = datos.placa?.trim().toUpperCase() || '';
+  const chofer = datos.chofer?.trim().toUpperCase() || '';
+  const observaciones = datos.observaciones?.trim() || '';
+
+  await actualizarSalidaCab(id, nroCfoDespacho, fecha, placa, chofer, observaciones);
+}
+
+export async function quitarLineaSalida(salidaDetalleId, cefoDetalleId) {
+  if (!salidaDetalleId || !cefoDetalleId) {
+    throw new Error('Faltan datos para quitar la línea');
+  }
+  await eliminarSalidaDetalle(salidaDetalleId, cefoDetalleId);
 }
 
 export async function agregarLineasSalida(salidaId, lineas) {

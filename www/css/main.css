@@ -898,6 +898,192 @@ body.dark #editar-lotes-container input[type="checkbox"] {
   padding: 0.5rem;
 }
 
+/* ── Control Rodeo: estado cerrado y progreso ── */
+.hoja-card--cerrada {
+  opacity: 0.72;
+  border-left: 4px solid var(--text-muted);
+}
+.hoja-card--cerrada .hoja-card-header {
+  background: linear-gradient(135deg, #e8e8e8 0%, #d0d0d0 100%);
+}
+body.dark .hoja-card--cerrada .hoja-card-header {
+  background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+}
+.estado-cerrado {
+  background: var(--text-muted);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.cefo-progreso-barra {
+  height: 4px;
+  background: var(--border);
+  margin: 0 1rem;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cefo-progreso-lleno {
+  height: 100%;
+  background: var(--success);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── Control Rodeo: fila consumida en tabla ── */
+tr.consumido td {
+  background: rgba(160,160,160,0.12);
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+body.dark tr.consumido td {
+  background: rgba(100,100,100,0.15);
+}
+
+/* ── Control Rodeo: grid de datos en cards ── */
+.cefo-datos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.9rem;
+  margin-top: 0.6rem;
+}
+.cefo-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.cefo-dato-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cefo-dato-valor {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text);
+  word-break: break-word;
+}
+.cefo-dato-valor.muted {
+  color: var(--text-muted);
+}
+
+/* ── Searchable Select (dropdown con búsqueda) ── */
+.searchable-select {
+  position: relative;
+}
+.ssd-display {
+  width: 100%;
+  cursor: pointer;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  font-family: inherit;
+}
+.ssd-display:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-pale);
+}
+.ssd-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 100;
+  max-height: 280px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ssd-dropdown.open {
+  display: flex;
+}
+.ssd-search {
+  width: calc(100% - 1rem);
+  margin: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  background: var(--input-bg);
+  color: var(--text);
+  outline: none;
+}
+.ssd-search:focus {
+  border-color: var(--primary);
+}
+.ssd-options {
+  overflow-y: auto;
+  max-height: 200px;
+  padding: 0 0.25rem 0.25rem;
+}
+.ssd-option {
+  padding: 0.5rem 0.65rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+.ssd-option:hover,
+.ssd-option.active {
+  background: var(--primary-pale);
+}
+.ssd-option.hidden {
+  display: none;
+}
+.ssd-empty {
+  padding: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Modal searchable-select: alineado arriba para no taparlo con el teclado */
+#modal-ss.modal {
+  align-items: flex-start;
+  padding-top: 2.5rem;
+}
+
+/* Scroll suave en el modal searchable-select */
+#modal-ss-lista {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Opciones dentro del modal searchable-select */
+#modal-ss-lista .ssd-option {
+  padding: 0.85rem 1.2rem;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+#modal-ss-lista .ssd-option:last-child {
+  border-bottom: none;
+}
+#modal-ss-lista .ssd-option:active {
+  background: var(--primary-pale);
+}
+
 /* ================================
    BARRA ACCIONES MÚLTIPLES
 ================================ */
