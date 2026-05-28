@@ -55,6 +55,7 @@ export async function getGuias(empresaId = null) {
       g.id, g.numero_completo, g.numero_secuencial,
       g.fecha, g.hora_llegada, g.hora_salida,
       g.boletario, g.turno, g.frente, g.propiedad,
+      g.lote, g.variedad, g.cultivo, g.hectareas,
       g.estado, g.cod_liberacion, g.placa, g.nombre_chofer,
       e.nombre AS empresa_nombre
     FROM guia_transporte_cab g
@@ -62,6 +63,24 @@ export async function getGuias(empresaId = null) {
     ${where}
     ORDER BY g.numero_secuencial DESC
   `, params);
+}
+
+export async function getGuiasByIds(ids) {
+  if (!ids || ids.length === 0) return [];
+  const placeholders = ids.map(() => '?').join(',');
+  return await executeQuery(`
+    SELECT
+      g.id, g.numero_completo, g.numero_secuencial,
+      g.fecha, g.hora_llegada, g.hora_salida,
+      g.boletario, g.turno, g.frente, g.propiedad,
+      g.lote, g.variedad, g.cultivo, g.hectareas,
+      g.estado, g.cod_liberacion, g.placa, g.nombre_chofer,
+      e.nombre AS empresa_nombre
+    FROM guia_transporte_cab g
+    LEFT JOIN empresas e ON e.id = g.empresa_id
+    WHERE g.id IN (${placeholders})
+    ORDER BY g.numero_secuencial DESC
+  `, ids);
 }
 
 export async function getGuiaById(id) {

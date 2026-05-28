@@ -68,60 +68,52 @@ export async function actualizarGuiaTransporte(id, data) {
   }
 }
 
-export async function prepararExcelGuiaTransporte(guiaId) {
-  const g = await obtenerGuia(guiaId);
-  if (!g) throw new Error('Guía no encontrada');
+export async function prepararExcelGuiaTransporte(guiaIds) {
+  const ids = Array.isArray(guiaIds) ? guiaIds : [guiaIds];
+  if (ids.length === 0) throw new Error('Debe seleccionar al menos una guía');
+
+  const { getGuiasByIds } = await import('../repositories/guiaTransporteCana.repo.js');
+  const guias = await getGuiasByIds(ids);
+  if (!guias || guias.length === 0) throw new Error('No se encontraron guías');
 
   const XLSX = window.XLSX;
   if (!XLSX) throw new Error('SheetJS no está disponible');
 
   const headers = [
-    'NUMERO', 'FECHA', 'HORA_LLEGADA', 'HORA_SALIDA', 'HORA_COLA',
-    'BOLETARIO', 'TURNO', 'FRENTE', 'PROPIEDAD', 'LOTE',
-    'VARIEDAD', 'CULTIVO', 'HECTAREAS', 'OBSERVACIONES',
-    'COD_LIBERACION', 'COD_CHOFER', 'NOMBRE_CHOFER', 'COD_CAMION',
-    'PLACA', 'COD_CHATA', 'TRANSPORTISTA', 'COD_CARGADORA',
-    'COD_OPERADORA', 'COD_TRACTOR_CHATA', 'COD_TRACTORISTA',
+    'Ingenio', 'Sector', 'Columna1', 'Lotes', 'Variedad',
+    'Nro_Corte', 'Edad Caña', 'Superficie del Lote'
   ];
 
-  const fila = {
-    NUMERO: g.numero_completo ?? '',
-    FECHA: g.fecha ?? '',
-    HORA_LLEGADA: g.hora_llegada ?? '',
-    HORA_SALIDA: g.hora_salida ?? '',
-    HORA_COLA: g.hora_llegada_cola ?? '',
-    BOLETARIO: g.boletario ?? '',
-    TURNO: g.turno ?? '',
-    FRENTE: g.frente ?? '',
-    PROPIEDAD: g.propiedad ?? '',
-    LOTE: g.lote ?? '',
-    VARIEDAD: g.variedad ?? '',
-    CULTIVO: g.cultivo ?? '',
-    HECTAREAS: g.hectareas ?? '',
-    OBSERVACIONES: g.observaciones ?? '',
-    COD_LIBERACION: g.cod_liberacion ?? '',
-    COD_CHOFER: g.cod_chofer ?? '',
-    NOMBRE_CHOFER: g.nombre_chofer ?? '',
-    COD_CAMION: g.cod_camion ?? '',
-    PLACA: g.placa ?? '',
-    COD_CHATA: g.cod_chata ?? '',
-    TRANSPORTISTA: g.transportista ?? '',
-    COD_CARGADORA: g.cod_cargadora ?? '',
-    COD_OPERADORA: g.cod_operadora ?? '',
-    COD_TRACTOR_CHATA: g.cod_tractor_chata ?? '',
-    COD_TRACTORISTA: g.cod_tractorista ?? '',
-  };
+  // Agrupar por lote+variedad+cultivo+hectareas para evitar filas repetidas
+  const grupos = new Map();
+  guias.forEach(g => {
+    const key = `${g.lote ?? ''}|${g.variedad ?? ''}|${g.cultivo ?? ''}|${g.hectareas ?? ''}`;
+    if (!grupos.has(key)) {
+      grupos.set(key, {
+        Ingenio: 'AGUAI',
+        Sector: '',
+        Columna1: g.lote ?? '',
+        Lotes: '',
+        Variedad: g.variedad ?? '',
+        Nro_Corte: '',
+        'Edad Caña': g.cultivo ?? '',
+        'Superficie del Lote': g.hectareas ?? '',
+      });
+    }
+  });
 
-  const ws = XLSX.utils.json_to_sheet([fila], { header: headers });
+  const filas = Array.from(grupos.values());
 
-  const colWidths = headers.map(h => ({ wch: Math.max(h.length, 12) }));
+  const ws = XLSX.utils.json_to_sheet(filas, { header: headers });
+
+  const colWidths = headers.map(h => ({ wch: Math.max(h.length, 18) }));
   ws['!cols'] = colWidths;
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Guia Transporte');
 
   const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-  const nombre = `${g.numero_completo}.xlsx`;
+  const nombre = `Guia_Transporte_Cana_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.xlsx`;
   return { base64, nombre };
 }
 
