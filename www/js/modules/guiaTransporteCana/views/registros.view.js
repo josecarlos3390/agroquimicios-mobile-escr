@@ -124,13 +124,13 @@ export async function cargarRegistrosGuiaTransporte() {
           <div>🔓 Liberación: ${g.cod_liberacion || '—'}</div>
         </div>
         <div class="hoja-card-actions">
-          <button type="button" class="btn-editar-guia" style="color:var(--primary);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
+          <button type="button" class="btn-editar-guia">
             ✏️ Editar
           </button>
-          <button type="button" class="btn-enviar-guia" style="color:var(--success);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
-            📤 Enviar
+          <button type="button" class="btn-enviar-guia">
+            📤 Exportar
           </button>
-          <button type="button" class="btn-eliminar-guia" style="color:var(--danger);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
+          <button type="button" class="btn-eliminar-guia">
             🗑️ Eliminar
           </button>
         </div>
