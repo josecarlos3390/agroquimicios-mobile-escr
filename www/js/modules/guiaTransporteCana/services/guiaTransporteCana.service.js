@@ -92,7 +92,7 @@ export async function prepararExcelGuiaTransporte(guiaIds) {
       grupos.set(key, {
         Ingenio: 'AGUAI',
         Sector: '',
-        Columna1: g.lote ?? '',
+        Columna1: g.lote_nombre ?? g.lote ?? '',
         Lotes: '',
         Variedad: g.variedad ?? '',
         Nro_Corte: '',

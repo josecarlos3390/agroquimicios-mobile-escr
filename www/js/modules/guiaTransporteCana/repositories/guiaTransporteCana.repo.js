@@ -75,9 +75,11 @@ export async function getGuiasByIds(ids) {
       g.boletario, g.turno, g.frente, g.propiedad,
       g.lote, g.variedad, g.cultivo, g.hectareas,
       g.estado, g.cod_liberacion, g.placa, g.nombre_chofer,
-      e.nombre AS empresa_nombre
+      e.nombre AS empresa_nombre,
+      l.nombre AS lote_nombre
     FROM guia_transporte_cab g
     LEFT JOIN empresas e ON e.id = g.empresa_id
+    LEFT JOIN lotes l ON l.id = g.lote
     WHERE g.id IN (${placeholders})
     ORDER BY g.numero_secuencial DESC
   `, ids);
