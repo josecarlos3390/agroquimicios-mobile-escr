@@ -587,6 +587,64 @@ export async function initSchema() {
 
     CREATE INDEX IF NOT EXISTS idx_cefo_salida_detalle_salida
       ON cefo_salida_detalle (salida_id);
+
+    /* =========================
+       MÓDULO RODEO
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS rodeo_sectores (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      empresa_id INTEGER NOT NULL,
+      nombre TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE,
+      UNIQUE (empresa_id, nombre)
+    );
+
+    CREATE TABLE IF NOT EXISTS rodeo_cab (
+      id                  TEXT PRIMARY KEY,
+      empresa_id          INTEGER NOT NULL,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
+      fecha               DATE    NOT NULL,
+      sector_id           INTEGER,
+      estado              TEXT    DEFAULT 'BORRADOR',
+      sync_status         TEXT    DEFAULT 'pending',
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE,
+      FOREIGN KEY (sector_id) REFERENCES rodeo_sectores(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS rodeo_detalle (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      rodeo_cab_id        TEXT    NOT NULL,
+      nro_rodeo           TEXT,
+      x_coord             REAL,
+      y_coord             REAL,
+      especie             TEXT,
+      faja                TEXT,
+      nro_arbol           TEXT,
+      seccion             TEXT,
+      d1                  REAL,
+      d2                  REAL,
+      largo               REAL,
+      volumen             REAL,
+      para_transporte     TEXT,
+      FOREIGN KEY (rodeo_cab_id) REFERENCES rodeo_cab(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_rodeo_sectores_empresa
+      ON rodeo_sectores (empresa_id);
+
+    CREATE INDEX IF NOT EXISTS idx_rodeo_cab_empresa
+      ON rodeo_cab (empresa_id);
+
+    CREATE INDEX IF NOT EXISTS idx_rodeo_cab_estado
+      ON rodeo_cab (estado);
+
+    CREATE INDEX IF NOT EXISTS idx_rodeo_detalle_cab
+      ON rodeo_detalle (rodeo_cab_id);
   `;
 
   await executeSet(statements);
@@ -710,5 +768,9 @@ export async function initSchema() {
   await executeRun(`
     INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
     SELECT 'cefo_salida_cab', COALESCE(MAX(numero_secuencial), 0) FROM cefo_salida_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'rodeo_cab', COALESCE(MAX(numero_secuencial), 0) FROM rodeo_cab
   `);
 }

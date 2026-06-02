@@ -63,6 +63,9 @@ import { initDetalleControlRodeoView, cargarDetalleCefo } from './modules/contro
 import { initRegistrosSalidaView, cargarRegistrosSalida } from './modules/controlRodeo/views/registrosSalida.view.js';
 import { initNuevaSalidaView } from './modules/controlRodeo/views/nuevaSalida.view.js';
 import { initDetalleSalidaView, cargarDetalleSalida } from './modules/controlRodeo/views/detalleSalida.view.js';
+import { initRodeoRegistrosView, cargarRodeoRegistros } from './modules/controlRodeo/views/rodeoRegistros.view.js';
+import { initRodeoNuevoView } from './modules/controlRodeo/views/rodeoNuevo.view.js';
+import { initRodeoSectoresView, cargarRodeoSectores } from './modules/controlRodeo/views/rodeoSectores.view.js';
 
 /* ===============================
    SPLASH
@@ -620,6 +623,11 @@ function showView(view, param = null) {
       if (param) cargarDetalleSalida(param);
       break;
     }
+
+    // ── Módulo Rodeo ──
+    case 'rodeo-registros': initRodeoRegistrosView(); cargarRodeoRegistros(); break;
+    case 'rodeo-nuevo': initRodeoNuevoView(); break;
+    case 'rodeo-sectores': initRodeoSectoresView(); cargarRodeoSectores(); break;
   }
 }
 

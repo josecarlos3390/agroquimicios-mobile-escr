@@ -1442,6 +1442,57 @@
 
   </section>
 
+  <!-- ======================
+       MÓDULO RODEO
+  ====================== -->
+
+  <section id="view-rodeo-registros" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <h3>🌲 Registros de Rodeo</h3>
+      </div>
+      <button id="btn-nuevo-rodeo" class="btn-primary" style="width:100%">➕ Nuevo registro</button>
+    </div>
+    <div id="rodeo-lista"></div>
+  </section>
+
+  <section id="view-rodeo-nuevo" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <button type="button" id="btn-rodeo-nuevo-volver" class="btn-volver">← Volver</button>
+        <h3>🌲 Nuevo Rodeo</h3>
+      </div>
+    </div>
+    <form id="form-rodeo" class="card" style="display:flex;flex-direction:column;gap:0.7rem;">
+      <label>Fecha <input type="date" id="rodeo-fecha" required></label>
+      <label>Sector
+        <select id="rodeo-sector" required>
+          <option value="">Seleccioná sector...</option>
+        </select>
+      </label>
+      <label>Archivo Excel (RODEO_APP.xlsx)
+        <input type="file" id="rodeo-excel" accept=".xlsx,.xls" required>
+      </label>
+      <div id="rodeo-preview" style="max-height:300px;overflow:auto;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem;">
+        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Seleccioná un archivo para ver la preview...</p>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%">💾 Guardar rodeo</button>
+    </form>
+  </section>
+
+  <section id="view-rodeo-sectores" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <h3>🗺️ Sectores de Rodeo</h3>
+      </div>
+      <form id="form-rodeo-sector" class="card" style="display:flex;flex-direction:column;gap:0.7rem;">
+        <label>Nombre del sector <input type="text" id="rodeo-sector-nombre" class="input-upper" required placeholder="Ej: SECTOR NORTE"></label>
+        <button type="submit" class="btn-primary" style="width:100%">➕ Agregar sector</button>
+      </form>
+      <div id="rodeo-sectores-lista"></div>
+    </div>
+  </section>
+
 </main>
 
 <!-- ======================

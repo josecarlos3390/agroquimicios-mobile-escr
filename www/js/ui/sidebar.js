@@ -148,8 +148,14 @@ const MENUS = {
 
     <div class="menu-divider"></div>
 
+    <p class="menu-title">🌲 Rodeo</p>
+    <a href="#" data-view="rodeo-registros">📋 Registrar RODEO</a>
+
+    <div class="menu-divider"></div>
+
     <p class="menu-title">🌿 Maestros</p>
     <a href="#" data-view="especies">🌿 Especies</a>
+    <a href="#" data-view="rodeo-sectores">🗺️ Sectores de Rodeo</a>
 
     <div class="menu-divider"></div>
 
