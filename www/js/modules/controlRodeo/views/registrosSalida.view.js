@@ -22,7 +22,7 @@ export function initRegistrosSalidaView() {
       const ok = await confirmar({
         icon: '🗑️',
         titulo: '¿Eliminar despacho?',
-        msg: 'Se eliminará el despacho y los árboles volverán a estar disponibles.',
+        msg: 'Se eliminará el despacho de monte y los árboles volverán a estar disponibles.',
       });
       if (!ok) return;
       await borrarSalida(card.dataset.salidaId);
@@ -50,9 +50,9 @@ export async function cargarRegistrosSalida() {
     if (salidasCache.length === 0) {
       lista.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">📦</div>
-          <div class="empty-state-title">Sin despachos</div>
-          <div class="empty-state-sub">Creá un nuevo despacho para dar de baja árboles</div>
+          <div class="empty-state-icon">🌲</div>
+          <div class="empty-state-title">Sin registros de monte</div>
+          <div class="empty-state-sub">Creá un nuevo despacho para dar de baja árboles del rodeo</div>
         </div>
       `;
       if (buscador) buscador.value = '';
@@ -62,7 +62,7 @@ export async function cargarRegistrosSalida() {
     renderCards(salidasCache);
 
   } catch (err) {
-    console.error('[SALIDA] Error al cargar registros:', err);
+    console.error('[MONTE] Error al cargar registros:', err);
     lista.innerHTML = `<div class="empty-state"><div class="empty-state-sub">Error al cargar</div></div>`;
   }
 }

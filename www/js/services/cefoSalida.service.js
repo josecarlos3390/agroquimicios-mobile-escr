@@ -27,10 +27,10 @@ export async function borrarSalida(id) {
   return eliminarSalida(id);
 }
 
-export async function buscarArboles(termino) {
+export async function buscarArboles(filtros) {
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
-  return buscarArbolesDisponibles(empresa.id, termino);
+  return buscarArbolesDisponibles(empresa.id, filtros);
 }
 
 export async function crearSalidaCabecera(datos) {
@@ -65,11 +65,11 @@ export async function actualizarSalidaCabecera(id, datos) {
   await actualizarSalidaCab(id, nroCfoDespacho, fecha, placa, chofer, observaciones);
 }
 
-export async function quitarLineaSalida(salidaDetalleId, cefoDetalleId) {
-  if (!salidaDetalleId || !cefoDetalleId) {
+export async function quitarLineaSalida(salidaDetalleId, rodeoDetalleId) {
+  if (!salidaDetalleId || !rodeoDetalleId) {
     throw new Error('Faltan datos para quitar la línea');
   }
-  await eliminarSalidaDetalle(salidaDetalleId, cefoDetalleId);
+  await eliminarSalidaDetalle(salidaDetalleId, rodeoDetalleId);
 }
 
 export async function agregarLineasSalida(salidaId, lineas) {
@@ -84,7 +84,7 @@ export async function agregarLineasSalida(salidaId, lineas) {
   for (const linea of lineas) {
     await insertarSalidaDetalle(
       salidaId,
-      linea.cefoDetalleId,
+      linea.rodeoDetalleId,
       linea.especie,
       linea.faja,
       linea.nroArbol,
@@ -94,7 +94,7 @@ export async function agregarLineasSalida(salidaId, lineas) {
       linea.largo,
       linea.volumen
     );
-    await marcarDetalleDespachado(linea.cefoDetalleId);
+    await marcarDetalleDespachado(linea.rodeoDetalleId);
     creados++;
   }
 

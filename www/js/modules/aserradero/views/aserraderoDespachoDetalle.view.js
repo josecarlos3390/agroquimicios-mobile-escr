@@ -1,24 +1,24 @@
-import { getSalida, actualizarSalidaCabecera, buscarArboles, agregarLineasSalida, quitarLineaSalida } from '../../../services/cefoSalida.service.js';
+import { getDespacho, actualizarDespachoCabecera, buscarArboles, agregarLineasDespacho, quitarLineaDespacho } from '../services/aserraderoDespacho.service.js';
 
 let inicializado = false;
 let lineasPendientes = [];
-let salidaIdActual = null;
+let despachoIdActual = null;
 
-export function initDetalleSalidaView() {
+export function initAserraderoDespachoDetalleView() {
   if (inicializado) return;
   inicializado = true;
 
-  const cont = document.getElementById('salida-detalle-contenido');
+  const cont = document.getElementById('aserradero-despacho-detalle-contenido');
 
   cont?.addEventListener('click', async (e) => {
-    if (e.target.closest('#btn-salida-detalle-volver')) {
-      window.showView('control-rodeo-salida-registros');
+    if (e.target.closest('#btn-aserradero-despacho-detalle-volver')) {
+      window.showView('aserradero-despacho-registros');
       return;
     }
 
-    if (e.target.closest('#btn-salida-agregar-linea')) {
-      const input = document.getElementById('salida-buscar-arbol');
-      const resultados = document.getElementById('salida-resultados-arbol');
+    if (e.target.closest('#btn-aserradero-despacho-agregar-linea')) {
+      const input = document.getElementById('aserradero-despacho-buscar-arbol');
+      const resultados = document.getElementById('aserradero-despacho-resultados-arbol');
       input.value = '';
       resultados.innerHTML = '';
       resultados.style.display = 'none';
@@ -26,29 +26,29 @@ export function initDetalleSalidaView() {
       return;
     }
 
-    if (e.target.closest('#btn-salida-guardar-lineas')) {
+    if (e.target.closest('#btn-aserradero-despacho-guardar-lineas')) {
       await guardarLineas();
       return;
     }
 
-    if (e.target.closest('#btn-salida-editar-cabecera')) {
+    if (e.target.closest('#btn-aserradero-despacho-editar-cabecera')) {
       mostrarFormularioEdicion();
       return;
     }
 
-    if (e.target.closest('#btn-salida-cancelar-edicion')) {
-      if (salidaIdActual) cargarDetalleSalida(salidaIdActual);
+    if (e.target.closest('#btn-aserradero-despacho-cancelar-edicion')) {
+      if (despachoIdActual) cargarAserraderoDespachoDetalle(despachoIdActual);
       return;
     }
 
-    if (e.target.closest('#btn-salida-guardar-cabecera')) {
+    if (e.target.closest('#btn-aserradero-despacho-guardar-cabecera')) {
       await guardarEdicionCabecera();
       return;
     }
   });
 
   cont?.addEventListener('input', async (e) => {
-    if (e.target.id === 'salida-buscar-arbol' || e.target.id === 'salida-filtro-faja' || e.target.id === 'salida-filtro-nro-arbol') {
+    if (e.target.id === 'aserradero-despacho-buscar-arbol' || e.target.id === 'aserradero-despacho-filtro-faja' || e.target.id === 'aserradero-despacho-filtro-nro-arbol') {
       await ejecutarBusqueda();
     }
   });
@@ -85,8 +85,8 @@ export function initDetalleSalidaView() {
         rodeoNumero: item.dataset.rodeoNumero,
       });
 
-      document.getElementById('salida-resultados-arbol').style.display = 'none';
-      document.getElementById('salida-buscar-arbol').value = '';
+      document.getElementById('aserradero-despacho-resultados-arbol').style.display = 'none';
+      document.getElementById('aserradero-despacho-buscar-arbol').value = '';
       renderLineasPendientes();
       return;
     }
@@ -101,7 +101,7 @@ export function initDetalleSalidaView() {
 
     const btnQuitar = e.target.closest('[data-quitar-linea]');
     if (btnQuitar) {
-      const ok = confirm('¿Quitar este árbol del despacho? Se liberará para usar en otro despacho.');
+      const ok = confirm('¿Quitar este árbol del despacho? Se liberará para usar en otro registro.');
       if (!ok) return;
       await quitarLineaGuardada(
         parseInt(btnQuitar.dataset.quitarLinea),
@@ -112,10 +112,10 @@ export function initDetalleSalidaView() {
 }
 
 async function ejecutarBusqueda() {
-  const termino = document.getElementById('salida-buscar-arbol')?.value?.trim() || '';
-  const faja = document.getElementById('salida-filtro-faja')?.value?.trim() || '';
-  const nroArbol = document.getElementById('salida-filtro-nro-arbol')?.value?.trim() || '';
-  const resultados = document.getElementById('salida-resultados-arbol');
+  const termino = document.getElementById('aserradero-despacho-buscar-arbol')?.value?.trim() || '';
+  const faja = document.getElementById('aserradero-despacho-filtro-faja')?.value?.trim() || '';
+  const nroArbol = document.getElementById('aserradero-despacho-filtro-nro-arbol')?.value?.trim() || '';
+  const resultados = document.getElementById('aserradero-despacho-resultados-arbol');
 
   if (termino.length < 2 && !faja && !nroArbol) {
     resultados.style.display = 'none';
@@ -126,18 +126,18 @@ async function ejecutarBusqueda() {
     const arboles = await buscarArboles({ termino: termino || null, faja: faja || null, nroArbol: nroArbol || null });
     renderResultadosArboles(arboles, resultados);
   } catch (err) {
-    console.error('[MONTE] Error buscando árboles:', err);
+    console.error('[ASERRADERO] Error buscando árboles:', err);
   }
 }
 
-export async function cargarDetalleSalida(id) {
-  salidaIdActual = id;
+export async function cargarAserraderoDespachoDetalle(id) {
+  despachoIdActual = id;
   lineasPendientes = [];
-  const container = document.getElementById('salida-detalle-contenido');
+  const container = document.getElementById('aserradero-despacho-detalle-contenido');
   container.innerHTML = '<p style="text-align:center;color:var(--text-muted)">Cargando...</p>';
 
   try {
-    const data = await getSalida(id);
+    const data = await getDespacho(id);
     if (!data) {
       container.innerHTML = '<p style="text-align:center;color:var(--text-muted)">Despacho no encontrado</p>';
       return;
@@ -151,13 +151,13 @@ export async function cargarDetalleSalida(id) {
       : '—';
 
     let html = `
-      <div class="card" id="salida-cabecera-card">
+      <div class="card" id="aserradero-despacho-cabecera-card">
         <div class="vista-header">
-          <button type="button" id="btn-salida-detalle-volver" class="btn-volver">← Volver</button>
-          <h3>🌲 ${cab.numero_completo}</h3>
+          <button type="button" id="btn-aserradero-despacho-detalle-volver" class="btn-volver">← Volver</button>
+          <h3>🪵 ${cab.numero_completo}</h3>
         </div>
         <div class="grid" style="margin-top:0.5rem">
-          <label>Nro CFO Despacho <span class="detalle-info">${cab.nro_cfo_despacho}</span></label>
+          <label>Nro Despacho <span class="detalle-info">${cab.nro_despacho}</span></label>
           <label>Fecha despacho <span class="detalle-info">${fecha}</span></label>
           <label>Placa <span class="detalle-info">${cab.placa || '—'}</span></label>
           <label>Chofer <span class="detalle-info">${cab.chofer || '—'}</span></label>
@@ -165,7 +165,7 @@ export async function cargarDetalleSalida(id) {
         </div>
         ${cab.observaciones ? `<label style="margin-top:0.5rem">Observaciones <span class="detalle-info">${cab.observaciones}</span></label>` : ''}
         <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
-          <button type="button" id="btn-salida-editar-cabecera" class="btn-secondary" style="flex:1; margin:0">✏️ Editar cabecera</button>
+          <button type="button" id="btn-aserradero-despacho-editar-cabecera" class="btn-secondary" style="flex:1; margin:0">✏️ Editar cabecera</button>
         </div>
       </div>
     `;
@@ -218,26 +218,26 @@ export async function cargarDetalleSalida(id) {
       <div class="card">
         <h3>➕ Agregar árboles del Rodeo</h3>
         <label>Buscar árbol
-          <input type="text" id="salida-buscar-arbol" placeholder="Código de rodeo, especie o nro árbol..." autocomplete="off">
+          <input type="text" id="aserradero-despacho-buscar-arbol" placeholder="Código de rodeo, especie o nro árbol..." autocomplete="off">
         </label>
         <div class="grid" style="margin-top:0.5rem; grid-template-columns: 1fr 1fr;">
           <label>Fija
-            <input type="text" id="salida-filtro-faja" placeholder="Ej: 5" autocomplete="off">
+            <input type="text" id="aserradero-despacho-filtro-faja" placeholder="Ej: 5" autocomplete="off">
           </label>
           <label>Nro Árbol
-            <input type="text" id="salida-filtro-nro-arbol" placeholder="Ej: 12" autocomplete="off">
+            <input type="text" id="aserradero-despacho-filtro-nro-arbol" placeholder="Ej: 12" autocomplete="off">
           </label>
         </div>
-        <div id="salida-resultados-arbol" style="display:none; margin-top:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); max-height:240px; overflow-y:auto;"></div>
-        <button type="button" id="btn-salida-agregar-linea" class="btn-secondary" style="margin-top:0.75rem">🔍 Buscar árbol</button>
+        <div id="aserradero-despacho-resultados-arbol" style="display:none; margin-top:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); max-height:240px; overflow-y:auto;"></div>
+        <button type="button" id="btn-aserradero-despacho-agregar-linea" class="btn-secondary" style="margin-top:0.75rem">🔍 Buscar árbol</button>
       </div>
 
       <div class="card">
         <h3>🌲 Árboles agregados</h3>
-        <div id="salida-lineas-pendientes" style="overflow-x:auto">
+        <div id="aserradero-despacho-lineas-pendientes" style="overflow-x:auto">
           <p style="color:var(--text-muted);font-size:0.9rem">Sin líneas agregadas</p>
         </div>
-        <button type="button" id="btn-salida-guardar-lineas" class="btn-primary" style="width:100%; margin-top:0.75rem" disabled>💾 Guardar líneas</button>
+        <button type="button" id="btn-aserradero-despacho-guardar-lineas" class="btn-primary" style="width:100%; margin-top:0.75rem" disabled>💾 Guardar líneas</button>
       </div>
     `;
 
@@ -245,17 +245,17 @@ export async function cargarDetalleSalida(id) {
     renderLineasPendientes();
 
   } catch (err) {
-    console.error('[MONTE] Error al cargar detalle:', err);
+    console.error('[ASERRADERO] Error al cargar detalle:', err);
     container.innerHTML = '<p style="text-align:center;color:var(--text-muted)">Error al cargar detalle</p>';
   }
 }
 
 function mostrarFormularioEdicion() {
-  const card = document.getElementById('salida-cabecera-card');
-  if (!card || !salidaIdActual) return;
+  const card = document.getElementById('aserradero-despacho-cabecera-card');
+  if (!card || !despachoIdActual) return;
 
   const labels = card.querySelectorAll('label');
-  let nroCfo = '';
+  let nroDespacho = '';
   let fecha = '';
   let placa = '';
   let chofer = '';
@@ -264,56 +264,56 @@ function mostrarFormularioEdicion() {
   labels.forEach(lbl => {
     const txt = lbl.textContent;
     const val = lbl.querySelector('.detalle-info')?.textContent?.trim() || '';
-    if (txt.includes('Nro CFO Despacho')) nroCfo = val;
+    if (txt.includes('Nro Despacho')) nroDespacho = val;
     if (txt.includes('Fecha despacho')) {
       const parts = val.split('/');
       if (parts.length === 3) fecha = `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
-    if (txt.includes('Placa') && !txt.includes('Nro CFO')) placa = val === '—' ? '' : val;
+    if (txt.includes('Placa') && !txt.includes('Nro')) placa = val === '—' ? '' : val;
     if (txt.includes('Chofer')) chofer = val === '—' ? '' : val;
     if (txt.includes('Observaciones')) observaciones = val;
   });
 
   card.innerHTML = `
     <div class="vista-header">
-      <button type="button" id="btn-salida-detalle-volver" class="btn-volver">← Volver</button>
+      <button type="button" id="btn-aserradero-despacho-detalle-volver" class="btn-volver">← Volver</button>
       <h3>✏️ Editar Cabecera</h3>
     </div>
     <div class="grid" style="margin-top:0.5rem">
-      <label>Nro CFO Despacho <input type="text" id="edit-salida-nro-cfo" class="input-upper" value="${nroCfo}" required></label>
-      <label>Fecha despacho <input type="date" id="edit-salida-fecha" value="${fecha}"></label>
-      <label>Placa <input type="text" id="edit-salida-placa" class="input-upper" value="${placa}"></label>
-      <label>Chofer <input type="text" id="edit-salida-chofer" class="input-upper" value="${chofer}"></label>
+      <label>Nro Despacho <input type="text" id="edit-aserradero-despacho-nro" class="input-upper" value="${nroDespacho}" required></label>
+      <label>Fecha despacho <input type="date" id="edit-aserradero-despacho-fecha" value="${fecha}"></label>
+      <label>Placa <input type="text" id="edit-aserradero-despacho-placa" class="input-upper" value="${placa}"></label>
+      <label>Chofer <input type="text" id="edit-aserradero-despacho-chofer" class="input-upper" value="${chofer}"></label>
     </div>
-    <label style="margin-top:0.5rem">Observaciones <textarea id="edit-salida-observaciones" rows="2">${observaciones}</textarea></label>
+    <label style="margin-top:0.5rem">Observaciones <textarea id="edit-aserradero-despacho-observaciones" rows="2">${observaciones}</textarea></label>
     <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
-      <button type="button" id="btn-salida-guardar-cabecera" class="btn-primary" style="flex:1; margin:0">💾 Guardar</button>
-      <button type="button" id="btn-salida-cancelar-edicion" class="btn-secondary" style="flex:1; margin:0">❌ Cancelar</button>
+      <button type="button" id="btn-aserradero-despacho-guardar-cabecera" class="btn-primary" style="flex:1; margin:0">💾 Guardar</button>
+      <button type="button" id="btn-aserradero-despacho-cancelar-edicion" class="btn-secondary" style="flex:1; margin:0">❌ Cancelar</button>
     </div>
   `;
 }
 
 async function guardarEdicionCabecera() {
-  const btn = document.getElementById('btn-salida-guardar-cabecera');
+  const btn = document.getElementById('btn-aserradero-despacho-guardar-cabecera');
   if (btn) {
     btn.disabled = true;
     btn.textContent = '⏳ Guardando...';
   }
 
   try {
-    const nroCfo = document.getElementById('edit-salida-nro-cfo')?.value?.trim();
-    const fecha = document.getElementById('edit-salida-fecha')?.value || null;
-    const placa = document.getElementById('edit-salida-placa')?.value?.trim();
-    const chofer = document.getElementById('edit-salida-chofer')?.value?.trim();
-    const observaciones = document.getElementById('edit-salida-observaciones')?.value?.trim();
+    const nroDespacho = document.getElementById('edit-aserradero-despacho-nro')?.value?.trim();
+    const fecha = document.getElementById('edit-aserradero-despacho-fecha')?.value || null;
+    const placa = document.getElementById('edit-aserradero-despacho-placa')?.value?.trim();
+    const chofer = document.getElementById('edit-aserradero-despacho-chofer')?.value?.trim();
+    const observaciones = document.getElementById('edit-aserradero-despacho-observaciones')?.value?.trim();
 
-    if (!nroCfo) {
-      alert('❌ El número de CFO de despacho es obligatorio');
+    if (!nroDespacho) {
+      alert('❌ El número de despacho es obligatorio');
       return;
     }
 
-    await actualizarSalidaCabecera(salidaIdActual, {
-      nroCfoDespacho: nroCfo,
+    await actualizarDespachoCabecera(despachoIdActual, {
+      nroDespacho: nroDespacho,
       fechaDespacho: fecha,
       placa: placa,
       chofer: chofer,
@@ -321,9 +321,9 @@ async function guardarEdicionCabecera() {
     });
 
     mostrarToast('✅ Cabecera actualizada');
-    await cargarDetalleSalida(salidaIdActual);
+    await cargarAserraderoDespachoDetalle(despachoIdActual);
   } catch (err) {
-    console.error('[MONTE] Error al actualizar cabecera:', err);
+    console.error('[ASERRADERO] Error al actualizar cabecera:', err);
     alert('❌ ' + err.message);
   } finally {
     if (btn) {
@@ -363,8 +363,8 @@ function renderResultadosArboles(arboles, container) {
 }
 
 function renderLineasPendientes() {
-  const container = document.getElementById('salida-lineas-pendientes');
-  const btnGuardar = document.getElementById('btn-salida-guardar-lineas');
+  const container = document.getElementById('aserradero-despacho-lineas-pendientes');
+  const btnGuardar = document.getElementById('btn-aserradero-despacho-guardar-lineas');
   if (!container) return;
 
   if (lineasPendientes.length === 0) {
@@ -406,16 +406,16 @@ function renderLineasPendientes() {
 }
 
 async function guardarLineas() {
-  if (lineasPendientes.length === 0 || !salidaIdActual) return;
+  if (lineasPendientes.length === 0 || !despachoIdActual) return;
 
-  const btn = document.getElementById('btn-salida-guardar-lineas');
+  const btn = document.getElementById('btn-aserradero-despacho-guardar-lineas');
   btn.disabled = true;
   btn.textContent = '⏳ Guardando...';
 
   try {
-    await agregarLineasSalida(salidaIdActual, lineasPendientes);
+    await agregarLineasDespacho(despachoIdActual, lineasPendientes);
     lineasPendientes = [];
-    await cargarDetalleSalida(salidaIdActual);
+    await cargarAserraderoDespachoDetalle(despachoIdActual);
     mostrarToast('✅ Líneas guardadas');
   } catch (err) {
     alert('❌ ' + err.message);
@@ -424,13 +424,13 @@ async function guardarLineas() {
   }
 }
 
-async function quitarLineaGuardada(salidaDetalleId, rodeoDetalleId) {
+async function quitarLineaGuardada(despachoDetalleId, rodeoDetalleId) {
   try {
-    await quitarLineaSalida(salidaDetalleId, rodeoDetalleId);
+    await quitarLineaDespacho(despachoDetalleId, rodeoDetalleId);
     mostrarToast('✅ Árbol quitado del despacho');
-    await cargarDetalleSalida(salidaIdActual);
+    await cargarAserraderoDespachoDetalle(despachoIdActual);
   } catch (err) {
-    console.error('[MONTE] Error al quitar línea:', err);
+    console.error('[ASERRADERO] Error al quitar línea:', err);
     alert('❌ ' + err.message);
   }
 }

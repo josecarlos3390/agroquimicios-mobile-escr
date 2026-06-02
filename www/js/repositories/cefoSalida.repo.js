@@ -8,25 +8,25 @@ export async function insertarSalidaCab(id, empresaId, numeroSecuencial, numeroC
   );
 }
 
-export async function insertarSalidaDetalle(salidaId, cefoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen) {
+export async function insertarSalidaDetalle(salidaId, rodeoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen) {
   await executeRun(
-    `INSERT INTO cefo_salida_detalle (salida_id, cefo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen)
+    `INSERT INTO cefo_salida_detalle (salida_id, rodeo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [salidaId, cefoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen]
+    [salidaId, rodeoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen]
   );
 }
 
-export async function marcarDetalleDespachado(cefoDetalleId) {
+export async function marcarDetalleDespachado(rodeoDetalleId) {
   await executeRun(
-    'UPDATE cefo_detalle SET despachado = 1 WHERE id = ?',
-    [cefoDetalleId]
+    "UPDATE rodeo_detalle SET estado_uso = 'DESPACHADO' WHERE id = ?",
+    [rodeoDetalleId]
   );
 }
 
-export async function desmarcarDetalleDespachado(cefoDetalleId) {
+export async function desmarcarDetalleDespachado(rodeoDetalleId) {
   await executeRun(
-    'UPDATE cefo_detalle SET despachado = 0 WHERE id = ?',
-    [cefoDetalleId]
+    "UPDATE rodeo_detalle SET estado_uso = 'DISPONIBLE' WHERE id = ?",
+    [rodeoDetalleId]
   );
 }
 
@@ -52,8 +52,25 @@ export async function obtenerSalidaPorId(id) {
   if (!cab[0]) return null;
 
   const det = await executeQuery(
-    `SELECT id, cefo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen
-     FROM cefo_salida_detalle WHERE salida_id = ? ORDER BY id`,
+    `SELECT
+       sd.id,
+       sd.rodeo_detalle_id,
+       rd.nro_rodeo,
+       rd.especie,
+       rd.faja,
+       rd.nro_arbol,
+       rd.seccion,
+       rd.d1 AS diamayor,
+       rd.d2 AS diamenor,
+       rd.largo,
+       rd.volumen,
+       rd.para_transporte,
+       rc.numero_completo AS rodeo_numero
+     FROM cefo_salida_detalle sd
+     LEFT JOIN rodeo_detalle rd ON rd.id = sd.rodeo_detalle_id
+     LEFT JOIN rodeo_cab rc ON rc.id = rd.rodeo_cab_id
+     WHERE sd.salida_id = ?
+     ORDER BY sd.id`,
     [id]
   );
 
@@ -62,11 +79,13 @@ export async function obtenerSalidaPorId(id) {
 
 export async function eliminarSalida(id) {
   const detalles = await executeQuery(
-    'SELECT cefo_detalle_id FROM cefo_salida_detalle WHERE salida_id = ?',
+    'SELECT rodeo_detalle_id FROM cefo_salida_detalle WHERE salida_id = ?',
     [id]
   );
   for (const d of detalles) {
-    await desmarcarDetalleDespachado(d.cefo_detalle_id);
+    if (d.rodeo_detalle_id) {
+      await desmarcarDetalleDespachado(d.rodeo_detalle_id);
+    }
   }
   return executeRun(
     'DELETE FROM cefo_salida_cab WHERE id = ?',
@@ -83,24 +102,66 @@ export async function actualizarSalidaCab(id, nroCfoDespacho, fechaDespacho, pla
   );
 }
 
-export async function eliminarSalidaDetalle(salidaDetalleId, cefoDetalleId) {
+export async function eliminarSalidaDetalle(salidaDetalleId, rodeoDetalleId) {
   await executeRun(
     'DELETE FROM cefo_salida_detalle WHERE id = ?',
     [salidaDetalleId]
   );
-  await desmarcarDetalleDespachado(cefoDetalleId);
+  if (rodeoDetalleId) {
+    await desmarcarDetalleDespachado(rodeoDetalleId);
+  }
 }
 
-export async function buscarArbolesDisponibles(empresaId, termino) {
+export async function buscarArbolesDisponibles(empresaId, filtros) {
+  const conditions = [
+    'c.empresa_id = ?',
+    "d.estado_uso = 'DISPONIBLE'"
+  ];
+  const params = [empresaId];
+
+  if (filtros.termino) {
+    conditions.push('(d.nro_rodeo LIKE ? OR d.especie LIKE ? OR d.nro_arbol LIKE ?)');
+    const t = `%${filtros.termino}%`;
+    params.push(t, t, t);
+  }
+
+  if (filtros.faja) {
+    conditions.push('d.faja = ?');
+    params.push(filtros.faja);
+  }
+
+  if (filtros.nroArbol) {
+    conditions.push('d.nro_arbol LIKE ?');
+    params.push(`%${filtros.nroArbol}%`);
+  }
+
+  const where = conditions.join(' AND ');
+
   return executeQuery(
-    `SELECT d.id, d.especie, d.faja, d.nro_arbol, d.seccion, d.diamayor, d.diamenor, d.largo, d.volumen,
-            c.nro_cfo_recib
-     FROM cefo_detalle d
-     JOIN cefo_cab c ON c.id = d.cefo_id
-     WHERE c.empresa_id = ? AND d.despachado = 0
-       AND (d.especie LIKE ? OR d.nro_arbol LIKE ? OR c.nro_cfo_recib LIKE ?)
-     ORDER BY d.especie, d.faja, d.nro_arbol
+    `SELECT
+       d.id,
+       d.nro_rodeo,
+       d.x_coord,
+       d.y_coord,
+       d.especie,
+       d.faja,
+       d.nro_arbol,
+       d.seccion,
+       d.d1,
+       d.d2,
+       d.largo,
+       d.volumen,
+       d.para_transporte,
+       d.estado_uso,
+       c.numero_completo AS rodeo_numero,
+       c.sector_id,
+       s.nombre AS sector_nombre
+     FROM rodeo_detalle d
+     JOIN rodeo_cab c ON c.id = d.rodeo_cab_id
+     LEFT JOIN rodeo_sectores s ON s.id = c.sector_id
+     WHERE ${where}
+     ORDER BY c.numero_completo, d.nro_rodeo, d.faja, d.nro_arbol
      LIMIT 50`,
-    [empresaId, `%${termino}%`, `%${termino}%`, `%${termino}%`]
+    params
   );
 }

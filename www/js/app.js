@@ -65,7 +65,16 @@ import { initNuevaSalidaView } from './modules/controlRodeo/views/nuevaSalida.vi
 import { initDetalleSalidaView, cargarDetalleSalida } from './modules/controlRodeo/views/detalleSalida.view.js';
 import { initRodeoRegistrosView, cargarRodeoRegistros } from './modules/controlRodeo/views/rodeoRegistros.view.js';
 import { initRodeoNuevoView } from './modules/controlRodeo/views/rodeoNuevo.view.js';
+import { initRodeoDetalleView, cargarRodeoDetalle } from './modules/controlRodeo/views/rodeoDetalle.view.js';
 import { initRodeoSectoresView, cargarRodeoSectores } from './modules/controlRodeo/views/rodeoSectores.view.js';
+
+// ── Módulo: Aserradero ────────────────────────────────────
+import { initAserraderoRecepcionRegistrosView, cargarAserraderoRecepcionRegistros } from './modules/aserradero/views/aserraderoRecepcionRegistros.view.js';
+import { initAserraderoRecepcionNuevoView } from './modules/aserradero/views/aserraderoRecepcionNuevo.view.js';
+import { initAserraderoRecepcionDetalleView, cargarAserraderoRecepcionDetalle } from './modules/aserradero/views/aserraderoRecepcionDetalle.view.js';
+import { initAserraderoDespachoRegistrosView, cargarAserraderoDespachoRegistros } from './modules/aserradero/views/aserraderoDespachoRegistros.view.js';
+import { initAserraderoDespachoNuevoView } from './modules/aserradero/views/aserraderoDespachoNuevo.view.js';
+import { initAserraderoDespachoDetalleView, cargarAserraderoDespachoDetalle } from './modules/aserradero/views/aserraderoDespachoDetalle.view.js';
 
 /* ===============================
    SPLASH
@@ -624,9 +633,30 @@ function showView(view, param = null) {
       break;
     }
 
+    // ── Módulo Aserradero ──
+    case 'aserradero-recepcion-registros': initAserraderoRecepcionRegistrosView(); cargarAserraderoRecepcionRegistros(); break;
+    case 'aserradero-recepcion-nuevo': initAserraderoRecepcionNuevoView(); break;
+    case 'aserradero-recepcion-detalle': {
+      initAserraderoRecepcionDetalleView();
+      if (param) cargarAserraderoRecepcionDetalle(param);
+      break;
+    }
+    case 'aserradero-despacho-registros': initAserraderoDespachoRegistrosView(); cargarAserraderoDespachoRegistros(); break;
+    case 'aserradero-despacho-nuevo': initAserraderoDespachoNuevoView(); break;
+    case 'aserradero-despacho-detalle': {
+      initAserraderoDespachoDetalleView();
+      if (param) cargarAserraderoDespachoDetalle(param);
+      break;
+    }
+
     // ── Módulo Rodeo ──
     case 'rodeo-registros': initRodeoRegistrosView(); cargarRodeoRegistros(); break;
     case 'rodeo-nuevo': initRodeoNuevoView(); break;
+    case 'rodeo-detalle': {
+      initRodeoDetalleView();
+      if (param) cargarRodeoDetalle(param);
+      break;
+    }
     case 'rodeo-sectores': initRodeoSectoresView(); cargarRodeoSectores(); break;
   }
 }

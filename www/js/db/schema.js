@@ -569,7 +569,8 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS cefo_salida_detalle (
       id                  INTEGER PRIMARY KEY AUTOINCREMENT,
       salida_id           TEXT    NOT NULL,
-      cefo_detalle_id     INTEGER NOT NULL,
+      cefo_detalle_id     INTEGER,
+      rodeo_detalle_id    INTEGER,
       especie             TEXT    NOT NULL,
       faja                INTEGER,
       nro_arbol           TEXT,
@@ -579,7 +580,8 @@ export async function initSchema() {
       largo               REAL,
       volumen             REAL,
       FOREIGN KEY (salida_id) REFERENCES cefo_salida_cab(id) ON DELETE CASCADE,
-      FOREIGN KEY (cefo_detalle_id) REFERENCES cefo_detalle(id)
+      FOREIGN KEY (cefo_detalle_id) REFERENCES cefo_detalle(id),
+      FOREIGN KEY (rodeo_detalle_id) REFERENCES rodeo_detalle(id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_cefo_salida_cab_empresa
@@ -587,6 +589,86 @@ export async function initSchema() {
 
     CREATE INDEX IF NOT EXISTS idx_cefo_salida_detalle_salida
       ON cefo_salida_detalle (salida_id);
+
+    /* =========================
+       ASERRADERO — RECEPCIÓN
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS aserradero_recepcion_cab (
+      id                  TEXT PRIMARY KEY,
+      empresa_id          INTEGER NOT NULL,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
+      nro_recepcion       TEXT NOT NULL,
+      fecha_recepcion     DATE,
+      placa               TEXT,
+      chofer              TEXT,
+      observaciones       TEXT,
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS aserradero_recepcion_detalle (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      recepcion_id        TEXT    NOT NULL,
+      rodeo_detalle_id    INTEGER,
+      especie             TEXT    NOT NULL,
+      faja                INTEGER,
+      nro_arbol           TEXT,
+      seccion             TEXT,
+      diamayor            REAL,
+      diamenor            REAL,
+      largo               REAL,
+      volumen             REAL,
+      FOREIGN KEY (recepcion_id) REFERENCES aserradero_recepcion_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (rodeo_detalle_id) REFERENCES rodeo_detalle(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_aserradero_recepcion_cab_empresa
+      ON aserradero_recepcion_cab (empresa_id);
+
+    CREATE INDEX IF NOT EXISTS idx_aserradero_recepcion_detalle_recepcion
+      ON aserradero_recepcion_detalle (recepcion_id);
+
+    /* =========================
+       ASERRADERO — DESPACHO
+       ========================= */
+
+    CREATE TABLE IF NOT EXISTS aserradero_despacho_cab (
+      id                  TEXT PRIMARY KEY,
+      empresa_id          INTEGER NOT NULL,
+      numero_secuencial   INTEGER NOT NULL,
+      numero_completo     TEXT    NOT NULL,
+      nro_despacho        TEXT NOT NULL,
+      fecha_despacho      DATE,
+      placa               TEXT,
+      chofer              TEXT,
+      observaciones       TEXT,
+      created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS aserradero_despacho_detalle (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      despacho_id         TEXT    NOT NULL,
+      rodeo_detalle_id    INTEGER,
+      especie             TEXT    NOT NULL,
+      faja                INTEGER,
+      nro_arbol           TEXT,
+      seccion             TEXT,
+      diamayor            REAL,
+      diamenor            REAL,
+      largo               REAL,
+      volumen             REAL,
+      FOREIGN KEY (despacho_id) REFERENCES aserradero_despacho_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (rodeo_detalle_id) REFERENCES rodeo_detalle(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_aserradero_despacho_cab_empresa
+      ON aserradero_despacho_cab (empresa_id);
+
+    CREATE INDEX IF NOT EXISTS idx_aserradero_despacho_detalle_despacho
+      ON aserradero_despacho_detalle (despacho_id);
 
     /* =========================
        MÓDULO RODEO
@@ -631,6 +713,8 @@ export async function initSchema() {
       largo               REAL,
       volumen             REAL,
       para_transporte     TEXT,
+      despachado          INTEGER DEFAULT 0,
+      estado_uso          TEXT    DEFAULT 'DISPONIBLE',
       FOREIGN KEY (rodeo_cab_id) REFERENCES rodeo_cab(id) ON DELETE CASCADE
     );
 
@@ -715,6 +799,56 @@ export async function initSchema() {
   await addColumnIfNotExists('cefo_salida_cab', 'numero_completo', "TEXT NOT NULL DEFAULT 'DESP-000'");
   await addColumnIfNotExists('cefo_salida_cab', 'observaciones', 'TEXT');
 
+  // Migración: cefo_salida_detalle — agregar rodeo_detalle_id (recrear tabla si no existe la columna)
+  try {
+    const colsCefoSalida = await executeQuery(`PRAGMA table_info(cefo_salida_detalle)`);
+    const tieneRodeoId = colsCefoSalida.some(c => c.name === 'rodeo_detalle_id');
+    if (!tieneRodeoId) {
+      await executeRun(`ALTER TABLE cefo_salida_detalle RENAME TO cefo_salida_detalle_old`);
+      await executeRun(`
+        CREATE TABLE cefo_salida_detalle (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          salida_id TEXT NOT NULL,
+          cefo_detalle_id INTEGER,
+          rodeo_detalle_id INTEGER,
+          especie TEXT NOT NULL,
+          faja INTEGER,
+          nro_arbol TEXT,
+          seccion TEXT,
+          diamayor REAL,
+          diamenor REAL,
+          largo REAL,
+          volumen REAL,
+          FOREIGN KEY (salida_id) REFERENCES cefo_salida_cab(id) ON DELETE CASCADE,
+          FOREIGN KEY (cefo_detalle_id) REFERENCES cefo_detalle(id),
+          FOREIGN KEY (rodeo_detalle_id) REFERENCES rodeo_detalle(id)
+        )
+      `);
+      await executeRun(`
+        INSERT INTO cefo_salida_detalle (id, salida_id, cefo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen)
+        SELECT id, salida_id, cefo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen FROM cefo_salida_detalle_old
+      `);
+      await executeRun(`DROP TABLE cefo_salida_detalle_old`);
+    }
+  } catch (_) { /* ignorar */ }
+
+  // Migración: rodeo_detalle — agregar despachado
+  await addColumnIfNotExists('rodeo_detalle', 'despachado', 'INTEGER DEFAULT 0');
+
+  // Migración: rodeo_detalle — agregar estado_uso
+  await addColumnIfNotExists('rodeo_detalle', 'estado_uso', "TEXT DEFAULT 'DISPONIBLE'");
+
+  // Backfill: convertir despachado=1 en estado_uso='DESPACHADO' (legacy Monte)
+  try {
+    await executeRun("UPDATE rodeo_detalle SET estado_uso = 'DESPACHADO' WHERE despachado = 1 AND estado_uso = 'DISPONIBLE'");
+  } catch (_) { /* ignorar */ }
+
+  // Índices de rodeo_detalle que dependen de la columna despachado
+  try {
+    await executeRun('CREATE INDEX IF NOT EXISTS idx_rodeo_detalle_despachado ON rodeo_detalle (despachado)');
+    await executeRun('CREATE INDEX IF NOT EXISTS idx_rodeo_detalle_busqueda ON rodeo_detalle (faja, nro_arbol)');
+  } catch (_) { /* ignorar si ya existen */ }
+
   // Migraciones módulo Guía de Transporte de Caña
   await addColumnIfNotExists('guia_transporte_cab', 'lote', 'TEXT');
   await addColumnIfNotExists('guia_transporte_cab', 'variedad', 'TEXT');
@@ -772,5 +906,13 @@ export async function initSchema() {
   await executeRun(`
     INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
     SELECT 'rodeo_cab', COALESCE(MAX(numero_secuencial), 0) FROM rodeo_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'aserradero_recepcion_cab', COALESCE(MAX(numero_secuencial), 0) FROM aserradero_recepcion_cab
+  `);
+  await executeRun(`
+    INSERT OR IGNORE INTO secuencias (tabla, ultimo_numero)
+    SELECT 'aserradero_despacho_cab', COALESCE(MAX(numero_secuencial), 0) FROM aserradero_despacho_cab
   `);
 }

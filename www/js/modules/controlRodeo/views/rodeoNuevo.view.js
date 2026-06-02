@@ -55,6 +55,8 @@ export function initRodeoNuevoView() {
         if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
 
         const empresa = getEmpresaActiva();
+        if (!empresa?.id) throw new Error('Debes seleccionar una propiedad activa');
+
         const fecha = section.querySelector('#rodeo-fecha')?.value;
         if (!fecha) throw new Error('La fecha es obligatoria');
 
@@ -64,7 +66,7 @@ export function initRodeoNuevoView() {
         if (_previewDetalle.length === 0) throw new Error('Debes importar un archivo Excel');
 
         const data = {
-          empresa_id: empresa?.id ?? null,
+          empresa_id: empresa.id,
           fecha,
           sector_id: parseInt(sectorId, 10),
         };

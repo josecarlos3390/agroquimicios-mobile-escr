@@ -143,8 +143,14 @@ const MENUS = {
 
     <div class="menu-divider"></div>
 
-    <p class="menu-title">📦 Salidas</p>
-    <a href="#" data-view="control-rodeo-salida-registros">📦 Despachos</a>
+    <p class="menu-title">🌲 Monte</p>
+    <a href="#" data-view="control-rodeo-salida-registros">🌲 Despachos</a>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-title">🪵 Aserradero</p>
+    <a href="#" data-view="aserradero-recepcion-registros">📥 Recepción</a>
+    <a href="#" data-view="aserradero-despacho-registros">📦 Despacho</a>
 
     <div class="menu-divider"></div>
 

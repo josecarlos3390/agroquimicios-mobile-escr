@@ -18,7 +18,8 @@ export function initRodeoSectoresView() {
 
       try {
         const empresa = getEmpresaActiva();
-        await guardarRodeoSector({ empresa_id: empresa?.id ?? null, nombre });
+        if (!empresa?.id) { alert('Debes seleccionar una propiedad activa'); return; }
+        await guardarRodeoSector({ empresa_id: empresa.id, nombre });
         input.value = '';
         await cargarRodeoSectores();
       } catch (err) {

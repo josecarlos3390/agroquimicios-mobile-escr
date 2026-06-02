@@ -1187,7 +1187,7 @@
   ====================== -->
   <section id="view-control-rodeo-salida-registros" class="view hidden">
     <div class="card">
-      <h3>📦 Despachos de CFO</h3>
+      <h3>🌲 Registros de Monte</h3>
       <button id="btn-nueva-salida" class="btn-primary" style="width:100%;margin:0">➕ Crear Despacho</button>
     </div>
     <div class="card" style="padding:0.6rem 0.9rem">
@@ -1201,7 +1201,7 @@
       <div class="card">
         <div class="vista-header">
           <button type="button" id="btn-salida-nuevo-volver" class="btn-volver">← Volver</button>
-          <h3>📦 Nuevo Despacho</h3>
+          <h3>🌲 Nuevo Despacho — Monte</h3>
         </div>
         <div class="grid">
           <label>Nro. CFO Despacho <input type="text" id="salida-nro-cfo" class="input-upper" required placeholder="Ej: BO-SCZ-999999"></label>
@@ -1217,6 +1217,82 @@
 
   <section id="view-control-rodeo-salida-detalle" class="view hidden">
     <div id="salida-detalle-contenido"></div>
+  </section>
+
+  <!-- ======================
+       ASERRADERO — RECEPCIÓN
+  ====================== -->
+
+  <section id="view-aserradero-recepcion-registros" class="view hidden">
+    <div class="card">
+      <h3>🪵 Recepciones de Aserradero</h3>
+      <button id="btn-nueva-recepcion" class="btn-primary" style="width:100%;margin:0">➕ Crear Recepción</button>
+    </div>
+    <div class="card" style="padding:0.6rem 0.9rem">
+      <input type="text" id="aserradero-recepcion-buscador" placeholder="🔍 Buscar por nro, placa o chofer..." style="width:100%; margin:0">
+    </div>
+    <div id="aserradero-recepcion-lista"></div>
+  </section>
+
+  <section id="view-aserradero-recepcion-nuevo" class="view hidden">
+    <form id="form-aserradero-recepcion-nuevo" onsubmit="return false">
+      <div class="card">
+        <div class="vista-header">
+          <button type="button" id="btn-aserradero-recepcion-nuevo-volver" class="btn-volver">← Volver</button>
+          <h3>🪵 Nueva Recepción — Aserradero</h3>
+        </div>
+        <div class="grid">
+          <label>Nro. Recepción <input type="text" id="aserradero-recepcion-nro" class="input-upper" required placeholder="Ej: REC-001"></label>
+          <label>Fecha recepción <input type="date" id="aserradero-recepcion-fecha" required></label>
+          <label>Placa <input type="text" id="aserradero-recepcion-placa" class="input-upper"></label>
+          <label>Chofer <input type="text" id="aserradero-recepcion-chofer" class="input-upper"></label>
+        </div>
+        <label>Observaciones <textarea id="aserradero-recepcion-observaciones" rows="2" placeholder="Notas..."></textarea></label>
+      </div>
+      <button type="submit" id="btn-aserradero-recepcion-guardar" class="btn-primary" style="width:100%">💾 Guardar y continuar</button>
+    </form>
+  </section>
+
+  <section id="view-aserradero-recepcion-detalle" class="view hidden">
+    <div id="aserradero-recepcion-detalle-contenido"></div>
+  </section>
+
+  <!-- ======================
+       ASERRADERO — DESPACHO
+  ====================== -->
+
+  <section id="view-aserradero-despacho-registros" class="view hidden">
+    <div class="card">
+      <h3>🪵 Despachos de Aserradero</h3>
+      <button id="btn-nuevo-despacho-aserradero" class="btn-primary" style="width:100%;margin:0">➕ Crear Despacho</button>
+    </div>
+    <div class="card" style="padding:0.6rem 0.9rem">
+      <input type="text" id="aserradero-despacho-buscador" placeholder="🔍 Buscar por nro, placa o chofer..." style="width:100%; margin:0">
+    </div>
+    <div id="aserradero-despacho-lista"></div>
+  </section>
+
+  <section id="view-aserradero-despacho-nuevo" class="view hidden">
+    <form id="form-aserradero-despacho-nuevo" onsubmit="return false">
+      <div class="card">
+        <div class="vista-header">
+          <button type="button" id="btn-aserradero-despacho-nuevo-volver" class="btn-volver">← Volver</button>
+          <h3>🪵 Nuevo Despacho — Aserradero</h3>
+        </div>
+        <div class="grid">
+          <label>Nro. Despacho <input type="text" id="aserradero-despacho-nro" class="input-upper" required placeholder="Ej: DES-001"></label>
+          <label>Fecha despacho <input type="date" id="aserradero-despacho-fecha" required></label>
+          <label>Placa <input type="text" id="aserradero-despacho-placa" class="input-upper"></label>
+          <label>Chofer <input type="text" id="aserradero-despacho-chofer" class="input-upper"></label>
+        </div>
+        <label>Observaciones <textarea id="aserradero-despacho-observaciones" rows="2" placeholder="Notas..."></textarea></label>
+      </div>
+      <button type="submit" id="btn-aserradero-despacho-guardar" class="btn-primary" style="width:100%">💾 Guardar y continuar</button>
+    </form>
+  </section>
+
+  <section id="view-aserradero-despacho-detalle" class="view hidden">
+    <div id="aserradero-despacho-detalle-contenido"></div>
   </section>
 
   <!-- ======================
@@ -1491,6 +1567,16 @@
       </form>
       <div id="rodeo-sectores-lista"></div>
     </div>
+  </section>
+
+  <section id="view-rodeo-detalle" class="view hidden">
+    <div class="card">
+      <div class="vista-header">
+        <button type="button" id="btn-rodeo-detalle-volver" class="btn-volver">← Volver</button>
+        <h3>🌲 Detalle de Rodeo</h3>
+      </div>
+    </div>
+    <div id="rodeo-detalle-contenido"></div>
   </section>
 
 </main>

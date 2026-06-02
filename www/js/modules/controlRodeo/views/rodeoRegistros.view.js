@@ -24,6 +24,11 @@ export function initRodeoRegistrosView() {
     const id = card.dataset.id;
     if (!id) return;
 
+    if (e.target.closest('.btn-ver-rodeo')) {
+      window.showView('rodeo-detalle', id);
+      return;
+    }
+
     if (e.target.closest('.btn-eliminar-rodeo')) {
       const ok = await confirmar({ titulo: 'Eliminar rodeo', msg: '¿Eliminar este registro de rodeo?' });
       if (!ok) return;
@@ -35,8 +40,6 @@ export function initRodeoRegistrosView() {
       }
       return;
     }
-
-    window.showView('rodeo-detalle', id);
   });
 }
 
@@ -78,6 +81,9 @@ export async function cargarRodeoRegistros() {
           <div>🌳 ${r.cantidad_arboles || 0} árboles registrados</div>
         </div>
         <div class="hoja-card-actions">
+          <button type="button" class="btn-ver-rodeo" style="color:var(--primary);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
+            👁️ Ver detalle
+          </button>
           <button type="button" class="btn-eliminar-rodeo" style="color:var(--danger);background:none;border:none;padding:0.3rem 0.6rem;font-size:0.85rem">
             🗑️ Eliminar
           </button>
