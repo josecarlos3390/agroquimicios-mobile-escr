@@ -662,13 +662,35 @@
     <div class="card">
       <div class="vista-header">
         <button id="btn-detalle-volver" class="btn-volver">← Volver</button>
-        <h3>📋 Hoja de trabajo</h3>
+        <h3>📋 Hoja de trabajo <span id="detalle-hoja-numero" style="color:var(--primary)"></span></h3>
       </div>
       <div class="grid">
-        <label>Número <span id="detalle-hoja-numero" class="detalle-info">—</span></label>
+        <label>Empresa <span id="detalle-hoja-empresa" class="detalle-info">—</span></label>
+        <label>Técnico <span id="detalle-hoja-tecnico" class="detalle-info">—</span></label>
+        <label>Tipo aplicación <span id="detalle-hoja-tipo-aplicacion" class="detalle-info">—</span></label>
+        <label>Caudal <span id="detalle-hoja-caudal" class="detalle-info">—</span></label>
         <label>Campaña <span id="detalle-hoja-campana" class="detalle-info">—</span></label>
         <label>Fechas <span id="detalle-hoja-fecha" class="detalle-info">—</span></label>
+        <label>Cultivo <span id="detalle-hoja-cultivo" class="detalle-info">—</span></label>
+        <label>Variedad <span id="detalle-hoja-variedad" class="detalle-info">—</span></label>
         <label>Hectáreas <span id="detalle-hoja-hectareas" class="detalle-info">—</span></label>
+        <label>Mes <span id="detalle-hoja-mes" class="detalle-info">—</span></label>
+        <label>Estado <span id="detalle-hoja-estado" class="detalle-info">—</span></label>
+      </div>
+
+      <label style="margin-top:0.75rem;">
+        Observaciones
+        <span id="detalle-hoja-observaciones" class="detalle-info" style="display:block; white-space:pre-wrap; margin-top:0.25rem;"></span>
+      </label>
+
+      <div id="detalle-sectores-container" style="margin-top:0.75rem;">
+        <strong>🗺️ Sectores</strong>
+        <p>Cargando...</p>
+      </div>
+
+      <div id="detalle-lotes-container" style="margin-top:0.75rem;">
+        <strong>🌿 Lotes</strong>
+        <p>Cargando...</p>
       </div>
     </div>
 

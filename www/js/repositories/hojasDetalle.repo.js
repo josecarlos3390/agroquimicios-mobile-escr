@@ -69,11 +69,14 @@ export async function deleteDetalleLinea(id) {
 
 export async function getDetalleByHojaId(hojaId) {
   return await executeQuery(
-    `SELECT 
+    `SELECT
        hd.id, hd.linea, hd.cantidad, hd.dosis,
        hd.producto_id, hd.producto_codigo, hd.producto_nombre,
-       hd.unidad_medida_id
+       hd.unidad_medida_id,
+       um.codigo AS unidad_medida_codigo,
+       um.nombre AS unidad_medida_nombre
      FROM hojas_detalle hd
+     LEFT JOIN unidades_medida um ON um.id = hd.unidad_medida_id
      WHERE hd.hoja_id = ?
      ORDER BY hd.linea`,
     [hojaId]

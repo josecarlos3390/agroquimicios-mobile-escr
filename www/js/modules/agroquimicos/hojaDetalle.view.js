@@ -1,5 +1,7 @@
 import { agregarDetalleHoja } from '../../services/hojasDetalle.service.js';
 import { getHojaCabById } from '../../repositories/hojasCab.repo.js';
+import { getSectoresByHojaId } from '../../repositories/hojasSectores.repo.js';
+import { getLotesByHojaId } from '../../repositories/hojasLotes.repo.js';
 import { deleteDetalleLinea, getDetalleByHojaId, updateDetalleCantidadDosis } from '../../repositories/hojasDetalle.repo.js';
 import { listarProductosActivos } from '../../services/productos.service.js';
 import { listarUnidadesByProducto } from '../../services/unidadesMedida.service.js';
@@ -206,13 +208,12 @@ export async function cargarHojaDetalle(hojaId) {
     return;
   }
 
-  // Resumen cabecera
-  document.getElementById('detalle-hoja-numero').textContent    = hojaActual.numero_completo;
-  document.getElementById('detalle-hoja-campana').textContent   = hojaActual.campana;
-  document.getElementById('detalle-hoja-fecha').textContent     =
-    `${formatFecha(hojaActual.fecha_inicio)} → ${formatFecha(hojaActual.fecha_fin)}`;
-  document.getElementById('detalle-hoja-hectareas').textContent =
-    `${hojaActual.cantidad_hectareas} ha`;
+  // Resumen cabecera (datos completos como en edición)
+  const [sectores, lotes] = await Promise.all([
+    getSectoresByHojaId(hojaId),
+    getLotesByHojaId(hojaId)
+  ]);
+  renderCabeceraHojaDetalle(hojaActual, sectores, lotes);
 
   // Cargar productos en memoria para búsqueda (solo de esta empresa)
   todosLosProductos = await listarProductosActivos(hojaActual.empresa_id);
@@ -255,6 +256,7 @@ function renderTablaDetalle(lineas) {
   }
 
   lineas.forEach(l => {
+    const unidad = l.unidad_medida_codigo || l.unidad_medida_nombre || '—';
     const div     = document.createElement('div');
     div.innerHTML = `
       <div class="detalle-card">
@@ -268,11 +270,131 @@ function renderTablaDetalle(lineas) {
         </div>
         <div class="detalle-card-nombre">${l.producto_nombre}</div>
         <div class="detalle-card-body">
-          <span>📦 ${l.cantidad}</span>
-          <span>💧 Dosis: ${parseFloat(l.dosis).toFixed(3)}</span>
+          <span>📦 ${l.cantidad} ${unidad}</span>
+          <span>💧 Dosis: ${parseFloat(l.dosis).toFixed(3)} ${unidad}/ha</span>
         </div>
       </div>
     `;
     tbody.appendChild(div);
   });
+}
+
+/* =========================
+   CABECERA COMPLETA
+========================= */
+function renderCabeceraHojaDetalle(hoja, sectores, lotes) {
+  document.getElementById('detalle-hoja-numero').textContent          = hoja.numero_completo || '—';
+  document.getElementById('detalle-hoja-empresa').textContent         = hoja.empresa_nombre || '—';
+  document.getElementById('detalle-hoja-tecnico').textContent         = hoja.tecnico_nombre || '—';
+  document.getElementById('detalle-hoja-tipo-aplicacion').textContent = hoja.tipo_aplicacion_nombre || '—';
+  document.getElementById('detalle-hoja-caudal').textContent          = hoja.caudal_descripcion || '—';
+  document.getElementById('detalle-hoja-campana').textContent         = hoja.campana || '—';
+  document.getElementById('detalle-hoja-fecha').textContent           =
+    `${formatFecha(hoja.fecha_inicio)} → ${formatFecha(hoja.fecha_fin)}`;
+  document.getElementById('detalle-hoja-cultivo').textContent         = hoja.cultivo_nombre || '—';
+  document.getElementById('detalle-hoja-variedad').textContent        = hoja.variedad_nombre || 'Sin variedad';
+  document.getElementById('detalle-hoja-hectareas').textContent       =
+    `${hoja.cantidad_hectareas ?? 0} ha`;
+  document.getElementById('detalle-hoja-mes').textContent             = hoja.mes || '—';
+  document.getElementById('detalle-hoja-estado').textContent          = hoja.estado || '—';
+
+  const obsEl = document.getElementById('detalle-hoja-observaciones');
+  if (obsEl) obsEl.textContent = hoja.observaciones || 'Sin observaciones';
+
+  renderSectoresDetalle(sectores);
+  renderLotesDetalle(lotes);
+}
+
+/* =========================
+   SECTORES (solo lectura)
+========================= */
+function renderSectoresDetalle(sectores) {
+  const container = document.getElementById('detalle-sectores-container');
+  if (!container) return;
+
+  if (sectores.length === 0) {
+    container.innerHTML = `
+      <strong>🗺️ Sectores</strong>
+      <p style="color:var(--text-muted); margin:0.25rem 0 0;">No hay sectores asignados</p>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <strong>🗺️ Sectores</strong>
+    <div class="chip-row" style="margin-top:0.4rem;">
+      ${sectores.map(s => `
+        <span class="sector-chip activo" style="cursor:default;">
+          <svg class="chip-leaf" viewBox="0 0 14 14" fill="none">
+            <path class="chip-leaf-bg" d="M7 1C4 1 2 4 2 7s2 6 5 6 5-3 5-6-2-6-5-6z"/>
+            <path class="chip-leaf-vein" d="M7 3v8M4 6c1-1 2-1 3 0s2 1 3 0" stroke-width="0.8" stroke-linecap="round"/>
+          </svg>
+          <span class="chip-nombre">${s.nombre}</span>
+          ${s.hectareas ? `<span class="chip-ha">${s.hectareas} ha</span>` : ''}
+        </span>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* =========================
+   LOTES (solo lectura)
+========================= */
+function renderLotesDetalle(lotes) {
+  const container = document.getElementById('detalle-lotes-container');
+  if (!container) return;
+
+  if (lotes.length === 0) {
+    container.innerHTML = `
+      <strong>🌿 Lotes</strong>
+      <p style="color:var(--text-muted); margin:0.25rem 0 0;">No hay lotes asignados</p>
+    `;
+    return;
+  }
+
+  // Agrupar por sector
+  const porSector = new Map();
+  lotes.forEach(l => {
+    if (!porSector.has(l.sector_id)) {
+      porSector.set(l.sector_id, { nombre: l.sector_nombre, lotes: [], haTotal: 0 });
+    }
+    const g = porSector.get(l.sector_id);
+    g.lotes.push(l);
+    g.haTotal += parseFloat(l.hectareas_aplicadas ?? 0);
+  });
+
+  const acordeonesHTML = [...porSector.entries()].map(([sId, grupo]) => `
+    <div class="sector-acordeon abierto" data-sector-id="${sId}">
+      <div class="sector-acordeon-header" style="cursor:default;">
+        <div class="sector-acordeon-titulo">
+          <span>🗺️ ${grupo.nombre}</span>
+          <span class="sector-acordeon-meta">
+            ${grupo.lotes.length} lote${grupo.lotes.length !== 1 ? 's' : ''}
+            ${grupo.haTotal > 0 ? ` · ${grupo.haTotal.toFixed(2)} ha aplicadas` : ''}
+          </span>
+        </div>
+      </div>
+      <div class="sector-acordeon-body" style="display:block;">
+        ${grupo.lotes.map(l => `
+          <div class="lote-label" style="padding:0.35rem 0; border-bottom:1px solid var(--border);">
+            <span class="lote-label-info" style="flex:1; min-width:0;">
+              <span class="lote-nombre">${l.nombre}</span>
+              <span class="lote-meta">
+                ${l.hectareas_aplicadas ?? '-'} ha aplicadas
+                ${l.cultivo_nombre ? ` · ${l.cultivo_nombre}` : ''}
+                ${l.variedad_nombre ? ` / ${l.variedad_nombre}` : ''}
+              </span>
+            </span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <strong>🌿 Lotes</strong>
+    <div style="margin-top:0.4rem; display:flex; flex-direction:column; gap:0.5rem;">
+      ${acordeonesHTML}
+    </div>
+  `;
 }

@@ -90,7 +90,20 @@ export async function updateHojaCab(id, data) {
 
 export async function getHojaCabById(id) {
   const result = await executeQuery(
-    'SELECT * FROM hojas_cab WHERE id = ?',
+    `SELECT
+       h.*,
+       e.nombre AS empresa_nombre,
+       c.nombre AS cultivo_nombre,
+       t.nombre AS tecnico_nombre,
+       ta.nombre AS tipo_aplicacion_nombre,
+       v.nombre AS variedad_nombre
+     FROM hojas_cab h
+     LEFT JOIN empresas e ON e.id = h.empresa_id
+     LEFT JOIN cultivos c ON c.id = h.cultivo_id
+     LEFT JOIN tecnicos t ON t.id = h.tecnico_id
+     LEFT JOIN tipos_aplicacion ta ON ta.id = h.tipo_aplicacion_id
+     LEFT JOIN variedades v ON v.id = h.variedad_id
+     WHERE h.id = ?`,
     [id]
   );
 
