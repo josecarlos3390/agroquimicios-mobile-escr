@@ -75,6 +75,7 @@ export async function cargarNuevaAsignacion() {
   if (activa) {
     empresaSel.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
     empresaSel.value = activa.id;
+    empresaSel.disabled = true;
   }
 
   document.getElementById('foto-preview').innerHTML = '';
@@ -113,6 +114,7 @@ export async function cargarEdicionAsignacion(id) {
   const empresaSel = document.getElementById('combustible-empresa-select');
   empresaSel.innerHTML = `<option value="${data.empresa_id}">${data.empresa_nombre}</option>`;
   empresaSel.value = data.empresa_id;
+  empresaSel.disabled = true;
 
   if (data.foto_base64) {
     fotoBase64 = data.foto_base64;

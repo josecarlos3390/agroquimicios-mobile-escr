@@ -2,8 +2,7 @@
 import {
   listarEmpresas,
   guardarEmpresa,
-  eliminarEmpresa,
-  setEmpresaActiva
+  eliminarEmpresa
 } from '../services/empresas.service.js';
 import { confirmar } from '../utils/confirm.js';
 
@@ -23,11 +22,6 @@ const emailInput = document.getElementById('empresa-email');
 export async function cargarEmpresas() {
   const empresas = await listarEmpresas();
   tbody.innerHTML = '';
-
-  if (empresas.length > 0) {
-    // 👉 empresa activa por defecto
-    setEmpresaActiva(empresas[0]);
-  }
 
   empresas.forEach(e => {
     tbody.innerHTML += `
@@ -111,12 +105,4 @@ document
       }
     }
 
-    // 👉 SELECCIONAR EMPRESA ACTIVA (click en fila)
-    if (e.target.tagName === 'TD') {
-      const tr = e.target.closest('tr');
-      setEmpresaActiva({
-        id: tr.dataset.id,
-        nombre: tr.children[0].innerText
-      });
-    }
   });

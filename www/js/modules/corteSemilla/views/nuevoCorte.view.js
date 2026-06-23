@@ -57,6 +57,7 @@ export async function cargarNuevoCorteSemilla() {
   if (activa) {
     empresaSel.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
     empresaSel.value = activa.id;
+    empresaSel.disabled = true;
   }
 
   const tecnicos = await listarTecnicos(activa?.id || null);
@@ -96,6 +97,7 @@ export async function cargarEdicionCorteSemilla(id) {
   const empresaSel = document.getElementById('cs-empresa-select');
   empresaSel.innerHTML = `<option value="${c.empresa_id}">${c.empresa_nombre}</option>`;
   empresaSel.value = c.empresa_id;
+  empresaSel.disabled = true;
 
   const tecnicos = await listarTecnicos(c.empresa_id);
   poblarSelect('cs-tecnico-select', tecnicos, 'Encargado');

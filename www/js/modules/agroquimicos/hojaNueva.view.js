@@ -162,10 +162,12 @@ export async function cargarNuevaHoja() {
         // Mostrar solo la empresa activa — el usuario ya eligió la propiedad
         sel.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
         sel.value = activa.id;
+        sel.disabled = true;
         sel.dispatchEvent(new Event('change'));
       } else {
         const data = await listarEmpresas();
         poblarSelect(sel, data, 'Seleccione empresa');
+        sel.disabled = false;
       }
     })(),
   ]);

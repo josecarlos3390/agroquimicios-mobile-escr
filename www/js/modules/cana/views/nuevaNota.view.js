@@ -65,6 +65,7 @@ export async function cargarNuevaNotaCana() {
   if (activa) {
     empresaSel.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
     empresaSel.value = activa.id;
+    empresaSel.disabled = true;
   }
 
   const tecnicos = await listarTecnicos(activa?.id || null);
@@ -117,6 +118,7 @@ export async function cargarEdicionNotaCana(id) {
   const empresaSel = document.getElementById('cana-empresa-select');
   empresaSel.innerHTML = `<option value="${c.empresa_id}">${c.empresa_nombre}</option>`;
   empresaSel.value = c.empresa_id;
+  empresaSel.disabled = true;
 
   const tecnicos = await listarTecnicos(c.empresa_id);
   poblarSelect('cana-tecnico-select', tecnicos, 'Enc. de Siembra');

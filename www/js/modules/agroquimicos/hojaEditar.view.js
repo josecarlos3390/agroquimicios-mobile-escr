@@ -208,14 +208,16 @@ export async function cargarHojaEditar(hojaId) {
     listarTiposAplicacion(hojaActual.empresa_id),
   ]);
 
-  // Mostrar solo la empresa activa en el select
+  // Mostrar solo la empresa activa en el select (no editable)
   const activa = getEmpresaActiva();
   const empresasMostrar = activa ? [activa] : empresas;
-  poblarSelect(document.getElementById('editar-empresa-select'), empresasMostrar, 'Seleccione empresa');
+  const selEmpresa = document.getElementById('editar-empresa-select');
+  poblarSelect(selEmpresa, empresasMostrar, 'Seleccione empresa');
+  selEmpresa.disabled = true;
   poblarSelect(document.getElementById('editar-tecnico-select'), tecnicos, 'Seleccione técnico');
   poblarSelect(document.getElementById('editar-tipo-aplicacion-select'), tiposAplicacion, 'Seleccione tipo');
 
-  document.getElementById('editar-empresa-select').value         = hojaActual.empresa_id;
+  selEmpresa.value         = hojaActual.empresa_id || (activa?.id ?? '');
   document.getElementById('editar-tecnico-select').value         = hojaActual.tecnico_id;
   document.getElementById('editar-tipo-aplicacion-select').value = hojaActual.tipo_aplicacion_id;
   document.getElementById('editar-caudal-input').value           = hojaActual.caudal_descripcion ?? '';

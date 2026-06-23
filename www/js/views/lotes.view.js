@@ -51,6 +51,7 @@ async function cargarEmpresas() {
   if (activa) {
     select.innerHTML = `<option value="${activa.id}">${activa.nombre}</option>`;
     select.value = activa.id;
+    select.disabled = true;
     select.dispatchEvent(new Event('change'));
     return;
   }
