@@ -171,14 +171,16 @@ export async function cargarAserraderoRecepcionDetalle(id) {
     `;
 
     if (det.length > 0) {
+      const despachadosCount = det.filter(a => a.despachado === 1).length;
       html += `
         <div class="card">
-          <h3>🌲 Árboles recibidos</h3>
+          <h3>🌲 Árboles recibidos (${det.length} total${despachadosCount > 0 ? ` · <span style="color:var(--danger)">${despachadosCount} despachado${despachadosCount !== 1 ? 's' : ''}</span>` : ''})</h3>
           <div style="overflow-x:auto">
             <table>
               <thead>
                 <tr>
                   <th>#</th>
+                  <th>Estado</th>
                   <th>Rodeo</th>
                   <th>Especie</th>
                   <th>Faja</th>
@@ -192,9 +194,19 @@ export async function cargarAserraderoRecepcionDetalle(id) {
                 </tr>
               </thead>
               <tbody>
-                ${det.map((a, i) => `
-                  <tr>
+                ${det.map((a, i) => {
+                  const yaDespachado = a.despachado === 1;
+                  const rowStyle = yaDespachado ? 'background:#f0f0f0;color:#888;text-decoration:line-through;' : '';
+                  const badge = yaDespachado
+                    ? '<span style="display:inline-block;background:var(--danger);color:#fff;padding:0.15rem 0.4rem;border-radius:0.25rem;font-size:0.65rem">DESPACHADO</span>'
+                    : '<span style="display:inline-block;background:var(--success);color:#fff;padding:0.15rem 0.4rem;border-radius:0.25rem;font-size:0.65rem">DISPONIBLE</span>';
+                  const btnQuitar = yaDespachado
+                    ? '<span style="font-size:0.7rem;color:var(--text-muted)">—</span>'
+                    : `<button class="btn-icon" data-quitar-linea="${a.id}" data-rodeo-detalle-id="${a.rodeo_detalle_id}" title="Quitar">✖</button>`;
+                  return `
+                  <tr style="${rowStyle}">
                     <td>${i + 1}</td>
+                    <td style="text-align:center;">${badge}</td>
                     <td>${a.rodeo_numero || '—'}</td>
                     <td>${a.especie}</td>
                     <td>${a.faja ?? '—'}</td>
@@ -204,9 +216,9 @@ export async function cargarAserraderoRecepcionDetalle(id) {
                     <td>${a.diamenor?.toFixed(2) ?? '—'}</td>
                     <td>${a.largo?.toFixed(2) ?? '—'}</td>
                     <td>${a.volumen?.toFixed(3) ?? '—'}</td>
-                    <td><button class="btn-icon" data-quitar-linea="${a.id}" data-rodeo-detalle-id="${a.rodeo_detalle_id}" title="Quitar">✖</button></td>
+                    <td>${btnQuitar}</td>
                   </tr>
-                `).join('')}
+                `;}).join('')}
               </tbody>
             </table>
           </div>

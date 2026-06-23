@@ -21,8 +21,6 @@ export function initRodeoNuevoView() {
     fechaInput.value = new Date().toISOString().split('T')[0];
   }
 
-  cargarSectores();
-
   const excelInput = section.querySelector('#rodeo-excel');
   if (excelInput) {
     excelInput.addEventListener('change', async () => {
@@ -84,12 +82,13 @@ export function initRodeoNuevoView() {
   }
 }
 
-async function cargarSectores() {
+export async function cargarRodeoNuevoSectores() {
   const select = document.getElementById('rodeo-sector');
   if (!select) return;
   try {
     const empresa = getEmpresaActiva();
-    const sectores = await listarRodeoSectores(empresa?.id ?? null);
+    if (!empresa?.id) return;
+    const sectores = await listarRodeoSectores(empresa.id);
     select.innerHTML = '<option value="">Seleccioná sector...</option>' +
       sectores.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
   } catch (err) {

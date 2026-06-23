@@ -8,25 +8,11 @@ export async function insertarDespachoCab(id, empresaId, numeroSecuencial, numer
   );
 }
 
-export async function insertarDespachoDetalle(despachoId, rodeoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen) {
+export async function insertarDespachoDetalle(despachoId, recepcionDetalleId, rodeoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen) {
   await executeRun(
-    `INSERT INTO aserradero_despacho_detalle (despacho_id, rodeo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [despachoId, rodeoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen]
-  );
-}
-
-export async function marcarDetalleDespachado(rodeoDetalleId) {
-  await executeRun(
-    "UPDATE rodeo_detalle SET estado_uso = 'DESPACHO_ASERRADERO' WHERE id = ?",
-    [rodeoDetalleId]
-  );
-}
-
-export async function desmarcarDetalleDespachado(rodeoDetalleId) {
-  await executeRun(
-    "UPDATE rodeo_detalle SET estado_uso = 'DISPONIBLE' WHERE id = ?",
-    [rodeoDetalleId]
+    `INSERT INTO aserradero_despacho_detalle (despacho_id, recepcion_detalle_id, rodeo_detalle_id, especie, faja, nro_arbol, seccion, diamayor, diamenor, largo, volumen)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [despachoId, recepcionDetalleId, rodeoDetalleId, especie, faja, nroArbol, seccion, diamayor, diamenor, largo, volumen]
   );
 }
 
@@ -54,21 +40,21 @@ export async function obtenerDespachoPorId(id) {
   const det = await executeQuery(
     `SELECT
        dd.id,
+       dd.recepcion_detalle_id,
        dd.rodeo_detalle_id,
-       rdt.nro_rodeo,
-       rdt.especie,
-       rdt.faja,
-       rdt.nro_arbol,
-       rdt.seccion,
-       rdt.d1 AS diamayor,
-       rdt.d2 AS diamenor,
-       rdt.largo,
-       rdt.volumen,
-       rdt.para_transporte,
-       rc.numero_completo AS rodeo_numero
+       rd.especie,
+       rd.faja,
+       rd.nro_arbol,
+       rd.seccion,
+       rd.diamayor,
+       rd.diamenor,
+       rd.largo,
+       rd.volumen,
+       rc.nro_recepcion,
+       rc.numero_completo AS recepcion_numero
      FROM aserradero_despacho_detalle dd
-     LEFT JOIN rodeo_detalle rdt ON rdt.id = dd.rodeo_detalle_id
-     LEFT JOIN rodeo_cab rc ON rc.id = rdt.rodeo_cab_id
+     LEFT JOIN aserradero_recepcion_detalle rd ON rd.id = dd.recepcion_detalle_id
+     LEFT JOIN aserradero_recepcion_cab rc ON rc.id = rd.recepcion_id
      WHERE dd.despacho_id = ?
      ORDER BY dd.id`,
     [id]
@@ -79,14 +65,9 @@ export async function obtenerDespachoPorId(id) {
 
 export async function eliminarDespacho(id) {
   const detalles = await executeQuery(
-    'SELECT rodeo_detalle_id FROM aserradero_despacho_detalle WHERE despacho_id = ?',
+    'SELECT recepcion_detalle_id FROM aserradero_despacho_detalle WHERE despacho_id = ?',
     [id]
   );
-  for (const d of detalles) {
-    if (d.rodeo_detalle_id) {
-      await desmarcarDetalleDespachado(d.rodeo_detalle_id);
-    }
-  }
   return executeRun(
     'DELETE FROM aserradero_despacho_cab WHERE id = ?',
     [id]
@@ -102,66 +83,9 @@ export async function actualizarDespachoCab(id, nroDespacho, fechaDespacho, plac
   );
 }
 
-export async function eliminarDespachoDetalle(despachoDetalleId, rodeoDetalleId) {
+export async function eliminarDespachoDetalle(despachoDetalleId) {
   await executeRun(
     'DELETE FROM aserradero_despacho_detalle WHERE id = ?',
     [despachoDetalleId]
-  );
-  if (rodeoDetalleId) {
-    await desmarcarDetalleDespachado(rodeoDetalleId);
-  }
-}
-
-export async function buscarArbolesDisponibles(empresaId, filtros) {
-  const conditions = [
-    'c.empresa_id = ?',
-    "d.estado_uso = 'DISPONIBLE'"
-  ];
-  const params = [empresaId];
-
-  if (filtros.termino) {
-    conditions.push('(d.nro_rodeo LIKE ? OR d.especie LIKE ? OR d.nro_arbol LIKE ?)');
-    const t = `%${filtros.termino}%`;
-    params.push(t, t, t);
-  }
-
-  if (filtros.faja) {
-    conditions.push('d.faja = ?');
-    params.push(filtros.faja);
-  }
-
-  if (filtros.nroArbol) {
-    conditions.push('d.nro_arbol LIKE ?');
-    params.push(`%${filtros.nroArbol}%`);
-  }
-
-  const where = conditions.join(' AND ');
-
-  return executeQuery(
-    `SELECT
-       d.id,
-       d.nro_rodeo,
-       d.x_coord,
-       d.y_coord,
-       d.especie,
-       d.faja,
-       d.nro_arbol,
-       d.seccion,
-       d.d1,
-       d.d2,
-       d.largo,
-       d.volumen,
-       d.para_transporte,
-       d.estado_uso,
-       c.numero_completo AS rodeo_numero,
-       c.sector_id,
-       s.nombre AS sector_nombre
-     FROM rodeo_detalle d
-     JOIN rodeo_cab c ON c.id = d.rodeo_cab_id
-     LEFT JOIN rodeo_sectores s ON s.id = c.sector_id
-     WHERE ${where}
-     ORDER BY c.numero_completo, d.nro_rodeo, d.faja, d.nro_arbol
-     LIMIT 50`,
-    params
   );
 }

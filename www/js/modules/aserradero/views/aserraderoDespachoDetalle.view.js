@@ -54,25 +54,25 @@ export function initAserraderoDespachoDetalleView() {
   });
 
   cont?.addEventListener('click', async (e) => {
-    const item = e.target.closest('[data-rodeo-detalle-id]');
+    const item = e.target.closest('[data-recepcion-detalle-id]');
     if (item) {
       if (Number(item.dataset.despachado) === 1) {
-        alert('Este árbol ya fue despachado en otro registro');
+        alert('Este árbol ya fue despachado');
         return;
       }
-      const id = parseInt(item.dataset.rodeoDetalleId);
-      if (!id || isNaN(id)) {
-        alert('Error: ID de árbol inválido');
+      const recepcionDetalleId = parseInt(item.dataset.recepcionDetalleId);
+      if (!recepcionDetalleId || isNaN(recepcionDetalleId)) {
+        alert('Error: ID de recepción inválido');
         return;
       }
-      if (lineasPendientes.some(l => l.rodeoDetalleId === id)) {
+      if (lineasPendientes.some(l => l.recepcionDetalleId === recepcionDetalleId)) {
         alert('Este árbol ya fue agregado');
         return;
       }
 
       lineasPendientes.push({
-        rodeoDetalleId: id,
-        nroRodeo: item.dataset.nroRodeo,
+        recepcionDetalleId: recepcionDetalleId,
+        rodeoDetalleId: item.dataset.rodeoDetalleId ? parseInt(item.dataset.rodeoDetalleId) : null,
         especie: item.dataset.especie,
         faja: item.dataset.faja ? parseInt(item.dataset.faja) : null,
         nroArbol: item.dataset.nroArbol,
@@ -81,8 +81,7 @@ export function initAserraderoDespachoDetalleView() {
         diamenor: item.dataset.diamenor ? parseFloat(item.dataset.diamenor) : null,
         largo: item.dataset.largo ? parseFloat(item.dataset.largo) : null,
         volumen: item.dataset.volumen ? parseFloat(item.dataset.volumen) : null,
-        paraTransporte: item.dataset.paraTransporte,
-        rodeoNumero: item.dataset.rodeoNumero,
+        recepcionNumero: item.dataset.recepcionNumero,
       });
 
       document.getElementById('aserradero-despacho-resultados-arbol').style.display = 'none';
@@ -101,11 +100,11 @@ export function initAserraderoDespachoDetalleView() {
 
     const btnQuitar = e.target.closest('[data-quitar-linea]');
     if (btnQuitar) {
-      const ok = confirm('¿Quitar este árbol del despacho? Se liberará para usar en otro registro.');
+      const ok = confirm('¿Quitar este árbol del despacho? Se liberará para usar en otro despacho.');
       if (!ok) return;
       await quitarLineaGuardada(
         parseInt(btnQuitar.dataset.quitarLinea),
-        parseInt(btnQuitar.dataset.rodeoDetalleId)
+        parseInt(btnQuitar.dataset.recepcionDetalleId)
       );
     }
   });
@@ -179,13 +178,13 @@ export async function cargarAserraderoDespachoDetalle(id) {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Rodeo</th>
+                  <th>Recepción</th>
                   <th>Especie</th>
                   <th>Faja</th>
                   <th>Nro Árbol</th>
                   <th>Sección</th>
-                  <th>D1</th>
-                  <th>D2</th>
+                  <th>Diam Mayor</th>
+                  <th>Diam Menor</th>
                   <th>Largo</th>
                   <th>Volumen</th>
                   <th></th>
@@ -195,7 +194,7 @@ export async function cargarAserraderoDespachoDetalle(id) {
                 ${det.map((a, i) => `
                   <tr>
                     <td>${i + 1}</td>
-                    <td>${a.rodeo_numero || '—'}</td>
+                    <td>${a.recepcion_numero || '—'}</td>
                     <td>${a.especie}</td>
                     <td>${a.faja ?? '—'}</td>
                     <td>${a.nro_arbol}</td>
@@ -204,7 +203,7 @@ export async function cargarAserraderoDespachoDetalle(id) {
                     <td>${a.diamenor?.toFixed(2) ?? '—'}</td>
                     <td>${a.largo?.toFixed(2) ?? '—'}</td>
                     <td>${a.volumen?.toFixed(3) ?? '—'}</td>
-                    <td><button class="btn-icon" data-quitar-linea="${a.id}" data-rodeo-detalle-id="${a.rodeo_detalle_id}" title="Quitar">✖</button></td>
+                    <td><button class="btn-icon" data-quitar-linea="${a.id}" data-recepcion-detalle-id="${a.recepcion_detalle_id}" title="Quitar">✖</button></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -216,9 +215,9 @@ export async function cargarAserraderoDespachoDetalle(id) {
 
     html += `
       <div class="card">
-        <h3>➕ Agregar árboles del Rodeo</h3>
+        <h3>➕ Agregar árboles de Recepción</h3>
         <label>Buscar árbol
-          <input type="text" id="aserradero-despacho-buscar-arbol" placeholder="Código de rodeo, especie o nro árbol..." autocomplete="off">
+          <input type="text" id="aserradero-despacho-buscar-arbol" placeholder="Especie, nro árbol o nro recepción..." autocomplete="off">
         </label>
         <div class="grid" style="margin-top:0.5rem; grid-template-columns: 1fr 1fr;">
           <label>Fija
@@ -341,20 +340,20 @@ function renderResultadosArboles(arboles, container) {
   }
 
   container.innerHTML = arboles.map(a => {
-    const usado = a.estado_uso !== 'DISPONIBLE';
-    const badgeText = a.estado_uso === 'DESPACHADO' ? 'DESPACHADO' : a.estado_uso === 'RECEPCIONADO' ? 'RECEPCIONADO' : a.estado_uso === 'DESPACHO_ASERRADERO' ? 'DESP. ASERRADERO' : '';
+    const usado = a.despachado === 1;
     const style = usado ? 'background:var(--gray-200);opacity:0.6;pointer-events:none;' : '';
     return `
       <div class="buscar-resultado-item" style="${style}padding:0.5rem;border-bottom:1px solid var(--border);cursor:pointer;"
-           data-rodeo-detalle-id="${a.id}" data-despachado="${usado ? 1 : 0}"
-           data-nro-rodeo="${a.nro_rodeo ?? ''}" data-especie="${a.especie}" data-faja="${a.faja ?? ''}" data-nro-arbol="${a.nro_arbol}"
-           data-seccion="${a.seccion}" data-diamayor="${a.d1 ?? ''}" data-diamenor="${a.d2 ?? ''}"
-           data-largo="${a.largo ?? ''}" data-volumen="${a.volumen ?? ''}" data-para-transporte="${a.para_transporte ?? ''}"
-           data-rodeo-numero="${a.rodeo_numero ?? ''}">
+           data-recepcion-detalle-id="${a.id}" data-despachado="${a.despachado ?? 0}"
+           data-rodeo-detalle-id="${a.rodeo_detalle_id ?? ''}"
+           data-especie="${a.especie}" data-faja="${a.faja ?? ''}" data-nro-arbol="${a.nro_arbol}"
+           data-seccion="${a.seccion}" data-diamayor="${a.diamayor ?? ''}" data-diamenor="${a.diamenor ?? ''}"
+           data-largo="${a.largo ?? ''}" data-volumen="${a.volumen ?? ''}"
+           data-recepcion-numero="${a.recepcion_numero ?? ''}">
         <div><strong>${a.especie}</strong> · Faja ${a.faja ?? '—'} · Árbol ${a.nro_arbol} · Sec ${a.seccion}</div>
         <div style="font-size:0.78rem;color:var(--text-muted)">
-          Rodeo: ${a.rodeo_numero ?? '—'} · Sector: ${a.sector_nombre ?? '—'} · Vol: ${a.volumen?.toFixed(3) ?? '—'} · ${a.para_transporte ?? ''}
-          ${usado ? `<span style="color:var(--danger);margin-left:0.5rem">⚠️ ${badgeText}</span>` : ''}
+          Recepción: ${a.recepcion_numero ?? '—'} · Vol: ${a.volumen?.toFixed(3) ?? '—'}
+          ${usado ? '<span style="color:var(--danger);margin-left:0.5rem">⚠️ Ya despachado</span>' : ''}
         </div>
       </div>
     `;
@@ -377,7 +376,7 @@ function renderLineasPendientes() {
     <table>
       <thead>
         <tr>
-          <th>Rodeo</th>
+          <th>Recepción</th>
           <th>Especie</th>
           <th>Faja</th>
           <th>Nro Árbol</th>
@@ -389,7 +388,7 @@ function renderLineasPendientes() {
       <tbody>
         ${lineasPendientes.map((l, i) => `
           <tr>
-            <td>${l.rodeoNumero || '—'}</td>
+            <td>${l.recepcionNumero || '—'}</td>
             <td>${l.especie}</td>
             <td>${l.faja ?? '—'}</td>
             <td>${l.nroArbol}</td>
@@ -424,9 +423,9 @@ async function guardarLineas() {
   }
 }
 
-async function quitarLineaGuardada(despachoDetalleId, rodeoDetalleId) {
+async function quitarLineaGuardada(despachoDetalleId, recepcionDetalleId) {
   try {
-    await quitarLineaDespacho(despachoDetalleId, rodeoDetalleId);
+    await quitarLineaDespacho(despachoDetalleId, recepcionDetalleId);
     mostrarToast('✅ Árbol quitado del despacho');
     await cargarAserraderoDespachoDetalle(despachoIdActual);
   } catch (err) {

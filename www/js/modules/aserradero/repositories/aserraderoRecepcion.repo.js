@@ -55,6 +55,7 @@ export async function obtenerRecepcionPorId(id) {
     `SELECT
        rd.id,
        rd.rodeo_detalle_id,
+       rd.despachado,
        rdt.nro_rodeo,
        rdt.especie,
        rdt.faja,
@@ -161,6 +162,72 @@ export async function buscarArbolesDisponibles(empresaId, filtros) {
      LEFT JOIN rodeo_sectores s ON s.id = c.sector_id
      WHERE ${where}
      ORDER BY c.numero_completo, d.nro_rodeo, d.faja, d.nro_arbol
+     LIMIT 50`,
+    params
+  );
+}
+
+
+export async function marcarRecepcionDetalleDespachado(id) {
+  await executeRun(
+    'UPDATE aserradero_recepcion_detalle SET despachado = 1 WHERE id = ?',
+    [id]
+  );
+}
+
+export async function desmarcarRecepcionDetalleDespachado(id) {
+  await executeRun(
+    'UPDATE aserradero_recepcion_detalle SET despachado = 0 WHERE id = ?',
+    [id]
+  );
+}
+
+export async function buscarArbolesRecepcionDisponibles(empresaId, filtros) {
+  const conditions = [
+    'rc.empresa_id = ?',
+    'rd.despachado = 0'
+  ];
+  const params = [empresaId];
+
+  if (filtros.termino) {
+    conditions.push('(rd.especie LIKE ? OR rd.nro_arbol LIKE ? OR rc.nro_recepcion LIKE ?)');
+    const t = `%${filtros.termino}%`;
+    params.push(t, t, t);
+  }
+
+  if (filtros.faja) {
+    conditions.push('rd.faja = ?');
+    params.push(filtros.faja);
+  }
+
+  if (filtros.nroArbol) {
+    conditions.push('rd.nro_arbol LIKE ?');
+    params.push(`%${filtros.nroArbol}%`);
+  }
+
+  const where = conditions.join(' AND ');
+
+  return executeQuery(
+    `SELECT
+       rd.id,
+       rd.recepcion_id,
+       rd.rodeo_detalle_id,
+       rd.especie,
+       rd.faja,
+       rd.nro_arbol,
+       rd.seccion,
+       rd.diamayor,
+       rd.diamenor,
+       rd.largo,
+       rd.volumen,
+       rd.despachado,
+       rc.nro_recepcion,
+       rc.fecha_recepcion,
+       rc.numero_completo AS recepcion_numero
+     FROM aserradero_recepcion_detalle rd
+     JOIN aserradero_recepcion_cab rc ON rc.id = rd.recepcion_id
+     WHERE ${where}
+     ORDER BY rc.fecha_recepcion DESC, rd.id
      LIMIT 50`,
     params
   );

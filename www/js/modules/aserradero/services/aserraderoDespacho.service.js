@@ -1,14 +1,17 @@
 import {
   insertarDespachoCab,
   insertarDespachoDetalle,
-  marcarDetalleDespachado,
   listarDespachos,
   obtenerDespachoPorId,
   actualizarDespachoCab,
   eliminarDespacho,
   eliminarDespachoDetalle,
-  buscarArbolesDisponibles,
 } from '../repositories/aserraderoDespacho.repo.js';
+import {
+  marcarRecepcionDetalleDespachado,
+  desmarcarRecepcionDetalleDespachado,
+  buscarArbolesRecepcionDisponibles,
+} from '../repositories/aserraderoRecepcion.repo.js';
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
 import { reservarNumeroSecuencial } from '../../../db/sqlite.js';
 import { uuid } from '../../../utils/uuid.js';
@@ -30,7 +33,7 @@ export async function borrarDespacho(id) {
 export async function buscarArboles(filtros) {
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
-  return buscarArbolesDisponibles(empresa.id, filtros);
+  return buscarArbolesRecepcionDisponibles(empresa.id, filtros);
 }
 
 export async function crearDespachoCabecera(datos) {
@@ -65,11 +68,14 @@ export async function actualizarDespachoCabecera(id, datos) {
   await actualizarDespachoCab(id, nroDespacho, fecha, placa, chofer, observaciones);
 }
 
-export async function quitarLineaDespacho(despachoDetalleId, rodeoDetalleId) {
-  if (!despachoDetalleId || !rodeoDetalleId) {
+export async function quitarLineaDespacho(despachoDetalleId, recepcionDetalleId) {
+  if (!despachoDetalleId) {
     throw new Error('Faltan datos para quitar la línea');
   }
-  await eliminarDespachoDetalle(despachoDetalleId, rodeoDetalleId);
+  await eliminarDespachoDetalle(despachoDetalleId);
+  if (recepcionDetalleId) {
+    await desmarcarRecepcionDetalleDespachado(recepcionDetalleId);
+  }
 }
 
 export async function agregarLineasDespacho(despachoId, lineas) {
@@ -84,6 +90,7 @@ export async function agregarLineasDespacho(despachoId, lineas) {
   for (const linea of lineas) {
     await insertarDespachoDetalle(
       despachoId,
+      linea.recepcionDetalleId,
       linea.rodeoDetalleId,
       linea.especie,
       linea.faja,
@@ -94,7 +101,7 @@ export async function agregarLineasDespacho(despachoId, lineas) {
       linea.largo,
       linea.volumen
     );
-    await marcarDetalleDespachado(linea.rodeoDetalleId);
+    await marcarRecepcionDetalleDespachado(linea.recepcionDetalleId);
     creados++;
   }
 

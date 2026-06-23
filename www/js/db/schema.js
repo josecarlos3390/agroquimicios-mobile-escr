@@ -620,6 +620,7 @@ export async function initSchema() {
       diamenor            REAL,
       largo               REAL,
       volumen             REAL,
+      despachado          INTEGER DEFAULT 0,
       FOREIGN KEY (recepcion_id) REFERENCES aserradero_recepcion_cab(id) ON DELETE CASCADE,
       FOREIGN KEY (rodeo_detalle_id) REFERENCES rodeo_detalle(id)
     );
@@ -651,6 +652,7 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS aserradero_despacho_detalle (
       id                  INTEGER PRIMARY KEY AUTOINCREMENT,
       despacho_id         TEXT    NOT NULL,
+      recepcion_detalle_id INTEGER,
       rodeo_detalle_id    INTEGER,
       especie             TEXT    NOT NULL,
       faja                INTEGER,
@@ -661,6 +663,7 @@ export async function initSchema() {
       largo               REAL,
       volumen             REAL,
       FOREIGN KEY (despacho_id) REFERENCES aserradero_despacho_cab(id) ON DELETE CASCADE,
+      FOREIGN KEY (recepcion_detalle_id) REFERENCES aserradero_recepcion_detalle(id),
       FOREIGN KEY (rodeo_detalle_id) REFERENCES rodeo_detalle(id)
     );
 
@@ -848,6 +851,10 @@ export async function initSchema() {
     await executeRun('CREATE INDEX IF NOT EXISTS idx_rodeo_detalle_despachado ON rodeo_detalle (despachado)');
     await executeRun('CREATE INDEX IF NOT EXISTS idx_rodeo_detalle_busqueda ON rodeo_detalle (faja, nro_arbol)');
   } catch (_) { /* ignorar si ya existen */ }
+
+  // Migraciones módulo Aserradero
+  await addColumnIfNotExists('aserradero_recepcion_detalle', 'despachado', 'INTEGER DEFAULT 0');
+  await addColumnIfNotExists('aserradero_despacho_detalle', 'recepcion_detalle_id', 'INTEGER');
 
   // Migraciones módulo Guía de Transporte de Caña
   await addColumnIfNotExists('guia_transporte_cab', 'lote', 'TEXT');

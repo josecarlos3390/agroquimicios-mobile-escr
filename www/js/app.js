@@ -64,7 +64,7 @@ import { initRegistrosSalidaView, cargarRegistrosSalida } from './modules/contro
 import { initNuevaSalidaView } from './modules/controlRodeo/views/nuevaSalida.view.js';
 import { initDetalleSalidaView, cargarDetalleSalida } from './modules/controlRodeo/views/detalleSalida.view.js';
 import { initRodeoRegistrosView, cargarRodeoRegistros } from './modules/controlRodeo/views/rodeoRegistros.view.js';
-import { initRodeoNuevoView } from './modules/controlRodeo/views/rodeoNuevo.view.js';
+import { initRodeoNuevoView, cargarRodeoNuevoSectores } from './modules/controlRodeo/views/rodeoNuevo.view.js';
 import { initRodeoDetalleView, cargarRodeoDetalle } from './modules/controlRodeo/views/rodeoDetalle.view.js';
 import { initRodeoSectoresView, cargarRodeoSectores } from './modules/controlRodeo/views/rodeoSectores.view.js';
 
@@ -651,7 +651,7 @@ function showView(view, param = null) {
 
     // ── Módulo Rodeo ──
     case 'rodeo-registros': initRodeoRegistrosView(); cargarRodeoRegistros(); break;
-    case 'rodeo-nuevo': initRodeoNuevoView(); break;
+    case 'rodeo-nuevo': initRodeoNuevoView(); cargarRodeoNuevoSectores(); break;
     case 'rodeo-detalle': {
       initRodeoDetalleView();
       if (param) cargarRodeoDetalle(param);
