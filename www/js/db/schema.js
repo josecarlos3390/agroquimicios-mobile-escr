@@ -106,6 +106,7 @@ export async function initSchema() {
       tecnico_id INTEGER,
       sector_id INTEGER,
       tipo_aplicacion_id INTEGER,
+      variedad_id INTEGER,
       caudal_id INTEGER,
       caudal_descripcion TEXT,
 
@@ -137,6 +138,7 @@ export async function initSchema() {
       FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id),
       FOREIGN KEY (sector_id) REFERENCES sectores(id),
       FOREIGN KEY (tipo_aplicacion_id) REFERENCES tipos_aplicacion(id),
+      FOREIGN KEY (variedad_id) REFERENCES variedades(id),
       FOREIGN KEY (caudal_id) REFERENCES caudales(id)
     );
 
@@ -855,6 +857,9 @@ export async function initSchema() {
   // Migraciones módulo Aserradero
   await addColumnIfNotExists('aserradero_recepcion_detalle', 'despachado', 'INTEGER DEFAULT 0');
   await addColumnIfNotExists('aserradero_despacho_detalle', 'recepcion_detalle_id', 'INTEGER');
+
+  // Migraciones módulo Agroquímicos
+  await addColumnIfNotExists('hojas_cab', 'variedad_id', 'INTEGER');
 
   // Migraciones módulo Guía de Transporte de Caña
   await addColumnIfNotExists('guia_transporte_cab', 'lote', 'TEXT');

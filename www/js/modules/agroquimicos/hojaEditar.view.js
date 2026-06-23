@@ -153,6 +153,7 @@ export function initHojaEditarView() {
         empresa_id:         empresaSelect.value,
         campana:            document.getElementById('editar-campana-input').value.toUpperCase(),
         cultivo_id:         cultivoSelect.value,
+        variedad_id:        variedadSelect.value || null,
         tecnico_id:         document.getElementById('editar-tecnico-select').value,
         tipo_aplicacion_id: document.getElementById('editar-tipo-aplicacion-select').value,
         caudal_id:          null,
@@ -274,6 +275,7 @@ export async function cargarHojaEditar(hojaId) {
     if (variedades.length > 0) {
       poblarSelect(variedadSelect, variedades, 'Sin variedad');
       variedadSelect.disabled = false;
+      variedadSelect.value = hojaActual.variedad_id ?? '';
     }
   }
 }
