@@ -15,9 +15,6 @@ export async function seedEmpresas() {
   if (!nombres.includes('NUEVA ERA')) {
     await executeRun(`INSERT INTO empresas (nombre, rut) VALUES ('NUEVA ERA', '98765432-1')`);
   }
-  if (!nombres.includes('ESCR')) {
-    await executeRun(`INSERT INTO empresas (nombre, rut) VALUES ('ESCR', 'ESCR-0001')`);
-  }
 }
 
 /* =========================================================
@@ -525,21 +522,12 @@ export async function seedEspecies() {
     return;
   }
 
-  const empresas = await executeQuery("SELECT id FROM empresas WHERE nombre = 'ESCR' LIMIT 1");
-  if (empresas.length === 0) {
-    console.error('[SEED] ❌ No se encontró la empresa ESCR para asociar especies');
-    return;
-  }
-  const empresaId = empresas[0].id;
-
-  for (let idx = 0; idx < ESPECIES_INICIALES.length; idx++) {
-    const e = ESPECIES_INICIALES[idx];
+  const inserts = ESPECIES_INICIALES.map((e, idx) => {
     const codigo = `ESP-${String(idx + 1).padStart(4, '0')}`;
-    await executeRun(
-      'INSERT INTO especies (empresa_id, codigo, nombre_comun) VALUES (?, ?, ?)',
-      [empresaId, codigo, e.nombre_comun]
-    );
-  }
+    const nc = e.nombre_comun.replace(/'/g, "''");
+    return `INSERT INTO especies (codigo, nombre_comun) VALUES ('${codigo}', '${nc}');`;
+  }).join('\n');
 
+  await executeSet(inserts);
   console.log(`[SEED] ✅ seedEspecies: ${ESPECIES_INICIALES.length} especies insertadas`);
 }

@@ -1,4 +1,4 @@
-package com.gir.agroquimicos.escr;
+package com.gir.agroquimicos;
 
 import com.getcapacitor.BridgeActivity;
 
