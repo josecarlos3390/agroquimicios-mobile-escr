@@ -38,7 +38,7 @@ export function initNuevaAsignacionCombustibleView() {
           String(hoy.getHours()).padStart(2, '0'),
           String(hoy.getMinutes()).padStart(2, '0'),
         ].join(':');
-        const marca = `AgroApp - ${fechaTexto} ${horaTexto}`;
+        const marca = `ESCR APP - ${fechaTexto} ${horaTexto}`;
 
         const conMarca = await aplicarMarcaAgua(reader.result, marca);
         fotoBase64 = conMarca;

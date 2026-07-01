@@ -374,7 +374,7 @@ function actualizarHeaderUso(uso) {
   const header = document.querySelector('.header-title');
   const empresa = getEmpresaActiva();
   if (header && empresa) {
-    header.textContent = `${uso.icono} ${empresa.nombre} · ${uso.nombre}`;
+    header.innerHTML = `<img src="logos/ESCR-icon.png" alt="" style="width:28px;height:28px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">${empresa.nombre} · ${uso.nombre}`;
   }
   const sidebarUso = document.getElementById('sidebar-uso-nombre');
   if (sidebarUso) sidebarUso.textContent = uso.nombre;
@@ -393,9 +393,9 @@ async function cambiarPropiedad() {
       <div class="splash-bg-ring splash-ring-2"></div>
       <div class="splash-bg-ring splash-ring-3"></div>
       <div class="propiedad-content">
-        <div class="splash-logo-wrap"><div class="splash-logo">🌱</div></div>
+        <div class="splash-logo-wrap"><img src="logos/ESCR-icon.png" class="splash-logo" alt="ESCR APP" style="width:72px;height:72px;object-fit:contain;"></div>
         <div class="splash-texts">
-          <div class="splash-name">AgroApp</div>
+          <div class="splash-name">ESCR APP</div>
           <div class="splash-tagline">Seleccioná tu propiedad</div>
         </div>
         <div class="propiedad-cards" id="propiedad-cards"></div>
@@ -422,8 +422,7 @@ async function cambiarPropiedad() {
 window.cambiarPropiedad = cambiarPropiedad;
 
 function actualizarHeaderPropiedad(nombre) {
-  const header = document.querySelector('.header-title');
-  if (header) header.textContent = `🌱 ${nombre}`;
+  // El header principal conserva el logo + ESCR APP; la propiedad se muestra en el sidebar.
   const sidebarBtn = document.getElementById('sidebar-propiedad-nombre');
   if (sidebarBtn) sidebarBtn.textContent = nombre;
 }

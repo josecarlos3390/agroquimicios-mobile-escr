@@ -1,6 +1,6 @@
 {
   "appId": "com.gir.agroquimicos.escr",
-  "appName": "AgroApp ESCR",
+  "appName": "ESCR APP",
   "webDir": "www",
   "plugins": {
     "CapacitorSQLite": {

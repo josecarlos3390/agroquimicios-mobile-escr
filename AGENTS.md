@@ -1,6 +1,6 @@
-# AgroApp – Guía para Agentes de Código
+# ESCR APP – Guía para Agentes de Código
 
-> App Capacitor 8 offline-first para gestión agroquímica en Android. Cinco módulos funcionales: Agroquímicos (hojas de trabajo), Caña (plantación), Combustible (asignaciones), Corte de Semilla y Guía de Transporte de Caña.
+> App Capacitor 8 offline-first para Android. Versión ESCR con dos módulos funcionales: Uso de Combustible y Control Rodeo (incluye CFO, Monte, Aserradero y Rodeo).
 
 ## Stack
 
