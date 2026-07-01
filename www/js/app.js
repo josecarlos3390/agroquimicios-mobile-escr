@@ -61,16 +61,16 @@ const TIPOS_USO = [
     sub: 'Asignaciones de combustible',
     disponible: true,
   },
-];
-
-const TIPOS_USO_EXTRAS = [
   {
     id: 'control-rodeo',
     nombre: 'Control Rodeo',
-    icono: '🐄',
-    sub: 'Registro de animales',
+    icono: '🌳',
+    sub: 'Árboles cortados y despachados',
     disponible: true,
   },
+];
+
+const TIPOS_USO_EXTRAS = [
 ];
 
 let tipoUsoActivo = null;
@@ -223,7 +223,7 @@ function crearUsoScreen() {
           <div class="splash-name" style="font-size:1.5rem; text-align:left; white-space:normal; line-height:1.2">¿Qué vas a hacer?</div>
           <div class="splash-tagline" style="text-align:left">Seleccioná el tipo de uso</div>
         </div>
-        <button id="btn-uso-extras" style="background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.3); color:#fff; font-size:1.4rem; font-weight:700; cursor:pointer; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.18s, transform 0.12s; box-shadow:0 2px 8px rgba(0,0,0,0.2);">+</button>
+
       </div>
       <div class="propiedad-cards" id="uso-cards"></div>
     </div>
@@ -272,19 +272,13 @@ async function mostrarSelectorUso(empresa) {
           // Navegar a la vista de inicio del módulo
           if (uso.id === 'combustible') {
             window.showView('combustible-registros');
+          } else if (uso.id === 'control-rodeo') {
+            window.showView('control-rodeo-registros');
           }
 
           resolve(uso);
         }, { once: true });
       });
-    });
-
-    document.getElementById('btn-uso-extras')?.addEventListener('click', () => {
-      screen.classList.add('propiedad-hide');
-      screen.addEventListener('transitionend', () => {
-        screen.classList.add('hidden');
-        mostrarSelectorExtras();
-      }, { once: true });
     });
 
   });
