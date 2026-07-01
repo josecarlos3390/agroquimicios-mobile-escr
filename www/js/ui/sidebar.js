@@ -32,51 +32,6 @@ function applyDark(isDark, animate) {
    MENÚS POR MÓDULO
 ========================================================= */
 const MENUS = {
-  agroquimicos: `
-    <p class="menu-title">📋 Operación</p>
-    <a href="#" data-view="hojas">📝 Hojas de trabajo</a>
-    <a href="#" data-view="nueva-hoja">➕ Nueva hoja</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">🌱 Maestros</p>
-    <a href="#" data-view="empresas">🏢 Empresas</a>
-    <a href="#" data-view="sectores">🗺️ Sectores</a>
-    <a href="#" data-view="lotes">🌿 Lotes</a>
-    <a href="#" data-view="cultivos">🌾 Cultivos</a>
-    <a href="#" data-view="variedades">🌱 Variedades</a>
-    <a href="#" data-view="tecnicos">👨‍🌾 Técnicos</a>
-    <a href="#" data-view="productos">🧪 Productos</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">⚙️ Configuración</p>
-    <a href="#" data-view="tipos-producto">🏷️ Tipos de producto</a>
-    <a href="#" data-view="tipos-aplicacion">🚜 Tipos de aplicación</a>
-    <a href="#" data-view="unidades">📏 Unidades de medida</a>
-    <a href="#" data-view="importacion">📥 Actualizar datos</a>
-  `,
-
-  cana: `
-    <p class="menu-title">🌾 Operación</p>
-    <a href="#" data-view="cana-registros">📋 Registros</a>
-    <a href="#" data-view="cana-nuevo">➕ Nuevo registro</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">📂 Maestros compartidos</p>
-    <a href="#" data-view="sectores">🗺️ Sectores</a>
-    <a href="#" data-view="lotes">🌿 Lotes y variedades</a>
-    <a href="#" data-view="cultivos">🌾 Cultivos</a>
-    <a href="#" data-view="variedades">🌱 Variedades</a>
-    <a href="#" data-view="tecnicos">👨‍🌾 Técnicos</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">⚙️ Configuración</p>
-    <a href="#" data-view="importacion">📥 Actualizar datos</a>
-  `,
-
   combustible: `
     <p class="menu-title">\u26FD Operación</p>
     <a href="#" data-view="combustible-registros">\uD83D\uDCCB Asignaciones</a>
@@ -84,57 +39,8 @@ const MENUS = {
 
     <div class="menu-divider"></div>
 
-    <p class="menu-title">\uD83D\uDCC2 Maestros compartidos</p>
-    <a href="#" data-view="sectores">\uD83D\uDDFA\uFE0F Sectores</a>
-    <a href="#" data-view="lotes">\uD83C\uDF3F Lotes</a>
-    <a href="#" data-view="cultivos">\uD83C\uDF3E Cultivos</a>
-    <a href="#" data-view="variedades">\uD83C\uDF31 Variedades</a>
-    <a href="#" data-view="tecnicos">\uD83D\uDC68\u200D\uD83C\uDF3E Técnicos</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">\u2699\uFE0F Configuración</p>
-    <a href="#" data-view="importacion">\uD83D\uDCE5 Actualizar datos</a>
-  `,
-
-  'corte-semilla': `
-    <p class="menu-title">\u2702\uFE0F Operación</p>
-    <a href="#" data-view="corte-semilla-registros">\uD83D\uDCCB Registros</a>
-    <a href="#" data-view="corte-semilla-nuevo">\u2795 Nuevo corte</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">\uD83D\uDCC2 Maestros compartidos</p>
-    <a href="#" data-view="sectores">\uD83D\uDDFA\uFE0F Sectores</a>
-    <a href="#" data-view="lotes">\uD83C\uDF3F Lotes</a>
-    <a href="#" data-view="cultivos">\uD83C\uDF3E Cultivos</a>
-    <a href="#" data-view="variedades">\uD83C\uDF31 Variedades</a>
-    <a href="#" data-view="tecnicos">\uD83D\uDC68\u200D\uD83C\uDF3E Técnicos</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">\u2699\uFE0F Configuración</p>
-    <a href="#" data-view="importacion">\uD83D\uDCE5 Actualizar datos</a>
-  `,
-
-  'guia-transporte-cana': `
-    <p class="menu-title">\uD83D\uDCDC Operación</p>
-    <a href="#" data-view="guia-transporte-registros">\uD83D\uDCCB Guías</a>
-    <a href="#" data-view="guia-transporte-nuevo">\u2795 Nueva guía</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">\uD83D\uDCC2 Maestros compartidos</p>
-    <a href="#" data-view="sectores">\uD83D\uDDFA\uFE0F Sectores</a>
-    <a href="#" data-view="lotes">\uD83C\uDF3F Lotes</a>
-    <a href="#" data-view="cultivos">\uD83C\uDF3E Cultivos</a>
-    <a href="#" data-view="variedades">\uD83C\uDF31 Variedades</a>
-    <a href="#" data-view="tecnicos">\uD83D\uDC68\u200D\uD83C\uDF3E Técnicos</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">\u2699\uFE0F Configuración</p>
-    <a href="#" data-view="importacion">\uD83D\uDCE5 Actualizar datos</a>
+    <p class="menu-title">\uD83D\uDCC2 Maestros</p>
+    <a href="#" data-view="empresas">\uD83C\uDFE0 Propiedades</a>
   `,
 
   'control-rodeo': `
@@ -160,13 +66,9 @@ const MENUS = {
     <div class="menu-divider"></div>
 
     <p class="menu-title">🌿 Maestros</p>
+    <a href="#" data-view="empresas">🏢 Propiedades</a>
     <a href="#" data-view="especies">🌿 Especies</a>
     <a href="#" data-view="rodeo-sectores">🗺️ Sectores de Rodeo</a>
-
-    <div class="menu-divider"></div>
-
-    <p class="menu-title">⚙️ Configuración</p>
-    <a href="#" data-view="importacion">📥 Actualizar datos</a>
   `,
 };
 
@@ -223,7 +125,7 @@ export function renderMenuModulo(moduloId) {
   const nav = document.querySelector('#sidebar .sidebar-menu');
   if (!nav) return;
 
-  const html = MENUS[moduloId] ?? MENUS['agroquimicos'];
+  const html = MENUS[moduloId] ?? MENUS['combustible'];
   nav.innerHTML = html;
 
   // Re-registrar listeners en los nuevos links
@@ -241,11 +143,7 @@ export function renderMenuModulo(moduloId) {
 
   // Actualizar subtítulo del header del sidebar
   const subtitles = {
-    agroquimicos: 'Gestión Agroquímica',
-    cana: 'Plantación de Caña',
     combustible: 'Uso de Combustible',
-    'corte-semilla': 'Corte de Semilla',
-    'guia-transporte-cana': 'Guía de Transporte de Caña',
     'control-rodeo': 'Control Rodeo',
   };
   const subtitle = document.querySelector('.sidebar-header-subtitle');
