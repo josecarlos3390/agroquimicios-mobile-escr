@@ -16,6 +16,7 @@ export async function exportarHojas(hojaIds) {
 
 /* =========================
    EXPORTAR COMO CSV
+   (Formato legado, 16 columnas)
 ========================= */
 export function lineasACSV(lineas) {
   const headers = [
@@ -39,73 +40,76 @@ export function lineasACSV(lineas) {
 
 /* =========================
    EXPORTAR COMO XLSX (base64)
-   Usa SheetJS cargado globalmente como window.XLSX
+   Formato Gabriel:
+   - Fila 1: encabezados oficiales.
+   - Fila 2 en adelante: datos.
+   Usa SheetJS cargado globalmente como window.XLSX.
 ========================= */
 export function lineasAXLSX(lineas) {
   const XLSX = window.XLSX;
   if (!XLSX) throw new Error('SheetJS no está disponible');
 
-  const headers = [
-    'NRO_NOTA', 'FECHA_INICIO', 'CODIGO_PRODUCTO', 'DESCRIPCION',
-    'CANTIDAD', 'SELECCION', 'GCA', 'CA', 'CUENTA',
-    'HECTAREAS_APLICADAS', 'SELECCIONAR_LOTE', 'DOSIS',
-    'HECTAREAS_REF', 'CULTIVO', 'SECTOR', 'CAUDAL'
+  const COL_HEADERS = [
+    'Fila (A)',
+    ' Código Producto (*)      (B)',
+    '    Descripción Producto (*)                   (C)',
+    'Cantidad CUI (*) (D)',
+    'Cantidad CUP (*) (E)',
+    'Cuenta (*) (F)',
+    'C.C. (*) (G)',
+    'Grp. C.A. (*)  (H)',
+    'C.A. (*) (I)',
+    'R.S. / UN (*) (J)'
   ];
 
-  // Encabezados amigables para la primera fila
-  const headersLegibles = [
-    'Nro. Nota', 'Fecha Inicio', 'Código Producto', 'Descripción',
-    'Cantidad', 'Selección', 'GCA', 'CA', 'Cuenta',
-    'Hectáreas Aplicadas', 'Lote', 'Dosis',
-    'Hectáreas Ref.', 'Cultivo', 'Sector', 'Caudal'
-  ];
+  const CANTIDAD_DEFAULT = 0;
+  const CC_DEFAULT = 540;
+  const RS_UN_DEFAULT = 1;
 
-  // Columnas numéricas con decimales — se escriben como número real en Excel
-  // usando toPrecision(15) que es la máxima precisión de un float64,
-  // y formato de celda '0.###############' para mostrar hasta 15 decimales
-  // significativos sin ceros innecesarios al final.
-  const colsNumericas = new Set([
-    'CANTIDAD', 'HECTAREAS_APLICADAS', 'DOSIS', 'HECTAREAS_REF'
-  ]);
-  // 15 '#' = hasta 15 decimales significativos, sin ceros al final
-  const FMT_DECIMAL = '0.###############';
+  // Muestra todos los decimales significativos sin ceros innecesarios al final
+  const FMT_DECIMAL_COMPLETO = '0.###############';
 
-  const filas = lineas.map(l => {
-    const fila = {};
-    headers.forEach((h, i) => {
-      const val = l[h] ?? '';
-      if (colsNumericas.has(h) && val !== '' && val !== null) {
-        // parseFloat(toPrecision(15)): número real con máxima precisión float64
-        const n = typeof val === 'number' ? val : parseFloat(val);
-        fila[headersLegibles[i]] = isNaN(n) ? val : parseFloat(n.toPrecision(15));
-      } else {
-        fila[headersLegibles[i]] = val ?? '';
-      }
-    });
-    return fila;
+  const aoa = [COL_HEADERS];
+
+  lineas.forEach((l, idx) => {
+    const cantidadRaw = l.CANTIDAD ?? CANTIDAD_DEFAULT;
+    const cantidadNum = typeof cantidadRaw === 'number' ? cantidadRaw : parseFloat(cantidadRaw);
+    const cantidad = isNaN(cantidadNum) ? CANTIDAD_DEFAULT : cantidadNum;
+
+    aoa.push([
+      idx + 1,                       // A: Fila
+      l.CODIGO_PRODUCTO ?? '',       // B: Código Producto
+      l.DESCRIPCION ?? '',           // C: Descripción Producto
+      cantidad,                      // D: Cantidad CUI
+      cantidad,                      // E: Cantidad CUP (igual a D)
+      l.CUENTA ?? '',                // F: Cuenta
+      CC_DEFAULT,                    // G: C.C.
+      '',                            // H: Grp. C.A. (vacío)
+      '',                            // I: C.A. (vacío)
+      RS_UN_DEFAULT                  // J: R.S. / UN
+    ]);
   });
 
-  // Crear hoja
-  const ws = XLSX.utils.json_to_sheet(filas, { header: headersLegibles });
+  // Crear hoja a partir de array de arrays (AOA)
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  // Aplicar formato numérico con decimales completos a cada celda numérica
-  // t:'n' = tipo número, z = formato de visualización de Excel
+  // Aplicar formato numérico completo a las columnas de cantidad (D y E)
+  // Las filas de datos comienzan en el índice 1 (fila 2 del Excel).
   const range = XLSX.utils.decode_range(ws['!ref']);
-  headers.forEach((h, colIdx) => {
-    if (!colsNumericas.has(h)) return;
-    for (let rowIdx = range.s.r + 1; rowIdx <= range.e.r; rowIdx++) {
+  for (let rowIdx = 1; rowIdx <= range.e.r; rowIdx++) {
+    [3, 4].forEach(colIdx => {
       const cellAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
       if (ws[cellAddr]) {
-        ws[cellAddr].t = 'n';       // número real — permite sumar, calcular
-        ws[cellAddr].z = FMT_DECIMAL; // muestra todos los decimales sin redondear
+        ws[cellAddr].t = 'n';          // número real
+        ws[cellAddr].z = FMT_DECIMAL_COMPLETO;
       }
-    }
-  });
+    });
+  }
 
   // Ancho de columnas automático
-  const colWidths = headersLegibles.map((h, i) => {
-    const maxData = lineas.reduce((max, l) => {
-      const val = String(l[headers[i]] ?? '');
+  const colWidths = COL_HEADERS.map((h, i) => {
+    const maxData = aoa.slice(1).reduce((max, row) => {
+      const val = String(row[i] ?? '');
       return Math.max(max, val.length);
     }, 0);
     return { wch: Math.max(h.length, maxData, 8) + 2 };
