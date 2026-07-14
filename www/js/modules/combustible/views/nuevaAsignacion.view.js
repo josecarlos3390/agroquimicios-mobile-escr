@@ -7,9 +7,21 @@ let fotoBase64 = null;
 let modoEdicion = false;
 let asignacionEditandoId = null;
 
+function _forzarMayusculasEnInputs() {
+  const form = document.getElementById('form-combustible-asignacion');
+  if (!form) return;
+  form.querySelectorAll('input[type="text"], textarea').forEach(input => {
+    input.addEventListener('input', () => {
+      input.value = input.value.toUpperCase();
+    });
+  });
+}
+
 export function initNuevaAsignacionCombustibleView() {
   if (inicializado) return;
   inicializado = true;
+
+  _forzarMayusculasEnInputs();
 
   document.getElementById('btn-combustible-volver').onclick = () => {
     modoEdicion = false;

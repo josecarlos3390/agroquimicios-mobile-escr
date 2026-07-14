@@ -898,6 +898,42 @@ body.dark #editar-lotes-container input[type="checkbox"] {
   padding: 0.5rem;
 }
 
+/* ── Combustible: selección múltiple y exportar ── */
+.combustible-seleccion-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--primary-faint);
+  border: 1.5px solid var(--primary-light);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.combustible-check-label {
+  user-select: none;
+}
+
+.combustible-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.hoja-card-actions button[data-exportar-asignacion] {
+  background: var(--success-faint, #e8f5e9);
+  border-color: var(--success-light, #a5d6a7);
+  color: var(--success, #2e7d32);
+}
+
+.hoja-card-actions button[data-exportar-asignacion]:hover {
+  background: var(--success-pale, #c8e6c9) !important;
+}
+
 /* ── Control Rodeo: estado cerrado y progreso ── */
 .hoja-card--cerrada {
   opacity: 0.72;

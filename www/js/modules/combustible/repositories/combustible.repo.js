@@ -54,6 +54,20 @@ export async function getAsignacionById(id) {
   return r[0] ?? null;
 }
 
+export async function getAsignacionesByIds(ids) {
+  if (!ids || ids.length === 0) return [];
+  const placeholders = ids.map(() => '?').join(',');
+  return await executeQuery(`
+    SELECT
+      ca.*,
+      e.nombre AS empresa_nombre
+    FROM combustible_asignaciones ca
+    LEFT JOIN empresas e ON e.id = ca.empresa_id
+    WHERE ca.id IN (${placeholders})
+    ORDER BY ca.numero_secuencial DESC
+  `, ids);
+}
+
 export async function deleteAsignacion(id) {
   await executeRun('DELETE FROM combustible_asignaciones WHERE id = ?', [id]);
 }

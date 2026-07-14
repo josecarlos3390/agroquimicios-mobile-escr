@@ -4,6 +4,7 @@ import {
   createAsignacion,
   getAsignaciones,
   getAsignacionById,
+  getAsignacionesByIds,
   deleteAsignacion,
   updateAsignacion,
   getNextNumeroSecuencial,
@@ -36,6 +37,10 @@ export async function listarAsignaciones(empresaId = null) {
 
 export async function obtenerAsignacion(id) {
   return await getAsignacionById(id);
+}
+
+export async function obtenerAsignacionesPorIds(ids) {
+  return await getAsignacionesByIds(ids);
 }
 
 export async function eliminarAsignacion(id) {

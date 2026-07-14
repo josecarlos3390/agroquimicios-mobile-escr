@@ -200,6 +200,10 @@
         <h3>⛽ Asignaciones de combustible</h3>
       </div>
       <button id="btn-nueva-asignacion" class="btn-primary" style="width:100%">➕ Nueva asignación</button>
+      <div id="combustible-exportar-seleccion" class="combustible-seleccion-bar" style="display:none;margin-top:0.75rem">
+        <span id="combustible-seleccion-count">0 seleccionados</span>
+        <button id="btn-exportar-seleccionados" class="btn-secondary" style="padding:0.45rem 0.75rem;font-size:0.85rem">📤 Exportar seleccionados</button>
+      </div>
     </div>
     <div id="combustible-lista"></div>
   </section>
@@ -531,6 +535,9 @@
 
 <!-- SheetJS: generación de XLSX en el navegador (sin servidor) -->
 <script src="js/xlsx.full.min.js"></script>
+
+<!-- ExcelJS: generación de XLSX con imágenes embebidas -->
+<script src="js/exceljs.min.js"></script>
 
 <!-- Modal de confirmación custom (reemplaza confirm() nativo) -->
 <div id="modal-confirm" class="modal-confirm hidden">

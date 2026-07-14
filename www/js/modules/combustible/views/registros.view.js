@@ -1,9 +1,11 @@
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
-import { listarAsignaciones, eliminarAsignacion } from '../services/combustible.service.js';
+import { listarAsignaciones, eliminarAsignacion, obtenerAsignacionesPorIds } from '../services/combustible.service.js';
+import { exportarAsignacionesAExcel } from '../services/combustibleExport.service.js';
 import { confirmar } from '../../../utils/confirm.js';
 import { formatFecha } from '../../../utils/fecha.js';
 
 let inicializado = false;
+const seleccionados = new Set();
 
 export function initRegistrosCombustibleView() {
   if (inicializado) return;
@@ -11,6 +13,10 @@ export function initRegistrosCombustibleView() {
 
   document.getElementById('btn-nueva-asignacion').onclick = () =>
     window.showView('combustible-nuevo');
+
+  document.getElementById('btn-exportar-seleccionados')?.addEventListener('click', async () => {
+    await _exportarSeleccionados();
+  });
 
   document.getElementById('view-combustible-registros').addEventListener('click', async e => {
     if (e.target.dataset.verDetalle) {
@@ -36,10 +42,79 @@ export function initRegistrosCombustibleView() {
         btn.disabled = true;
         btn.textContent = '⏳';
         await eliminarAsignacion(id);
+        seleccionados.delete(id);
         await cargarRegistrosCombustible();
       }
+      return;
+    }
+
+    if (e.target.dataset.exportarAsignacion) {
+      const id = e.target.dataset.exportarAsignacion;
+      await _exportarIndividual(id, e.target);
+      return;
+    }
+
+    if (e.target.classList.contains('combustible-check')) {
+      const id = e.target.dataset.id;
+      if (e.target.checked) {
+        seleccionados.add(id);
+      } else {
+        seleccionados.delete(id);
+      }
+      _actualizarBarraSeleccion();
+      return;
     }
   });
+}
+
+function _actualizarBarraSeleccion() {
+  const bar = document.getElementById('combustible-exportar-seleccion');
+  const count = document.getElementById('combustible-seleccion-count');
+  if (!bar || !count) return;
+
+  const n = seleccionados.size;
+  count.textContent = `${n} seleccionado${n === 1 ? '' : 's'}`;
+  bar.style.display = n > 0 ? 'flex' : 'none';
+}
+
+async function _exportarIndividual(id, btn) {
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    const asignaciones = await obtenerAsignacionesPorIds([id]);
+    await exportarAsignacionesAExcel(asignaciones);
+  } catch (err) {
+    alert('❌ ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+async function _exportarSeleccionados() {
+  if (seleccionados.size === 0) {
+    alert('Seleccioná al menos una asignación');
+    return;
+  }
+
+  const btn = document.getElementById('btn-exportar-seleccionados');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    const ids = Array.from(seleccionados);
+    const asignaciones = await obtenerAsignacionesPorIds(ids);
+    await exportarAsignacionesAExcel(asignaciones);
+    seleccionados.clear();
+    _actualizarBarraSeleccion();
+    await cargarRegistrosCombustible();
+  } catch (err) {
+    alert('❌ ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 export async function cargarRegistrosCombustible() {
@@ -88,6 +163,10 @@ export async function cargarRegistrosCombustible() {
       <div class="hoja-card-header">
         <span class="hoja-numero">${a.numero_completo}</span>
         <span class="hoja-estado hoja-estado--${a.estado.toLowerCase()}">${a.estado}</span>
+        <label class="combustible-check-label" style="margin-left:auto;display:flex;align-items:center;gap:0.35rem;cursor:pointer;font-size:0.78rem;color:var(--text-muted)">
+          <input type="checkbox" class="combustible-check" data-id="${a.id}" ${seleccionados.has(a.id) ? 'checked' : ''}>
+          Seleccionar
+        </label>
       </div>
       <div class="hoja-card-body">
         <div class="hoja-card-main-row">
@@ -114,8 +193,11 @@ export async function cargarRegistrosCombustible() {
       <div class="hoja-card-actions">
         <button data-ver-detalle="${a.id}">📋 Ver</button>
         <button data-editar-asignacion="${a.id}">✏️ Editar</button>
+        <button data-exportar-asignacion="${a.id}">📤 Exportar</button>
         <button data-eliminar-asignacion="${a.id}">🗑️</button>
       </div>
     </div>
   `).join('');
+
+  _actualizarBarraSeleccion();
 }
