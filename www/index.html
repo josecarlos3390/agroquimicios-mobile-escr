@@ -461,9 +461,13 @@
           <option value="">Seleccioná sector...</option>
         </select>
       </label>
-      <label>Archivo Excel (RODEO_APP.xlsx)
-        <input type="file" id="rodeo-excel" accept=".xlsx,.xls" required>
-      </label>
+      <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        <label>Placa <input type="text" id="rodeo-placa" class="input-upper" placeholder="Ej: ABC123"></label>
+        <label>Chofer <input type="text" id="rodeo-chofer" class="input-upper" placeholder="Ej: JUAN PEREZ"></label>
+      </div>
+      <label>Observaciones <textarea id="rodeo-observaciones" rows="2" placeholder="Notas..."></textarea></label>
+      <input type="file" id="rodeo-excel" accept=".xlsx,.xls" style="display:none">
+      <button type="button" id="btn-rodeo-importar-excel" class="btn-secondary" style="width:100%">📥 Importar archivo Excel</button>
       <div id="rodeo-preview" style="max-height:300px;overflow:auto;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem;">
         <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Seleccioná un archivo para ver la preview...</p>
       </div>

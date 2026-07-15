@@ -698,6 +698,9 @@ export async function initSchema() {
       numero_completo     TEXT    NOT NULL,
       fecha               DATE    NOT NULL,
       sector_id           INTEGER,
+      placa               TEXT,
+      chofer              TEXT,
+      observaciones       TEXT,
       estado              TEXT    DEFAULT 'BORRADOR',
       sync_status         TEXT    DEFAULT 'pending',
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -863,6 +866,11 @@ export async function initSchema() {
   await addColumnIfNotExists('cefo_salida_cab', 'estado', "TEXT DEFAULT 'BORRADOR'");
   await addColumnIfNotExists('aserradero_recepcion_cab', 'estado', "TEXT DEFAULT 'BORRADOR'");
   await addColumnIfNotExists('aserradero_despacho_cab', 'estado', "TEXT DEFAULT 'BORRADOR'");
+
+  // Migraciones módulo Rodeo
+  await addColumnIfNotExists('rodeo_cab', 'placa', 'TEXT');
+  await addColumnIfNotExists('rodeo_cab', 'chofer', 'TEXT');
+  await addColumnIfNotExists('rodeo_cab', 'observaciones', 'TEXT');
 
   // Migraciones módulo Agroquímicos
   await addColumnIfNotExists('hojas_cab', 'variedad_id', 'INTEGER');

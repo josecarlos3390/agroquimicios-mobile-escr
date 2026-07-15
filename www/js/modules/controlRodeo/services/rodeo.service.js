@@ -20,7 +20,17 @@ export async function crearRodeo(data, detalle) {
   const corr = String(secuencial).padStart(3, '0');
   const numero_completo = `RODEO-${dispositivo}-${corr}`;
 
-  await createRodeoCab({ ...data, id, numero_secuencial: secuencial, numero_completo });
+  const datosCab = {
+    ...data,
+    id,
+    numero_secuencial: secuencial,
+    numero_completo,
+    placa: data.placa?.trim().toUpperCase() || null,
+    chofer: data.chofer?.trim().toUpperCase() || null,
+    observaciones: data.observaciones?.trim() || null,
+  };
+
+  await createRodeoCab(datosCab);
 
   if (detalle && detalle.length > 0) {
     await createRodeoDetalle(id, detalle);
