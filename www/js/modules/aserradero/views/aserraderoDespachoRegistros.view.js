@@ -35,6 +35,7 @@ export function initAserraderoDespachoRegistrosView() {
         icon: '✅',
         titulo: '¿Confirmar despacho?',
         msg: 'Una vez confirmado no podrás editar ni eliminar este despacho.',
+        okLabel: 'Aceptar',
       });
       if (!ok) return;
       await confirmarDespachoCab(card.dataset.despachoId);

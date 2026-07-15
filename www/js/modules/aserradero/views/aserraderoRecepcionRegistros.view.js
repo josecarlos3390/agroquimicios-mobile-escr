@@ -35,6 +35,7 @@ export function initAserraderoRecepcionRegistrosView() {
         icon: '✅',
         titulo: '¿Confirmar recepción?',
         msg: 'Una vez confirmada no podrás editar ni eliminar esta recepción.',
+        okLabel: 'Aceptar',
       });
       if (!ok) return;
       await confirmarRecepcionCab(card.dataset.recepcionId);
