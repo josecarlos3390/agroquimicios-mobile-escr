@@ -1,5 +1,4 @@
-import { getSalida, actualizarSalidaCabecera, buscarArboles, agregarLineasSalida, quitarLineaSalida, confirmarSalidaCab } from '../../../services/cefoSalida.service.js';
-import { confirmar } from '../../../utils/confirm.js';
+import { getSalida, actualizarSalidaCabecera, buscarArboles, agregarLineasSalida, quitarLineaSalida } from '../../../services/cefoSalida.service.js';
 
 let inicializado = false;
 let lineasPendientes = [];
@@ -46,11 +45,6 @@ export function initDetalleSalidaView() {
       await guardarEdicionCabecera();
       return;
     }
-
-    if (e.target.closest('#btn-salida-confirmar')) {
-      await confirmarDespacho();
-      return;
-    }
   });
 
   cont?.addEventListener('input', async (e) => {
@@ -60,6 +54,8 @@ export function initDetalleSalidaView() {
   });
 
   cont?.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-quitar-linea]')) return;
+
     const item = e.target.closest('[data-rodeo-detalle-id]');
     if (item) {
       if (Number(item.dataset.despachado) === 1) {
@@ -180,7 +176,6 @@ export async function cargarDetalleSalida(id) {
         ${!confirmado ? `
           <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
             <button type="button" id="btn-salida-editar-cabecera" class="btn-secondary" style="flex:1; margin:0">✏️ Editar cabecera</button>
-            <button type="button" id="btn-salida-confirmar" class="btn-primary" style="flex:1; margin:0">✅ Confirmar despacho</button>
           </div>
         ` : `
           <div style="margin-top:0.75rem; padding:0.75rem; background:rgba(40,167,69,0.1); border-radius:var(--radius-sm); color:var(--success); text-align:center; font-size:0.9rem">
@@ -454,35 +449,6 @@ async function quitarLineaGuardada(salidaId, salidaDetalleId, rodeoDetalleId) {
   } catch (err) {
     console.error('[MONTE] Error al quitar línea:', err);
     alert('❌ ' + err.message);
-  }
-}
-
-async function confirmarDespacho() {
-  if (!salidaIdActual) return;
-  const ok = await confirmar({
-    icon: '✅',
-    titulo: '¿Confirmar despacho?',
-    msg: 'Una vez confirmado no podrás editar ni eliminar este despacho ni sus árboles.',
-  });
-  if (!ok) return;
-
-  const btn = document.getElementById('btn-salida-confirmar');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Confirmando...';
-  }
-
-  try {
-    await confirmarSalidaCab(salidaIdActual);
-    mostrarToast('✅ Despacho confirmado');
-    await cargarDetalleSalida(salidaIdActual);
-  } catch (err) {
-    console.error('[MONTE] Error al confirmar despacho:', err);
-    alert('❌ ' + err.message);
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✅ Confirmar despacho';
-    }
   }
 }
 

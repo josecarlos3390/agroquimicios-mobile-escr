@@ -1,5 +1,4 @@
-import { getRecepcion, actualizarRecepcionCabecera, buscarArboles, agregarLineasRecepcion, quitarLineaRecepcion, confirmarRecepcionCab } from '../services/aserraderoRecepcion.service.js';
-import { confirmar } from '../../../utils/confirm.js';
+import { getRecepcion, actualizarRecepcionCabecera, buscarArboles, agregarLineasRecepcion, quitarLineaRecepcion } from '../services/aserraderoRecepcion.service.js';
 
 let inicializado = false;
 let lineasPendientes = [];
@@ -46,11 +45,6 @@ export function initAserraderoRecepcionDetalleView() {
       await guardarEdicionCabecera();
       return;
     }
-
-    if (e.target.closest('#btn-aserradero-recepcion-confirmar')) {
-      await confirmarRecepcion();
-      return;
-    }
   });
 
   cont?.addEventListener('input', async (e) => {
@@ -60,6 +54,8 @@ export function initAserraderoRecepcionDetalleView() {
   });
 
   cont?.addEventListener('click', async (e) => {
+    if (e.target.closest('[data-quitar-linea]')) return;
+
     const item = e.target.closest('[data-rodeo-detalle-id]');
     if (item) {
       if (Number(item.dataset.despachado) === 1) {
@@ -180,7 +176,6 @@ export async function cargarAserraderoRecepcionDetalle(id) {
         ${!confirmado ? `
           <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
             <button type="button" id="btn-aserradero-recepcion-editar-cabecera" class="btn-secondary" style="flex:1; margin:0">✏️ Editar cabecera</button>
-            <button type="button" id="btn-aserradero-recepcion-confirmar" class="btn-primary" style="flex:1; margin:0">✅ Confirmar recepción</button>
           </div>
         ` : `
           <div style="margin-top:0.75rem; padding:0.75rem; background:rgba(40,167,69,0.1); border-radius:var(--radius-sm); color:var(--success); text-align:center; font-size:0.9rem">
@@ -466,35 +461,6 @@ async function quitarLineaGuardada(recepcionId, recepcionDetalleId, rodeoDetalle
   } catch (err) {
     console.error('[ASERRADERO] Error al quitar línea:', err);
     alert('❌ ' + err.message);
-  }
-}
-
-async function confirmarRecepcion() {
-  if (!recepcionIdActual) return;
-  const ok = await confirmar({
-    icon: '✅',
-    titulo: '¿Confirmar recepción?',
-    msg: 'Una vez confirmada no podrás editar ni eliminar esta recepción ni sus árboles.',
-  });
-  if (!ok) return;
-
-  const btn = document.getElementById('btn-aserradero-recepcion-confirmar');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Confirmando...';
-  }
-
-  try {
-    await confirmarRecepcionCab(recepcionIdActual);
-    mostrarToast('✅ Recepción confirmada');
-    await cargarAserraderoRecepcionDetalle(recepcionIdActual);
-  } catch (err) {
-    console.error('[ASERRADERO] Error al confirmar recepción:', err);
-    alert('❌ ' + err.message);
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '✅ Confirmar recepción';
-    }
   }
 }
 
