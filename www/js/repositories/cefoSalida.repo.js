@@ -32,7 +32,7 @@ export async function desmarcarDetalleDespachado(rodeoDetalleId) {
 
 export async function listarSalidas(empresaId) {
   return executeQuery(
-    `SELECT s.id, s.numero_completo, s.nro_cfo_despacho, s.fecha_despacho, s.placa, s.chofer,
+    `SELECT s.id, s.numero_completo, s.nro_cfo_despacho, s.fecha_despacho, s.placa, s.chofer, s.estado,
             COUNT(d.id) as cantidad_arboles
      FROM cefo_salida_cab s
      LEFT JOIN cefo_salida_detalle d ON d.salida_id = s.id
@@ -45,7 +45,7 @@ export async function listarSalidas(empresaId) {
 
 export async function obtenerSalidaPorId(id) {
   const cab = await executeQuery(
-    `SELECT id, numero_completo, nro_cfo_despacho, fecha_despacho, placa, chofer, observaciones, created_at
+    `SELECT id, numero_completo, nro_cfo_despacho, fecha_despacho, placa, chofer, observaciones, estado, created_at
      FROM cefo_salida_cab WHERE id = ?`,
     [id]
   );
@@ -99,6 +99,13 @@ export async function actualizarSalidaCab(id, nroCfoDespacho, fechaDespacho, pla
      SET nro_cfo_despacho = ?, fecha_despacho = ?, placa = ?, chofer = ?, observaciones = ?
      WHERE id = ?`,
     [nroCfoDespacho, fechaDespacho, placa, chofer, observaciones, id]
+  );
+}
+
+export async function confirmarSalida(id) {
+  await executeRun(
+    "UPDATE cefo_salida_cab SET estado = 'CONFIRMADO' WHERE id = ?",
+    [id]
   );
 }
 

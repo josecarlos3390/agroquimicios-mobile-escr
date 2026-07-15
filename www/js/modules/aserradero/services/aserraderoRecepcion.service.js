@@ -8,6 +8,7 @@ import {
   eliminarRecepcion,
   eliminarRecepcionDetalle,
   buscarArbolesDisponibles,
+  confirmarRecepcion,
 } from '../repositories/aserraderoRecepcion.repo.js';
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
 import { reservarNumeroSecuencial } from '../../../db/sqlite.js';
@@ -24,7 +25,18 @@ export async function getRecepcion(id) {
 }
 
 export async function borrarRecepcion(id) {
+  const actual = await obtenerRecepcionPorId(id);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede eliminar una recepción confirmada');
+  }
   return eliminarRecepcion(id);
+}
+
+export async function confirmarRecepcionCab(id) {
+  const actual = await obtenerRecepcionPorId(id);
+  if (!actual) throw new Error('Recepción no encontrada');
+  if (actual.cabecera.estado === 'CONFIRMADO') throw new Error('La recepción ya está confirmada');
+  await confirmarRecepcion(id);
 }
 
 export async function buscarArboles(filtros) {
@@ -54,6 +66,11 @@ export async function crearRecepcionCabecera(datos) {
 }
 
 export async function actualizarRecepcionCabecera(id, datos) {
+  const actual = await obtenerRecepcionPorId(id);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede editar una recepción confirmada');
+  }
+
   const nroRecepcion = datos.nroRecepcion?.trim().toUpperCase();
   if (!nroRecepcion) throw new Error('El número de recepción es obligatorio');
 
@@ -65,14 +82,22 @@ export async function actualizarRecepcionCabecera(id, datos) {
   await actualizarRecepcionCab(id, nroRecepcion, fecha, placa, chofer, observaciones);
 }
 
-export async function quitarLineaRecepcion(recepcionDetalleId, rodeoDetalleId) {
+export async function quitarLineaRecepcion(recepcionId, recepcionDetalleId, rodeoDetalleId) {
   if (!recepcionDetalleId || !rodeoDetalleId) {
     throw new Error('Faltan datos para quitar la línea');
+  }
+  const actual = await obtenerRecepcionPorId(recepcionId);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede quitar árboles de una recepción confirmada');
   }
   await eliminarRecepcionDetalle(recepcionDetalleId, rodeoDetalleId);
 }
 
 export async function agregarLineasRecepcion(recepcionId, lineas) {
+  const actual = await obtenerRecepcionPorId(recepcionId);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede agregar árboles a una recepción confirmada');
+  }
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
 

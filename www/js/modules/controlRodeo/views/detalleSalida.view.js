@@ -1,4 +1,5 @@
-import { getSalida, actualizarSalidaCabecera, buscarArboles, agregarLineasSalida, quitarLineaSalida } from '../../../services/cefoSalida.service.js';
+import { getSalida, actualizarSalidaCabecera, buscarArboles, agregarLineasSalida, quitarLineaSalida, confirmarSalidaCab } from '../../../services/cefoSalida.service.js';
+import { confirmar } from '../../../utils/confirm.js';
 
 let inicializado = false;
 let lineasPendientes = [];
@@ -43,6 +44,11 @@ export function initDetalleSalidaView() {
 
     if (e.target.closest('#btn-salida-guardar-cabecera')) {
       await guardarEdicionCabecera();
+      return;
+    }
+
+    if (e.target.closest('#btn-salida-confirmar')) {
+      await confirmarDespacho();
       return;
     }
   });
@@ -104,6 +110,7 @@ export function initDetalleSalidaView() {
       const ok = confirm('¿Quitar este árbol del despacho? Se liberará para usar en otro despacho.');
       if (!ok) return;
       await quitarLineaGuardada(
+        salidaIdActual,
         parseInt(btnQuitar.dataset.quitarLinea),
         parseInt(btnQuitar.dataset.rodeoDetalleId)
       );
@@ -150,11 +157,17 @@ export async function cargarDetalleSalida(id) {
       ? new Date(cab.fecha_despacho).toLocaleDateString('es-ES')
       : '—';
 
+    const confirmado = cab.estado === 'CONFIRMADO';
+    const badgeEstado = confirmado
+      ? '<span style="display:inline-block;background:var(--success);color:#fff;padding:0.25rem 0.6rem;border-radius:1rem;font-size:0.75rem">✅ CONFIRMADO</span>'
+      : '<span style="display:inline-block;background:var(--warning);color:#fff;padding:0.25rem 0.6rem;border-radius:1rem;font-size:0.75rem">📝 BORRADOR</span>';
+
     let html = `
       <div class="card" id="salida-cabecera-card">
         <div class="vista-header">
           <button type="button" id="btn-salida-detalle-volver" class="btn-volver">← Volver</button>
           <h3>🌲 ${cab.numero_completo}</h3>
+          ${badgeEstado}
         </div>
         <div class="grid" style="margin-top:0.5rem">
           <label>Nro CFO Despacho <span class="detalle-info">${cab.nro_cfo_despacho}</span></label>
@@ -164,9 +177,16 @@ export async function cargarDetalleSalida(id) {
           <label>Total árboles <span class="detalle-info">${det.length}</span></label>
         </div>
         ${cab.observaciones ? `<label style="margin-top:0.5rem">Observaciones <span class="detalle-info">${cab.observaciones}</span></label>` : ''}
-        <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
-          <button type="button" id="btn-salida-editar-cabecera" class="btn-secondary" style="flex:1; margin:0">✏️ Editar cabecera</button>
-        </div>
+        ${!confirmado ? `
+          <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
+            <button type="button" id="btn-salida-editar-cabecera" class="btn-secondary" style="flex:1; margin:0">✏️ Editar cabecera</button>
+            <button type="button" id="btn-salida-confirmar" class="btn-primary" style="flex:1; margin:0">✅ Confirmar despacho</button>
+          </div>
+        ` : `
+          <div style="margin-top:0.75rem; padding:0.75rem; background:rgba(40,167,69,0.1); border-radius:var(--radius-sm); color:var(--success); text-align:center; font-size:0.9rem">
+            🔒 Despacho confirmado. No se permite editar ni eliminar.
+          </div>
+        `}
       </div>
     `;
 
@@ -188,7 +208,7 @@ export async function cargarDetalleSalida(id) {
                   <th>D2</th>
                   <th>Largo</th>
                   <th>Volumen</th>
-                  <th></th>
+                  ${!confirmado ? '<th></th>' : ''}
                 </tr>
               </thead>
               <tbody>
@@ -204,7 +224,7 @@ export async function cargarDetalleSalida(id) {
                     <td>${a.diamenor?.toFixed(2) ?? '—'}</td>
                     <td>${a.largo?.toFixed(2) ?? '—'}</td>
                     <td>${a.volumen?.toFixed(3) ?? '—'}</td>
-                    <td><button class="btn-icon" data-quitar-linea="${a.id}" data-rodeo-detalle-id="${a.rodeo_detalle_id}" title="Quitar">✖</button></td>
+                    ${!confirmado ? `<td><button class="btn-icon" data-quitar-linea="${a.id}" data-rodeo-detalle-id="${a.rodeo_detalle_id}" title="Quitar">✖</button></td>` : ''}
                   </tr>
                 `).join('')}
               </tbody>
@@ -214,32 +234,34 @@ export async function cargarDetalleSalida(id) {
       `;
     }
 
-    html += `
-      <div class="card">
-        <h3>➕ Agregar árboles del Rodeo</h3>
-        <label>Buscar árbol
-          <input type="text" id="salida-buscar-arbol" placeholder="Código de rodeo, especie o nro árbol..." autocomplete="off">
-        </label>
-        <div class="grid" style="margin-top:0.5rem; grid-template-columns: 1fr 1fr;">
-          <label>Fija
-            <input type="text" id="salida-filtro-faja" placeholder="Ej: 5" autocomplete="off">
+    if (!confirmado) {
+      html += `
+        <div class="card">
+          <h3>➕ Agregar árboles del Rodeo</h3>
+          <label>Buscar árbol
+            <input type="text" id="salida-buscar-arbol" placeholder="Código de rodeo, especie o nro árbol..." autocomplete="off">
           </label>
-          <label>Nro Árbol
-            <input type="text" id="salida-filtro-nro-arbol" placeholder="Ej: 12" autocomplete="off">
-          </label>
+          <div class="grid" style="margin-top:0.5rem; grid-template-columns: 1fr 1fr;">
+            <label>Fija
+              <input type="text" id="salida-filtro-faja" placeholder="Ej: 5" autocomplete="off">
+            </label>
+            <label>Nro Árbol
+              <input type="text" id="salida-filtro-nro-arbol" placeholder="Ej: 12" autocomplete="off">
+            </label>
+          </div>
+          <div id="salida-resultados-arbol" style="display:none; margin-top:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); max-height:240px; overflow-y:auto;"></div>
+          <button type="button" id="btn-salida-agregar-linea" class="btn-secondary" style="margin-top:0.75rem">🔍 Buscar árbol</button>
         </div>
-        <div id="salida-resultados-arbol" style="display:none; margin-top:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); max-height:240px; overflow-y:auto;"></div>
-        <button type="button" id="btn-salida-agregar-linea" class="btn-secondary" style="margin-top:0.75rem">🔍 Buscar árbol</button>
-      </div>
 
-      <div class="card">
-        <h3>🌲 Árboles agregados</h3>
-        <div id="salida-lineas-pendientes" style="overflow-x:auto">
-          <p style="color:var(--text-muted);font-size:0.9rem">Sin líneas agregadas</p>
+        <div class="card">
+          <h3>🌲 Árboles agregados</h3>
+          <div id="salida-lineas-pendientes" style="overflow-x:auto">
+            <p style="color:var(--text-muted);font-size:0.9rem">Sin líneas agregadas</p>
+          </div>
+          <button type="button" id="btn-salida-guardar-lineas" class="btn-primary" style="width:100%; margin-top:0.75rem" disabled>💾 Guardar líneas</button>
         </div>
-        <button type="button" id="btn-salida-guardar-lineas" class="btn-primary" style="width:100%; margin-top:0.75rem" disabled>💾 Guardar líneas</button>
-      </div>
-    `;
+      `;
+    }
 
     container.innerHTML = html;
     renderLineasPendientes();
@@ -424,14 +446,43 @@ async function guardarLineas() {
   }
 }
 
-async function quitarLineaGuardada(salidaDetalleId, rodeoDetalleId) {
+async function quitarLineaGuardada(salidaId, salidaDetalleId, rodeoDetalleId) {
   try {
-    await quitarLineaSalida(salidaDetalleId, rodeoDetalleId);
+    await quitarLineaSalida(salidaId, salidaDetalleId, rodeoDetalleId);
     mostrarToast('✅ Árbol quitado del despacho');
     await cargarDetalleSalida(salidaIdActual);
   } catch (err) {
     console.error('[MONTE] Error al quitar línea:', err);
     alert('❌ ' + err.message);
+  }
+}
+
+async function confirmarDespacho() {
+  if (!salidaIdActual) return;
+  const ok = await confirmar({
+    icon: '✅',
+    titulo: '¿Confirmar despacho?',
+    msg: 'Una vez confirmado no podrás editar ni eliminar este despacho ni sus árboles.',
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btn-salida-confirmar');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Confirmando...';
+  }
+
+  try {
+    await confirmarSalidaCab(salidaIdActual);
+    mostrarToast('✅ Despacho confirmado');
+    await cargarDetalleSalida(salidaIdActual);
+  } catch (err) {
+    console.error('[MONTE] Error al confirmar despacho:', err);
+    alert('❌ ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '✅ Confirmar despacho';
+    }
   }
 }
 

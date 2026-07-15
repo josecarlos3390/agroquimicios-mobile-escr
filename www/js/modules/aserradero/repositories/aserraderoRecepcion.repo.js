@@ -32,7 +32,7 @@ export async function desmarcarDetalleDespachado(rodeoDetalleId) {
 
 export async function listarRecepciones(empresaId) {
   return executeQuery(
-    `SELECT r.id, r.numero_completo, r.nro_recepcion, r.fecha_recepcion, r.placa, r.chofer,
+    `SELECT r.id, r.numero_completo, r.nro_recepcion, r.fecha_recepcion, r.placa, r.chofer, r.estado,
             COUNT(d.id) as cantidad_arboles
      FROM aserradero_recepcion_cab r
      LEFT JOIN aserradero_recepcion_detalle d ON d.recepcion_id = r.id
@@ -45,7 +45,7 @@ export async function listarRecepciones(empresaId) {
 
 export async function obtenerRecepcionPorId(id) {
   const cab = await executeQuery(
-    `SELECT id, numero_completo, nro_recepcion, fecha_recepcion, placa, chofer, observaciones, created_at
+    `SELECT id, numero_completo, nro_recepcion, fecha_recepcion, placa, chofer, observaciones, estado, created_at
      FROM aserradero_recepcion_cab WHERE id = ?`,
     [id]
   );
@@ -100,6 +100,13 @@ export async function actualizarRecepcionCab(id, nroRecepcion, fechaRecepcion, p
      SET nro_recepcion = ?, fecha_recepcion = ?, placa = ?, chofer = ?, observaciones = ?
      WHERE id = ?`,
     [nroRecepcion, fechaRecepcion, placa, chofer, observaciones, id]
+  );
+}
+
+export async function confirmarRecepcion(id) {
+  await executeRun(
+    "UPDATE aserradero_recepcion_cab SET estado = 'CONFIRMADO' WHERE id = ?",
+    [id]
   );
 }
 

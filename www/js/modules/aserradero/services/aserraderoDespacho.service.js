@@ -6,6 +6,7 @@ import {
   actualizarDespachoCab,
   eliminarDespacho,
   eliminarDespachoDetalle,
+  confirmarDespacho,
 } from '../repositories/aserraderoDespacho.repo.js';
 import {
   marcarRecepcionDetalleDespachado,
@@ -27,7 +28,18 @@ export async function getDespacho(id) {
 }
 
 export async function borrarDespacho(id) {
+  const actual = await obtenerDespachoPorId(id);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede eliminar un despacho confirmado');
+  }
   return eliminarDespacho(id);
+}
+
+export async function confirmarDespachoCab(id) {
+  const actual = await obtenerDespachoPorId(id);
+  if (!actual) throw new Error('Despacho no encontrado');
+  if (actual.cabecera.estado === 'CONFIRMADO') throw new Error('El despacho ya está confirmado');
+  await confirmarDespacho(id);
 }
 
 export async function buscarArboles(filtros) {
@@ -57,6 +69,11 @@ export async function crearDespachoCabecera(datos) {
 }
 
 export async function actualizarDespachoCabecera(id, datos) {
+  const actual = await obtenerDespachoPorId(id);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede editar un despacho confirmado');
+  }
+
   const nroDespacho = datos.nroDespacho?.trim().toUpperCase();
   if (!nroDespacho) throw new Error('El número de despacho es obligatorio');
 
@@ -68,9 +85,13 @@ export async function actualizarDespachoCabecera(id, datos) {
   await actualizarDespachoCab(id, nroDespacho, fecha, placa, chofer, observaciones);
 }
 
-export async function quitarLineaDespacho(despachoDetalleId, recepcionDetalleId) {
+export async function quitarLineaDespacho(despachoId, despachoDetalleId, recepcionDetalleId) {
   if (!despachoDetalleId) {
     throw new Error('Faltan datos para quitar la línea');
+  }
+  const actual = await obtenerDespachoPorId(despachoId);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede quitar árboles de un despacho confirmado');
   }
   await eliminarDespachoDetalle(despachoDetalleId);
   if (recepcionDetalleId) {
@@ -79,6 +100,10 @@ export async function quitarLineaDespacho(despachoDetalleId, recepcionDetalleId)
 }
 
 export async function agregarLineasDespacho(despachoId, lineas) {
+  const actual = await obtenerDespachoPorId(despachoId);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede agregar árboles a un despacho confirmado');
+  }
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
 

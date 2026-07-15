@@ -564,6 +564,7 @@ export async function initSchema() {
       placa               TEXT,
       chofer              TEXT,
       observaciones       TEXT,
+      estado              TEXT    DEFAULT 'BORRADOR',
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
@@ -606,6 +607,7 @@ export async function initSchema() {
       placa               TEXT,
       chofer              TEXT,
       observaciones       TEXT,
+      estado              TEXT    DEFAULT 'BORRADOR',
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
@@ -647,6 +649,7 @@ export async function initSchema() {
       placa               TEXT,
       chofer              TEXT,
       observaciones       TEXT,
+      estado              TEXT    DEFAULT 'BORRADOR',
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
     );
@@ -857,6 +860,9 @@ export async function initSchema() {
   // Migraciones módulo Aserradero
   await addColumnIfNotExists('aserradero_recepcion_detalle', 'despachado', 'INTEGER DEFAULT 0');
   await addColumnIfNotExists('aserradero_despacho_detalle', 'recepcion_detalle_id', 'INTEGER');
+  await addColumnIfNotExists('cefo_salida_cab', 'estado', "TEXT DEFAULT 'BORRADOR'");
+  await addColumnIfNotExists('aserradero_recepcion_cab', 'estado', "TEXT DEFAULT 'BORRADOR'");
+  await addColumnIfNotExists('aserradero_despacho_cab', 'estado', "TEXT DEFAULT 'BORRADOR'");
 
   // Migraciones módulo Agroquímicos
   await addColumnIfNotExists('hojas_cab', 'variedad_id', 'INTEGER');

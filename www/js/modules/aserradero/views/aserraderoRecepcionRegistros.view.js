@@ -1,4 +1,4 @@
-import { getRecepciones, borrarRecepcion } from '../services/aserraderoRecepcion.service.js';
+import { getRecepciones, borrarRecepcion, confirmarRecepcionCab } from '../services/aserraderoRecepcion.service.js';
 import { confirmar } from '../../../utils/confirm.js';
 
 let inicializado = false;
@@ -26,6 +26,18 @@ export function initAserraderoRecepcionRegistrosView() {
       });
       if (!ok) return;
       await borrarRecepcion(card.dataset.recepcionId);
+      await cargarAserraderoRecepcionRegistros();
+      return;
+    }
+
+    if (e.target.closest('[data-confirmar]')) {
+      const ok = await confirmar({
+        icon: '✅',
+        titulo: '¿Confirmar recepción?',
+        msg: 'Una vez confirmada no podrás editar ni eliminar esta recepción.',
+      });
+      if (!ok) return;
+      await confirmarRecepcionCab(card.dataset.recepcionId);
       await cargarAserraderoRecepcionRegistros();
       return;
     }
@@ -69,11 +81,16 @@ function renderCards(listaRecepciones) {
   const lista = document.getElementById('aserradero-recepcion-lista');
   lista.innerHTML = listaRecepciones.map(r => {
     const total = r.cantidad_arboles || 0;
+    const confirmado = r.estado === 'CONFIRMADO';
+    const badgeEstado = confirmado
+      ? '<span style="display:inline-block;background:var(--success);color:#fff;padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.7rem">CONFIRMADO</span>'
+      : '<span style="display:inline-block;background:var(--warning);color:#fff;padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.7rem">BORRADOR</span>';
+
     return `
       <div class="card hoja-card" data-recepcion-id="${r.id}">
         <div class="hoja-card-header">
           <div class="hoja-card-num">${r.numero_completo}</div>
-          <div class="hoja-card-estado">${total} árbol${total !== 1 ? 'es' : ''}</div>
+          <div class="hoja-card-estado">${badgeEstado} · ${total} árbol${total !== 1 ? 'es' : ''}</div>
         </div>
         <div class="hoja-card-body">
           <div class="cefo-datos-grid">
@@ -100,7 +117,8 @@ function renderCards(listaRecepciones) {
           </div>
         </div>
         <div class="hoja-card-actions">
-          <button data-delete="${r.id}" class="btn-icon" title="Eliminar">🗑️</button>
+          ${!confirmado ? `<button data-confirmar="${r.id}" class="btn-icon" title="Confirmar recepción">✅</button>` : ''}
+          ${!confirmado ? `<button data-delete="${r.id}" class="btn-icon" title="Eliminar">🗑️</button>` : '<span style="font-size:0.75rem;color:var(--text-muted)">🔒 Confirmada</span>'}
         </div>
       </div>
     `;

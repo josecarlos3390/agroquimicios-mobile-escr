@@ -1,4 +1,4 @@
-import { getDespachos, borrarDespacho } from '../services/aserraderoDespacho.service.js';
+import { getDespachos, borrarDespacho, confirmarDespachoCab } from '../services/aserraderoDespacho.service.js';
 import { confirmar } from '../../../utils/confirm.js';
 
 let inicializado = false;
@@ -26,6 +26,18 @@ export function initAserraderoDespachoRegistrosView() {
       });
       if (!ok) return;
       await borrarDespacho(card.dataset.despachoId);
+      await cargarAserraderoDespachoRegistros();
+      return;
+    }
+
+    if (e.target.closest('[data-confirmar]')) {
+      const ok = await confirmar({
+        icon: '✅',
+        titulo: '¿Confirmar despacho?',
+        msg: 'Una vez confirmado no podrás editar ni eliminar este despacho.',
+      });
+      if (!ok) return;
+      await confirmarDespachoCab(card.dataset.despachoId);
       await cargarAserraderoDespachoRegistros();
       return;
     }
@@ -69,11 +81,16 @@ function renderCards(listaDespachos) {
   const lista = document.getElementById('aserradero-despacho-lista');
   lista.innerHTML = listaDespachos.map(d => {
     const total = d.cantidad_arboles || 0;
+    const confirmado = d.estado === 'CONFIRMADO';
+    const badgeEstado = confirmado
+      ? '<span style="display:inline-block;background:var(--success);color:#fff;padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.7rem">CONFIRMADO</span>'
+      : '<span style="display:inline-block;background:var(--warning);color:#fff;padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.7rem">BORRADOR</span>';
+
     return `
       <div class="card hoja-card" data-despacho-id="${d.id}">
         <div class="hoja-card-header">
           <div class="hoja-card-num">${d.numero_completo}</div>
-          <div class="hoja-card-estado">${total} árbol${total !== 1 ? 'es' : ''}</div>
+          <div class="hoja-card-estado">${badgeEstado} · ${total} árbol${total !== 1 ? 'es' : ''}</div>
         </div>
         <div class="hoja-card-body">
           <div class="cefo-datos-grid">
@@ -100,7 +117,8 @@ function renderCards(listaDespachos) {
           </div>
         </div>
         <div class="hoja-card-actions">
-          <button data-delete="${d.id}" class="btn-icon" title="Eliminar">🗑️</button>
+          ${!confirmado ? `<button data-confirmar="${d.id}" class="btn-icon" title="Confirmar despacho">✅</button>` : ''}
+          ${!confirmado ? `<button data-delete="${d.id}" class="btn-icon" title="Eliminar">🗑️</button>` : '<span style="font-size:0.75rem;color:var(--text-muted)">🔒 Confirmado</span>'}
         </div>
       </div>
     `;

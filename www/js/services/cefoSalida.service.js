@@ -8,6 +8,7 @@ import {
   eliminarSalida,
   eliminarSalidaDetalle,
   buscarArbolesDisponibles,
+  confirmarSalida,
 } from '../repositories/cefoSalida.repo.js';
 import { getEmpresaActiva } from './empresas.service.js';
 import { reservarNumeroSecuencial } from '../db/sqlite.js';
@@ -24,7 +25,18 @@ export async function getSalida(id) {
 }
 
 export async function borrarSalida(id) {
+  const actual = await obtenerSalidaPorId(id);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede eliminar un despacho confirmado');
+  }
   return eliminarSalida(id);
+}
+
+export async function confirmarSalidaCab(id) {
+  const actual = await obtenerSalidaPorId(id);
+  if (!actual) throw new Error('Despacho no encontrado');
+  if (actual.cabecera.estado === 'CONFIRMADO') throw new Error('El despacho ya está confirmado');
+  await confirmarSalida(id);
 }
 
 export async function buscarArboles(filtros) {
@@ -54,6 +66,11 @@ export async function crearSalidaCabecera(datos) {
 }
 
 export async function actualizarSalidaCabecera(id, datos) {
+  const actual = await obtenerSalidaPorId(id);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede editar un despacho confirmado');
+  }
+
   const nroCfoDespacho = datos.nroCfoDespacho?.trim().toUpperCase();
   if (!nroCfoDespacho) throw new Error('El número de CFO de despacho es obligatorio');
 
@@ -65,14 +82,22 @@ export async function actualizarSalidaCabecera(id, datos) {
   await actualizarSalidaCab(id, nroCfoDespacho, fecha, placa, chofer, observaciones);
 }
 
-export async function quitarLineaSalida(salidaDetalleId, rodeoDetalleId) {
+export async function quitarLineaSalida(salidaId, salidaDetalleId, rodeoDetalleId) {
   if (!salidaDetalleId || !rodeoDetalleId) {
     throw new Error('Faltan datos para quitar la línea');
+  }
+  const actual = await obtenerSalidaPorId(salidaId);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede quitar árboles de un despacho confirmado');
   }
   await eliminarSalidaDetalle(salidaDetalleId, rodeoDetalleId);
 }
 
 export async function agregarLineasSalida(salidaId, lineas) {
+  const actual = await obtenerSalidaPorId(salidaId);
+  if (actual && actual.cabecera.estado === 'CONFIRMADO') {
+    throw new Error('No se puede agregar árboles a un despacho confirmado');
+  }
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
 

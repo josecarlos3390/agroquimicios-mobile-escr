@@ -18,7 +18,7 @@ export async function insertarDespachoDetalle(despachoId, recepcionDetalleId, ro
 
 export async function listarDespachos(empresaId) {
   return executeQuery(
-    `SELECT d.id, d.numero_completo, d.nro_despacho, d.fecha_despacho, d.placa, d.chofer,
+    `SELECT d.id, d.numero_completo, d.nro_despacho, d.fecha_despacho, d.placa, d.chofer, d.estado,
             COUNT(dt.id) as cantidad_arboles
      FROM aserradero_despacho_cab d
      LEFT JOIN aserradero_despacho_detalle dt ON dt.despacho_id = d.id
@@ -31,7 +31,7 @@ export async function listarDespachos(empresaId) {
 
 export async function obtenerDespachoPorId(id) {
   const cab = await executeQuery(
-    `SELECT id, numero_completo, nro_despacho, fecha_despacho, placa, chofer, observaciones, created_at
+    `SELECT id, numero_completo, nro_despacho, fecha_despacho, placa, chofer, observaciones, estado, created_at
      FROM aserradero_despacho_cab WHERE id = ?`,
     [id]
   );
@@ -80,6 +80,13 @@ export async function actualizarDespachoCab(id, nroDespacho, fechaDespacho, plac
      SET nro_despacho = ?, fecha_despacho = ?, placa = ?, chofer = ?, observaciones = ?
      WHERE id = ?`,
     [nroDespacho, fechaDespacho, placa, chofer, observaciones, id]
+  );
+}
+
+export async function confirmarDespacho(id) {
+  await executeRun(
+    "UPDATE aserradero_despacho_cab SET estado = 'CONFIRMADO' WHERE id = ?",
+    [id]
   );
 }
 
