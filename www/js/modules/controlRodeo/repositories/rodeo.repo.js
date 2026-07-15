@@ -44,9 +44,10 @@ export async function getRodeos(empresaId) {
   return await executeQuery(`
     SELECT
       r.id, r.numero_completo, r.numero_secuencial,
-      r.fecha, r.placa, r.chofer, r.observaciones, r.estado,
+      r.fecha, r.observaciones, r.estado,
       s.nombre AS sector_nombre,
-      COUNT(d.id) AS cantidad_arboles
+      COUNT(d.id) AS cantidad_arboles,
+      SUM(CASE WHEN d.estado_uso != 'DISPONIBLE' THEN 1 ELSE 0 END) AS arboles_baja
     FROM rodeo_cab r
     LEFT JOIN rodeo_sectores s ON s.id = r.sector_id
     LEFT JOIN rodeo_detalle d ON d.rodeo_cab_id = r.id

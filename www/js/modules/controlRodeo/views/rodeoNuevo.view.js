@@ -69,16 +69,12 @@ export function initRodeoNuevoView() {
 
         if (_previewDetalle.length === 0) throw new Error('Debes importar un archivo Excel');
 
-        const placa = section.querySelector('#rodeo-placa')?.value?.trim().toUpperCase() || null;
-        const chofer = section.querySelector('#rodeo-chofer')?.value?.trim().toUpperCase() || null;
         const observaciones = section.querySelector('#rodeo-observaciones')?.value?.trim() || null;
 
         const data = {
           empresa_id: empresa.id,
           fecha,
           sector_id: parseInt(sectorId, 10),
-          placa,
-          chofer,
           observaciones,
         };
 

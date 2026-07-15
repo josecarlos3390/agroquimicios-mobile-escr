@@ -34,8 +34,6 @@ export async function cargarRodeoDetalle(id) {
             <div><strong>Fecha:</strong> ${formatFecha(r.fecha)}</div>
             <div><strong>Sector:</strong> ${r.sector_nombre || '—'}</div>
             <div><strong>Árboles:</strong> ${r.detalle?.length || 0}</div>
-            <div><strong>Placa:</strong> ${r.placa || '—'}</div>
-            <div><strong>Chofer:</strong> ${r.chofer || '—'}</div>
             ${r.observaciones ? `<div style="grid-column: 1 / -1;"><strong>Observaciones:</strong> ${r.observaciones}</div>` : ''}
           </div>
         </div>

@@ -78,9 +78,7 @@ export async function cargarRodeoRegistros() {
           <span>🗺️ ${r.sector_nombre || '—'}</span>
         </div>
         <div class="hoja-card-body" style="font-size:0.85rem;color:var(--text-muted)">
-          <div>🌳 ${r.cantidad_arboles || 0} árboles registrados</div>
-          ${r.placa ? `<div>🚛 Placa: ${r.placa}</div>` : ''}
-          ${r.chofer ? `<div>👤 Chofer: ${r.chofer}</div>` : ''}
+          <div>🌳 ${r.arboles_baja || 0} / ${r.cantidad_arboles || 0} árboles dados de baja</div>
           ${r.observaciones ? `<div>📝 ${r.observaciones}</div>` : ''}
         </div>
         <div class="hoja-card-actions">
