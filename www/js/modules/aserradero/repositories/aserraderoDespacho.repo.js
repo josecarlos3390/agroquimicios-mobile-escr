@@ -96,3 +96,19 @@ export async function eliminarDespachoDetalle(despachoDetalleId) {
     [despachoDetalleId]
   );
 }
+
+export async function marcarRecepcionDetallesDespachados(despachoId) {
+  await executeRun(`
+    UPDATE aserradero_recepcion_detalle
+    SET despachado = 1
+    WHERE id IN (SELECT recepcion_detalle_id FROM aserradero_despacho_detalle WHERE despacho_id = ?)
+  `, [despachoId]);
+}
+
+export async function desmarcarRecepcionDetallesDespachados(despachoId) {
+  await executeRun(`
+    UPDATE aserradero_recepcion_detalle
+    SET despachado = 0
+    WHERE id IN (SELECT recepcion_detalle_id FROM aserradero_despacho_detalle WHERE despacho_id = ?)
+  `, [despachoId]);
+}

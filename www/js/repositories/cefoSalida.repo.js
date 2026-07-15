@@ -30,6 +30,22 @@ export async function desmarcarDetalleDespachado(rodeoDetalleId) {
   );
 }
 
+export async function marcarArbolesDespachadosPorSalida(salidaId) {
+  await executeRun(`
+    UPDATE rodeo_detalle
+    SET estado_uso = 'DESPACHADO'
+    WHERE id IN (SELECT rodeo_detalle_id FROM cefo_salida_detalle WHERE salida_id = ?)
+  `, [salidaId]);
+}
+
+export async function desmarcarArbolesDespachadosPorSalida(salidaId) {
+  await executeRun(`
+    UPDATE rodeo_detalle
+    SET estado_uso = 'DISPONIBLE'
+    WHERE id IN (SELECT rodeo_detalle_id FROM cefo_salida_detalle WHERE salida_id = ?)
+  `, [salidaId]);
+}
+
 export async function listarSalidas(empresaId) {
   return executeQuery(
     `SELECT s.id, s.numero_completo, s.nro_cfo_despacho, s.fecha_despacho, s.placa, s.chofer, s.estado,
@@ -78,15 +94,6 @@ export async function obtenerSalidaPorId(id) {
 }
 
 export async function eliminarSalida(id) {
-  const detalles = await executeQuery(
-    'SELECT rodeo_detalle_id FROM cefo_salida_detalle WHERE salida_id = ?',
-    [id]
-  );
-  for (const d of detalles) {
-    if (d.rodeo_detalle_id) {
-      await desmarcarDetalleDespachado(d.rodeo_detalle_id);
-    }
-  }
   return executeRun(
     'DELETE FROM cefo_salida_cab WHERE id = ?',
     [id]
@@ -122,7 +129,8 @@ export async function eliminarSalidaDetalle(salidaDetalleId, rodeoDetalleId) {
 export async function buscarArbolesDisponibles(empresaId, filtros) {
   const conditions = [
     'c.empresa_id = ?',
-    "d.estado_uso = 'DISPONIBLE'"
+    "d.estado_uso = 'DISPONIBLE'",
+    "d.id NOT IN (SELECT sd.rodeo_detalle_id FROM cefo_salida_detalle sd JOIN cefo_salida_cab sc ON sc.id = sd.salida_id WHERE sc.estado = 'BORRADOR')"
   ];
   const params = [empresaId];
 

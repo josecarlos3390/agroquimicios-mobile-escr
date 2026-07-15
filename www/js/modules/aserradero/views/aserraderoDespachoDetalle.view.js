@@ -54,10 +54,8 @@ export function initAserraderoDespachoDetalleView() {
   });
 
   cont?.addEventListener('click', async (e) => {
-    if (e.target.closest('[data-quitar-linea]')) return;
-
     const item = e.target.closest('[data-recepcion-detalle-id]');
-    if (item) {
+    if (item && !e.target.closest('[data-quitar-linea]')) {
       if (Number(item.dataset.despachado) === 1) {
         alert('Este árbol ya fue despachado');
         return;

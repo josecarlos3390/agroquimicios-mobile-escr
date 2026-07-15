@@ -7,10 +7,9 @@ import {
   eliminarDespacho,
   eliminarDespachoDetalle,
   confirmarDespacho,
+  marcarRecepcionDetallesDespachados,
 } from '../repositories/aserraderoDespacho.repo.js';
 import {
-  marcarRecepcionDetalleDespachado,
-  desmarcarRecepcionDetalleDespachado,
   buscarArbolesRecepcionDisponibles,
 } from '../repositories/aserraderoRecepcion.repo.js';
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
@@ -32,7 +31,7 @@ export async function borrarDespacho(id) {
   if (actual && actual.cabecera.estado === 'CONFIRMADO') {
     throw new Error('No se puede eliminar un despacho confirmado');
   }
-  return eliminarDespacho(id);
+  await eliminarDespacho(id);
 }
 
 export async function confirmarDespachoCab(id) {
@@ -40,6 +39,7 @@ export async function confirmarDespachoCab(id) {
   if (!actual) throw new Error('Despacho no encontrado');
   if (actual.cabecera.estado === 'CONFIRMADO') throw new Error('El despacho ya está confirmado');
   await confirmarDespacho(id);
+  await marcarRecepcionDetallesDespachados(id);
 }
 
 export async function buscarArboles(filtros) {
@@ -94,9 +94,6 @@ export async function quitarLineaDespacho(despachoId, despachoDetalleId, recepci
     throw new Error('No se puede quitar árboles de un despacho confirmado');
   }
   await eliminarDespachoDetalle(despachoDetalleId);
-  if (recepcionDetalleId) {
-    await desmarcarRecepcionDetalleDespachado(recepcionDetalleId);
-  }
 }
 
 export async function agregarLineasDespacho(despachoId, lineas) {
@@ -126,7 +123,6 @@ export async function agregarLineasDespacho(despachoId, lineas) {
       linea.largo,
       linea.volumen
     );
-    await marcarRecepcionDetalleDespachado(linea.recepcionDetalleId);
     creados++;
   }
 

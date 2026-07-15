@@ -79,15 +79,6 @@ export async function obtenerRecepcionPorId(id) {
 }
 
 export async function eliminarRecepcion(id) {
-  const detalles = await executeQuery(
-    'SELECT rodeo_detalle_id FROM aserradero_recepcion_detalle WHERE recepcion_id = ?',
-    [id]
-  );
-  for (const d of detalles) {
-    if (d.rodeo_detalle_id) {
-      await desmarcarDetalleDespachado(d.rodeo_detalle_id);
-    }
-  }
   return executeRun(
     'DELETE FROM aserradero_recepcion_cab WHERE id = ?',
     [id]
@@ -120,10 +111,27 @@ export async function eliminarRecepcionDetalle(recepcionDetalleId, rodeoDetalleI
   }
 }
 
+export async function marcarArbolesRecepcionadosPorRecepcion(recepcionId) {
+  await executeRun(`
+    UPDATE rodeo_detalle
+    SET estado_uso = 'RECEPCIONADO'
+    WHERE id IN (SELECT rodeo_detalle_id FROM aserradero_recepcion_detalle WHERE recepcion_id = ?)
+  `, [recepcionId]);
+}
+
+export async function desmarcarArbolesRecepcionadosPorRecepcion(recepcionId) {
+  await executeRun(`
+    UPDATE rodeo_detalle
+    SET estado_uso = 'DISPONIBLE'
+    WHERE id IN (SELECT rodeo_detalle_id FROM aserradero_recepcion_detalle WHERE recepcion_id = ?)
+  `, [recepcionId]);
+}
+
 export async function buscarArbolesDisponibles(empresaId, filtros) {
   const conditions = [
     'c.empresa_id = ?',
-    "d.estado_uso = 'DISPONIBLE'"
+    "d.estado_uso = 'DISPONIBLE'",
+    "d.id NOT IN (SELECT rd.rodeo_detalle_id FROM aserradero_recepcion_detalle rd JOIN aserradero_recepcion_cab rc ON rc.id = rd.recepcion_id WHERE rc.estado = 'BORRADOR')"
   ];
   const params = [empresaId];
 

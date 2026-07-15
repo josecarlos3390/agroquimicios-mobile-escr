@@ -1,7 +1,6 @@
 import {
   insertarRecepcionCab,
   insertarRecepcionDetalle,
-  marcarDetalleDespachado,
   listarRecepciones,
   obtenerRecepcionPorId,
   actualizarRecepcionCab,
@@ -9,6 +8,8 @@ import {
   eliminarRecepcionDetalle,
   buscarArbolesDisponibles,
   confirmarRecepcion,
+  marcarArbolesRecepcionadosPorRecepcion,
+  desmarcarArbolesRecepcionadosPorRecepcion,
 } from '../repositories/aserraderoRecepcion.repo.js';
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
 import { reservarNumeroSecuencial } from '../../../db/sqlite.js';
@@ -29,7 +30,8 @@ export async function borrarRecepcion(id) {
   if (actual && actual.cabecera.estado === 'CONFIRMADO') {
     throw new Error('No se puede eliminar una recepción confirmada');
   }
-  return eliminarRecepcion(id);
+  await eliminarRecepcion(id);
+  await desmarcarArbolesRecepcionadosPorRecepcion(id);
 }
 
 export async function confirmarRecepcionCab(id) {
@@ -37,6 +39,7 @@ export async function confirmarRecepcionCab(id) {
   if (!actual) throw new Error('Recepción no encontrada');
   if (actual.cabecera.estado === 'CONFIRMADO') throw new Error('La recepción ya está confirmada');
   await confirmarRecepcion(id);
+  await marcarArbolesRecepcionadosPorRecepcion(id);
 }
 
 export async function buscarArboles(filtros) {
@@ -119,7 +122,6 @@ export async function agregarLineasRecepcion(recepcionId, lineas) {
       linea.largo,
       linea.volumen
     );
-    await marcarDetalleDespachado(linea.rodeoDetalleId);
     creados++;
   }
 

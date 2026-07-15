@@ -1,7 +1,6 @@
 import {
   insertarSalidaCab,
   insertarSalidaDetalle,
-  marcarDetalleDespachado,
   listarSalidas,
   obtenerSalidaPorId,
   actualizarSalidaCab,
@@ -9,6 +8,8 @@ import {
   eliminarSalidaDetalle,
   buscarArbolesDisponibles,
   confirmarSalida,
+  marcarArbolesDespachadosPorSalida,
+  desmarcarArbolesDespachadosPorSalida,
 } from '../repositories/cefoSalida.repo.js';
 import { getEmpresaActiva } from './empresas.service.js';
 import { reservarNumeroSecuencial } from '../db/sqlite.js';
@@ -29,7 +30,8 @@ export async function borrarSalida(id) {
   if (actual && actual.cabecera.estado === 'CONFIRMADO') {
     throw new Error('No se puede eliminar un despacho confirmado');
   }
-  return eliminarSalida(id);
+  await eliminarSalida(id);
+  await desmarcarArbolesDespachadosPorSalida(id);
 }
 
 export async function confirmarSalidaCab(id) {
@@ -37,6 +39,7 @@ export async function confirmarSalidaCab(id) {
   if (!actual) throw new Error('Despacho no encontrado');
   if (actual.cabecera.estado === 'CONFIRMADO') throw new Error('El despacho ya está confirmado');
   await confirmarSalida(id);
+  await marcarArbolesDespachadosPorSalida(id);
 }
 
 export async function buscarArboles(filtros) {
@@ -119,7 +122,6 @@ export async function agregarLineasSalida(salidaId, lineas) {
       linea.largo,
       linea.volumen
     );
-    await marcarDetalleDespachado(linea.rodeoDetalleId);
     creados++;
   }
 
