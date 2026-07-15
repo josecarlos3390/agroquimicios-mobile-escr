@@ -44,8 +44,8 @@ const MENUS = {
   `,
 
   'control-rodeo': `
-    <p class="menu-title">🐄 Entradas</p>
-    <a href="#" data-view="control-rodeo-registros">📋 Registros CFO</a>
+    <p class="menu-title">🌲 Entradas</p>
+    <a href="#" data-view="rodeo-registros">📋 Registros Rodeo</a>
 
     <div class="menu-divider"></div>
 
