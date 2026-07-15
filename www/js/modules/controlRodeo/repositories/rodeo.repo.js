@@ -73,6 +73,14 @@ export async function getRodeoDetalleByCabId(cabId) {
   `, [cabId]);
 }
 
+export async function contarArbolesConsumidos(rodeoCabId) {
+  const result = await executeQuery(`
+    SELECT COUNT(*) AS total FROM rodeo_detalle
+    WHERE rodeo_cab_id = ? AND estado_uso != 'DISPONIBLE'
+  `, [rodeoCabId]);
+  return result[0]?.total || 0;
+}
+
 export async function deleteRodeo(id) {
   await executeRun('DELETE FROM rodeo_cab WHERE id = ?', [id]);
 }

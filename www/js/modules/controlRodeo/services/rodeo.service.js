@@ -9,6 +9,7 @@ import {
   deleteRodeo,
   updateEstadoRodeo,
   getNextNumeroSecuencial,
+  contarArbolesConsumidos,
 } from '../repositories/rodeo.repo.js';
 
 export async function crearRodeo(data, detalle) {
@@ -51,6 +52,10 @@ export async function obtenerRodeo(id) {
 }
 
 export async function eliminarRodeo(id) {
+  const consumidos = await contarArbolesConsumidos(id);
+  if (consumidos > 0) {
+    throw new Error(`No se puede eliminar el rodeo porque tiene ${consumidos} árbol(es) ya consumido(s)`);
+  }
   await deleteRodeo(id);
 }
 
