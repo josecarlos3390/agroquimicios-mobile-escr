@@ -116,6 +116,38 @@ export async function confirmarSalida(id) {
   );
 }
 
+export async function obtenerDatosExportacionSalida(salidaId) {
+  const cab = await executeQuery(
+    `SELECT numero_completo, nro_cfo_despacho, fecha_despacho, placa, chofer, observaciones
+     FROM cefo_salida_cab WHERE id = ?`,
+    [salidaId]
+  );
+  if (!cab[0]) return null;
+
+  const det = await executeQuery(
+    `SELECT
+       rd.nro_rodeo,
+       rd.x_coord,
+       rd.y_coord,
+       rd.especie,
+       rd.faja,
+       rd.nro_arbol,
+       rd.seccion,
+       rd.d1,
+       rd.d2,
+       rd.largo,
+       rd.volumen,
+       rd.para_transporte
+     FROM cefo_salida_detalle sd
+     LEFT JOIN rodeo_detalle rd ON rd.id = sd.rodeo_detalle_id
+     WHERE sd.salida_id = ?
+     ORDER BY sd.id`,
+    [salidaId]
+  );
+
+  return { cabecera: cab[0], detalle: det };
+}
+
 export async function eliminarSalidaDetalle(salidaDetalleId, rodeoDetalleId) {
   await executeRun(
     'DELETE FROM cefo_salida_detalle WHERE id = ?',

@@ -10,6 +10,7 @@ import {
   confirmarRecepcion,
   marcarArbolesRecepcionadosPorRecepcion,
   desmarcarArbolesRecepcionadosPorRecepcion,
+  obtenerDatosExportacionRecepcion,
 } from '../repositories/aserraderoRecepcion.repo.js';
 import { getEmpresaActiva } from '../../../services/empresas.service.js';
 import { reservarNumeroSecuencial } from '../../../db/sqlite.js';
@@ -46,6 +47,10 @@ export async function buscarArboles(filtros) {
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
   return buscarArbolesDisponibles(empresa.id, filtros);
+}
+
+export async function getDatosExportacionRecepcion(id) {
+  return obtenerDatosExportacionRecepcion(id);
 }
 
 export async function crearRecepcionCabecera(datos) {

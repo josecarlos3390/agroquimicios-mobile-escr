@@ -97,6 +97,38 @@ export async function eliminarDespachoDetalle(despachoDetalleId) {
   );
 }
 
+export async function obtenerDatosExportacionDespacho(despachoId) {
+  const cab = await executeQuery(
+    `SELECT numero_completo, nro_despacho, fecha_despacho, placa, chofer, observaciones
+     FROM aserradero_despacho_cab WHERE id = ?`,
+    [despachoId]
+  );
+  if (!cab[0]) return null;
+
+  const det = await executeQuery(
+    `SELECT
+       rd.nro_rodeo,
+       rd.x_coord,
+       rd.y_coord,
+       rd.especie,
+       rd.faja,
+       rd.nro_arbol,
+       rd.seccion,
+       rd.d1,
+       rd.d2,
+       rd.largo,
+       rd.volumen,
+       rd.para_transporte
+     FROM aserradero_despacho_detalle dd
+     LEFT JOIN rodeo_detalle rd ON rd.id = dd.rodeo_detalle_id
+     WHERE dd.despacho_id = ?
+     ORDER BY dd.id`,
+    [despachoId]
+  );
+
+  return { cabecera: cab[0], detalle: det };
+}
+
 export async function marcarRecepcionDetallesDespachados(despachoId) {
   await executeRun(`
     UPDATE aserradero_recepcion_detalle

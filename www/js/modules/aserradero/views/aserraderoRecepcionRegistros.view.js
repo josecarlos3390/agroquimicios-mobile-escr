@@ -1,8 +1,10 @@
-import { getRecepciones, borrarRecepcion, confirmarRecepcionCab } from '../services/aserraderoRecepcion.service.js';
+import { getRecepciones, borrarRecepcion, confirmarRecepcionCab, getDatosExportacionRecepcion } from '../services/aserraderoRecepcion.service.js';
 import { confirmar } from '../../../utils/confirm.js';
+import { exportarRegistrosArbolesAXLSX } from '../../../utils/exportRodeoExcel.js';
 
 let inicializado = false;
 let recepcionesCache = [];
+const seleccionados = new Set();
 
 export function initAserraderoRecepcionRegistrosView() {
   if (inicializado) return;
@@ -13,10 +15,33 @@ export function initAserraderoRecepcionRegistrosView() {
       window.showView('aserradero-recepcion-nuevo');
     });
 
+  document.getElementById('btn-exportar-recepciones-seleccionadas')
+    ?.addEventListener('click', async () => {
+      await _exportarSeleccionados();
+    });
+
   const lista = document.getElementById('aserradero-recepcion-lista');
   lista?.addEventListener('click', async (e) => {
     const card = e.target.closest('[data-recepcion-id]');
     if (!card) return;
+
+    if (e.target.closest('[data-seleccionar]')) {
+      const cb = e.target.closest('[data-seleccionar]');
+      const id = card.dataset.recepcionId;
+      if (cb.checked) {
+        seleccionados.add(id);
+      } else {
+        seleccionados.delete(id);
+      }
+      _actualizarBarraSeleccion();
+      return;
+    }
+
+    if (e.target.closest('[data-exportar]')) {
+      e.stopPropagation();
+      await _exportarIndividual(card.dataset.recepcionId);
+      return;
+    }
 
     if (e.target.closest('[data-delete]')) {
       const ok = await confirmar({
@@ -26,6 +51,7 @@ export function initAserraderoRecepcionRegistrosView() {
       });
       if (!ok) return;
       await borrarRecepcion(card.dataset.recepcionId);
+      seleccionados.delete(card.dataset.recepcionId);
       await cargarAserraderoRecepcionRegistros();
       return;
     }
@@ -86,11 +112,15 @@ function renderCards(listaRecepciones) {
     const badgeEstado = confirmado
       ? '<span style="display:inline-block;background:var(--success);color:#fff;padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.7rem">CONFIRMADO</span>'
       : '<span style="display:inline-block;background:var(--warning);color:#fff;padding:0.15rem 0.5rem;border-radius:1rem;font-size:0.7rem">BORRADOR</span>';
+    const seleccionado = seleccionados.has(r.id);
 
     return `
       <div class="card hoja-card" data-recepcion-id="${r.id}">
         <div class="hoja-card-header">
-          <div class="hoja-card-num">${r.numero_completo}</div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <input type="checkbox" data-seleccionar="${r.id}" ${seleccionado ? 'checked' : ''} style="width:1.1rem;height:1.1rem;cursor:pointer">
+            <div class="hoja-card-num">${r.numero_completo}</div>
+          </div>
           <div class="hoja-card-estado">${badgeEstado} · ${total} árbol${total !== 1 ? 'es' : ''}</div>
         </div>
         <div class="hoja-card-body">
@@ -118,12 +148,15 @@ function renderCards(listaRecepciones) {
           </div>
         </div>
         <div class="hoja-card-actions">
+          <button data-exportar="${r.id}" class="btn-icon" title="Exportar Excel">📤</button>
           ${!confirmado ? `<button data-confirmar="${r.id}" class="btn-icon" title="Confirmar recepción">✅</button>` : ''}
           ${!confirmado ? `<button data-delete="${r.id}" class="btn-icon" title="Eliminar">🗑️</button>` : '<span style="font-size:0.75rem;color:var(--text-muted)">🔒 Confirmada</span>'}
         </div>
       </div>
     `;
   }).join('');
+
+  _actualizarBarraSeleccion();
 }
 
 function filtrarCards(termino) {
@@ -145,4 +178,77 @@ function formatearFecha(fecha) {
   const d = new Date(fecha);
   if (isNaN(d)) return fecha;
   return d.toLocaleDateString('es-ES');
+}
+
+function _actualizarBarraSeleccion() {
+  const btn = document.getElementById('btn-exportar-recepciones-seleccionadas');
+  if (!btn) return;
+  const cantidad = seleccionados.size;
+  btn.textContent = cantidad > 0
+    ? `📤 Exportar ${cantidad} seleccionado${cantidad !== 1 ? 's' : ''}`
+    : '📤 Exportar seleccionados';
+  btn.disabled = cantidad === 0;
+}
+
+async function _exportarIndividual(recepcionId) {
+  const btn = document.querySelector(`[data-recepcion-id="${recepcionId}"] [data-exportar]`);
+  const originalText = btn?.textContent;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳';
+  }
+  try {
+    const datos = await getDatosExportacionRecepcion(recepcionId);
+    if (!datos) throw new Error('No se encontraron datos de la recepción');
+    await exportarRegistrosArbolesAXLSX([datos], {
+      prefijoNombre: 'recepcion_aserradero',
+      nombreHoja: 'Recepcion Aserradero',
+      campoDocumento: 'numero_completo',
+      campoFecha: 'fecha_recepcion',
+    });
+  } catch (err) {
+    console.error('[ASERRADERO] Error exportando recepción:', err);
+    alert('❌ ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+}
+
+async function _exportarSeleccionados() {
+  if (seleccionados.size === 0) {
+    alert('Seleccioná al menos una recepción');
+    return;
+  }
+
+  const btn = document.getElementById('btn-exportar-recepciones-seleccionadas');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+
+  try {
+    const ids = Array.from(seleccionados);
+    const registros = [];
+    for (const id of ids) {
+      const datos = await getDatosExportacionRecepcion(id);
+      if (datos) registros.push(datos);
+    }
+    await exportarRegistrosArbolesAXLSX(registros, {
+      prefijoNombre: 'recepciones_aserradero',
+      nombreHoja: 'Recepciones Aserradero',
+      campoDocumento: 'numero_completo',
+      campoFecha: 'fecha_recepcion',
+    });
+    seleccionados.clear();
+    _actualizarBarraSeleccion();
+    await cargarAserraderoRecepcionRegistros();
+  } catch (err) {
+    console.error('[ASERRADERO] Error exportando seleccionados:', err);
+    alert('❌ ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }

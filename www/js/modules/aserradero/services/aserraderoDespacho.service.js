@@ -8,6 +8,7 @@ import {
   eliminarDespachoDetalle,
   confirmarDespacho,
   marcarRecepcionDetallesDespachados,
+  obtenerDatosExportacionDespacho,
 } from '../repositories/aserraderoDespacho.repo.js';
 import {
   buscarArbolesRecepcionDisponibles,
@@ -46,6 +47,10 @@ export async function buscarArboles(filtros) {
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
   return buscarArbolesRecepcionDisponibles(empresa.id, filtros);
+}
+
+export async function getDatosExportacionDespacho(id) {
+  return obtenerDatosExportacionDespacho(id);
 }
 
 export async function crearDespachoCabecera(datos) {

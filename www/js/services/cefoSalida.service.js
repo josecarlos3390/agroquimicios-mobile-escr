@@ -10,6 +10,7 @@ import {
   confirmarSalida,
   marcarArbolesDespachadosPorSalida,
   desmarcarArbolesDespachadosPorSalida,
+  obtenerDatosExportacionSalida,
 } from '../repositories/cefoSalida.repo.js';
 import { getEmpresaActiva } from './empresas.service.js';
 import { reservarNumeroSecuencial } from '../db/sqlite.js';
@@ -46,6 +47,10 @@ export async function buscarArboles(filtros) {
   const empresa = getEmpresaActiva();
   if (!empresa) throw new Error('No hay empresa activa');
   return buscarArbolesDisponibles(empresa.id, filtros);
+}
+
+export async function getDatosExportacionSalida(id) {
+  return obtenerDatosExportacionSalida(id);
 }
 
 export async function crearSalidaCabecera(datos) {

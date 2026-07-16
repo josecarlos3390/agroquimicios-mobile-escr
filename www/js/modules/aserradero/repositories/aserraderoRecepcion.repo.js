@@ -183,6 +183,38 @@ export async function buscarArbolesDisponibles(empresaId, filtros) {
 }
 
 
+export async function obtenerDatosExportacionRecepcion(recepcionId) {
+  const cab = await executeQuery(
+    `SELECT numero_completo, nro_recepcion, fecha_recepcion, placa, chofer, observaciones
+     FROM aserradero_recepcion_cab WHERE id = ?`,
+    [recepcionId]
+  );
+  if (!cab[0]) return null;
+
+  const det = await executeQuery(
+    `SELECT
+       rd.nro_rodeo,
+       rd.x_coord,
+       rd.y_coord,
+       rd.especie,
+       rd.faja,
+       rd.nro_arbol,
+       rd.seccion,
+       rd.d1,
+       rd.d2,
+       rd.largo,
+       rd.volumen,
+       rd.para_transporte
+     FROM aserradero_recepcion_detalle recd
+     LEFT JOIN rodeo_detalle rd ON rd.id = recd.rodeo_detalle_id
+     WHERE recd.recepcion_id = ?
+     ORDER BY recd.id`,
+    [recepcionId]
+  );
+
+  return { cabecera: cab[0], detalle: det };
+}
+
 export async function marcarRecepcionDetalleDespachado(id) {
   await executeRun(
     'UPDATE aserradero_recepcion_detalle SET despachado = 1 WHERE id = ?',
