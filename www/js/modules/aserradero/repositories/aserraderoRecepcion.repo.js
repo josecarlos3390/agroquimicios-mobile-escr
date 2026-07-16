@@ -200,7 +200,9 @@ export async function desmarcarRecepcionDetalleDespachado(id) {
 export async function buscarArbolesRecepcionDisponibles(empresaId, filtros) {
   const conditions = [
     'rc.empresa_id = ?',
-    'rd.despachado = 0'
+    "rc.estado = 'CONFIRMADO'",
+    'rd.despachado = 0',
+    "rd.id NOT IN (SELECT dd.recepcion_detalle_id FROM aserradero_despacho_detalle dd JOIN aserradero_despacho_cab dc ON dc.id = dd.despacho_id WHERE dc.estado = 'BORRADOR')"
   ];
   const params = [empresaId];
 
