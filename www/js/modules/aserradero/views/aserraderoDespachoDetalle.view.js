@@ -3,6 +3,7 @@ import { getDespacho, actualizarDespachoCabecera, buscarArboles, agregarLineasDe
 let inicializado = false;
 let lineasPendientes = [];
 let despachoIdActual = null;
+let detalleCache = [];
 
 export function initAserraderoDespachoDetalleView() {
   if (inicializado) return;
@@ -124,7 +125,12 @@ async function ejecutarBusqueda() {
 
   try {
     const arboles = await buscarArboles({ termino: termino || null, faja: faja || null, nroArbol: nroArbol || null });
-    renderResultadosArboles(arboles, resultados);
+    const idsExcluir = [
+      ...detalleCache.map(a => a.recepcion_detalle_id),
+      ...lineasPendientes.map(l => l.recepcionDetalleId),
+    ];
+    const filtrados = arboles.filter(a => !idsExcluir.includes(a.id));
+    renderResultadosArboles(filtrados, resultados);
   } catch (err) {
     console.error('[ASERRADERO] Error buscando árboles:', err);
   }
@@ -145,6 +151,7 @@ export async function cargarAserraderoDespachoDetalle(id) {
 
     const cab = data.cabecera;
     const det = data.detalle;
+    detalleCache = det;
 
     const fecha = cab.fecha_despacho
       ? new Date(cab.fecha_despacho).toLocaleDateString('es-ES')
